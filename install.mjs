@@ -20,7 +20,7 @@ var DIST_OWNER = "namdseasygoingvn";
 var DIST_REPO = "ezg-figma-tools-dist";
 var DIST_BRANCH = "main";
 var RAW_ORIGIN = "https://raw.githubusercontent.com";
-var CHECK_INTERVAL_MS = 60 * 60 * 1e3;
+var CHECK_INTERVAL_MS = 10 * 60 * 1e3;
 var INSTALL_DIR_PARTS = [".ezg", "figma-tools"];
 var DIST_FILES = {
   index: "index.json",
