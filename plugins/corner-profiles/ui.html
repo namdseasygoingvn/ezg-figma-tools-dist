@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="utf-8" />
     <title>Corner Profiles</title>
@@ -104,11 +104,6 @@ input {
   text-overflow: ellipsis;
   min-width: 0;
 }
-.cp-hint {
-  margin: 6px 0 0;
-  color: var(--figma-color-text-tertiary, #999);
-  text-align: center;
-}
 .cp-empty {
   margin: 0 0 4px;
   color: var(--figma-color-text-tertiary, #999);
@@ -176,6 +171,41 @@ input {
   background: var(--figma-color-bg-selected, #e5f4ff);
   box-shadow: inset 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
   color: var(--figma-color-text, #1e1e1e);
+}
+.cp-icon-btn {
+  appearance: none;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--figma-color-icon, #2c2c2c);
+  outline: none;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cp-icon-btn:enabled:hover {
+  background: var(--figma-color-bg-hover, #f5f5f5);
+}
+.cp-icon-btn:enabled:active {
+  background: var(--figma-color-bg-pressed, #e6e6e6);
+}
+.cp-icon-btn[aria-pressed=true],
+.cp-icon-btn[aria-pressed=true]:enabled:hover {
+  background: var(--figma-color-bg-selected, #e5f4ff);
+  color: var(--figma-color-icon-brand, #0d99ff);
+}
+.cp-icon-btn:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
+}
+.cp-icon-btn:disabled {
+  opacity: 0.4;
 }
 
 /* plugins/corner-profiles/src/ui/styles/inputs.css */
@@ -267,6 +297,49 @@ input[type=range]::-moz-range-thumb {
 }
 input[type=range]:focus-visible::-moz-range-thumb {
   box-shadow: 0 0 0 2px var(--cp-focus);
+}
+
+/* plugins/corner-profiles/src/ui/styles/scrub.css */
+.cp-scrub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  min-width: 0;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--figma-color-bg-secondary, #f5f5f5);
+}
+.cp-scrub > span {
+  color: var(--figma-color-text-secondary, #666);
+  font-size: 11px;
+  user-select: none;
+}
+.cp-scrub input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--figma-color-text, #333);
+  font: inherit;
+  text-align: right;
+  cursor: ew-resize;
+  outline: none;
+}
+.cp-scrub input:focus {
+  cursor: text;
+}
+.cp-scrub input:disabled {
+  cursor: default;
+  color: var(--figma-color-text-disabled, #b3b3b3);
+}
+.cp-scrub input.cp-scrubbing {
+  cursor: ew-resize;
+}
+.cp-scrub:focus-within {
+  box-shadow: inset 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
 }
 
 /* plugins/corner-profiles/src/ui/styles/switch.css */
@@ -549,10 +622,27 @@ input[type=range]:focus-visible::-moz-range-thumb {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 8px;
+  width: 260px;
+  margin: 4px auto 0;
 }
-.cp-toolbar .cp-spacer {
-  flex: 1 1 auto;
+.cp-seg {
+  display: flex;
+  flex: none;
+  border-radius: 5px;
+  background: var(--figma-color-bg-secondary, #f5f5f5);
+}
+.cp-seg .cp-icon-btn {
+  border-radius: 0;
+}
+.cp-seg .cp-icon-btn:first-child {
+  border-radius: 5px 0 0 5px;
+}
+.cp-seg .cp-icon-btn:last-child {
+  border-radius: 0 5px 5px 0;
+}
+.cp-toolbar .cp-scrub {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* plugins/corner-profiles/src/ui/styles/footer.css */
@@ -605,17 +695,17 @@ input[type=range]:focus-visible::-moz-range-thumb {
   <body>
     <div id="plugin-root">
       <main class="cp-content">
-        <section class="cp-group" aria-label="Corners">
+        <section class="cp-group" aria-label="Góc">
           <div class="cp-block">
             <div class="cp-row">
-              <span class="cp-caption" id="corner-label">All corners</span>
-              <button class="cp-btn ghost" id="all-corners">All corners</button>
+              <span class="cp-caption" id="corner-label">Tất cả góc</span>
+              <button class="cp-btn ghost" id="all-corners">Tất cả góc</button>
             </div>
             <svg
               id="shape-svg"
               class="cp-shape"
               role="group"
-              aria-label="Shape preview. Click a corner to edit it, Shift-click to add or remove corners."
+              aria-label="Xem trước hình dạng. Bấm vào một góc để sửa, Shift-click để thêm hoặc bỏ góc."
             ></svg>
           </div>
         </section>
@@ -627,11 +717,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
               class="cp-grid"
               id="presets"
               role="group"
-              aria-label="Profile presets"
+              aria-label="Preset profile"
             ></div>
           </div>
           <div class="cp-field" id="steps-field" hidden>
-            <label id="steps-label" for="steps">Steps</label>
+            <label id="steps-label" for="steps">Số bậc</label>
             <input
               type="range"
               id="steps-range"
@@ -640,73 +730,111 @@ input[type=range]:focus-visible::-moz-range-thumb {
             <input type="number" id="steps" step="1" />
           </div>
           <div class="cp-field" id="flip-field" hidden>
-            <label for="flip">Flip</label>
+            <label for="flip">Lật</label>
             <input type="checkbox" role="switch" class="cp-switch" id="flip" />
           </div>
           <div class="cp-block">
             <div class="cp-row cp-saved-head">
-              <span class="cp-caption">Saved profiles</span>
-              <button class="cp-btn ghost" id="save-open">Save profile</button>
+              <span class="cp-caption">Profile đã lưu</span>
+              <button class="cp-btn ghost" id="save-open">Lưu profile</button>
             </div>
             <div class="cp-save-row" id="save-row" hidden>
               <input
                 type="text"
                 id="save-name"
-                placeholder="Profile name"
-                aria-label="Profile name"
+                placeholder="Tên profile"
+                aria-label="Tên profile"
                 autocomplete="off"
                 spellcheck="false"
               />
-              <button class="cp-btn" id="save-confirm">Save</button>
-              <button class="cp-btn ghost" id="save-cancel">Cancel</button>
+              <button class="cp-btn" id="save-confirm">Lưu</button>
+              <button class="cp-btn ghost" id="save-cancel">Huỷ</button>
             </div>
-            <p class="cp-empty" id="saved-empty">No saved profiles yet</p>
+            <p class="cp-empty" id="saved-empty">Chưa có profile nào</p>
             <div class="cp-grid cp-saved" id="saved"></div>
           </div>
         </section>
 
         <section class="cp-group" aria-labelledby="size-title">
-          <h2 class="cp-group-title" id="size-title">Size</h2>
+          <h2 class="cp-group-title" id="size-title">Kích thước</h2>
           <div class="cp-field" id="size-field">
-            <label id="size-label" for="size">Size</label>
+            <label id="size-label" for="size">Kích thước</label>
             <input type="range" id="size-range" aria-labelledby="size-label" />
             <input type="number" id="size" min="0" step="1" />
           </div>
           <div class="cp-field">
-            <label for="asym">Asymmetric</label>
+            <label for="asym">Bất đối xứng</label>
             <input type="checkbox" role="switch" class="cp-switch" id="asym" />
           </div>
           <div class="cp-field" id="sx-field" hidden>
-            <label id="sx-label" for="sx">Horizontal</label>
+            <label id="sx-label" for="sx">Ngang</label>
             <input type="range" id="sx-range" aria-labelledby="sx-label" />
             <input type="number" id="sx" min="0" step="1" />
           </div>
           <div class="cp-field" id="sy-field" hidden>
-            <label id="sy-label" for="sy">Vertical</label>
+            <label id="sy-label" for="sy">Dọc</label>
             <input type="range" id="sy-range" aria-labelledby="sy-label" />
             <input type="number" id="sy" min="0" step="1" />
           </div>
         </section>
 
         <section class="cp-group" aria-labelledby="curve-title">
-          <h2 class="cp-group-title" id="curve-title">Curve</h2>
+          <h2 class="cp-group-title" id="curve-title">Đường cong</h2>
           <div class="cp-block">
             <div
               class="cp-editor-wrap"
               id="editor-wrap"
               tabindex="0"
               role="application"
-              aria-label="Profile curve editor"
+              aria-label="Trình sửa đường cong profile"
             >
               <svg id="editor"></svg>
             </div>
             <div class="cp-toolbar">
-              <button class="cp-btn secondary" id="pt-sharp">Sharp</button>
-              <button class="cp-btn secondary" id="pt-smooth">Smooth</button>
-              <span class="cp-spacer"></span>
-              <button class="cp-btn ghost" id="pt-delete">Delete point</button>
+              <div class="cp-seg" role="group" aria-label="Handle">
+                <button
+                  class="cp-icon-btn"
+                  data-mode="auto"
+                  aria-pressed="false"
+                ></button>
+                <button
+                  class="cp-icon-btn"
+                  data-mode="sharp"
+                  aria-pressed="false"
+                ></button>
+                <button
+                  class="cp-icon-btn"
+                  data-mode="free"
+                  aria-pressed="false"
+                ></button>
+                <button
+                  class="cp-icon-btn"
+                  data-mode="aligned"
+                  aria-pressed="false"
+                ></button>
+              </div>
+              <label class="cp-scrub">
+                <span>X</span>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="pt-x"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </label>
+              <label class="cp-scrub">
+                <span>Y</span>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="pt-y"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </label>
+              <button class="cp-icon-btn" id="pt-delete"></button>
             </div>
-            <p class="cp-hint" id="editor-hint"></p>
           </div>
         </section>
       </main>
@@ -714,18 +842,18 @@ input[type=range]:focus-visible::-moz-range-thumb {
       <footer class="cp-footer">
         <div class="cp-footer-row">
           <span class="cp-status" id="status" role="status" aria-live="polite"
-            >Select a rectangle</span
+            >Chọn một hình chữ nhật</span
           >
           <label class="cp-live">
-            <span>Live update</span>
+            <span>Cập nhật trực tiếp</span>
             <input type="checkbox" role="switch" class="cp-switch" id="live" />
           </label>
         </div>
         <div class="cp-footer-row">
           <button class="cp-btn secondary" id="reset" disabled>
-            Reset to rectangle
+            Đặt lại về hình chữ nhật
           </button>
-          <button class="cp-btn" id="apply" disabled>Apply</button>
+          <button class="cp-btn" id="apply" disabled>Áp dụng</button>
         </div>
       </footer>
     </div>
@@ -861,6 +989,13 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var input = (id) => byId(id, HTMLInputElement);
   var svg = (id) => byId(id, SVGSVGElement);
   var sliderFor = (id) => slider(input(`${id}-range`), input(id));
+  function modeButtons() {
+    const found = Array.from(
+      document.querySelectorAll("button[data-mode]")
+    );
+    if (found.length === 0) throw new Error("ui.html is missing mode buttons");
+    return found;
+  }
   var el = {
     root: block("plugin-root"),
     cornerLabel: block("corner-label"),
@@ -887,16 +1022,58 @@ input[type=range]:focus-visible::-moz-range-thumb {
     sy: sliderFor("sy"),
     editorWrap: block("editor-wrap"),
     editor: svg("editor"),
-    ptSharp: button("pt-sharp"),
-    ptSmooth: button("pt-smooth"),
+    ptModes: modeButtons(),
+    ptX: input("pt-x"),
+    ptY: input("pt-y"),
     ptDelete: button("pt-delete"),
-    hint: block("editor-hint"),
     status: block("status"),
     live: input("live"),
     reset: button("reset"),
     apply: button("apply")
   };
   var sliders = [el.size, el.sx, el.sy, el.steps];
+
+  // plugins/corner-profiles/src/ui/dom/icons.ts
+  var ATTRS = 'viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+  var ARC = `<path d="M2.5 15C2.5 8 4.5 4.5 8 4.5S13.5 8 13.5 15" />`;
+  var line = (x1, y1, x2, y2) => `<path d="M${x1} ${y1}L${x2} ${y2}" stroke-width="1" />`;
+  var ICONS = {
+    auto: { lines: ARC, nodes: [[10.5, 5.5]] },
+    sharp: { lines: `<path d="M3 15 8 3.5 13 15" />`, nodes: [[8, 3.5]] },
+    free: {
+      lines: `<path d="M2.5 15C3 10 4.5 6.5 6.5 4.5C9 6.5 11 10 12 15" />` + line(6.5, 4.5, 13, 4.5) + line(6.5, 4.5, 6.5, 11),
+      nodes: [
+        [6.5, 4.5],
+        [13, 4.5],
+        [6.5, 11]
+      ]
+    },
+    aligned: {
+      lines: ARC + line(2.5, 4.5, 13.5, 4.5),
+      nodes: [
+        [2.5, 4.5],
+        [8, 4.5],
+        [13.5, 4.5]
+      ]
+    }
+  };
+  var square = (x, y, r, extra) => `<rect x="${x - r}" y="${y - r}" width="${2 * r}" height="${2 * r}" ${extra} />`;
+  function iconSvg(name, icon) {
+    const id = `cp-icon-${name}`;
+    const holes = icon.nodes.map(([x, y]) => square(x, y, 1.7, 'fill="#000"'));
+    const nodes = icon.nodes.map(
+      ([x, y]) => square(x, y, 1.2, 'stroke-width="1"')
+    );
+    return `<svg ${ATTRS}><mask id="${id}"><rect width="16" height="16" fill="#fff" />${holes.join("")}</mask><g mask="url(#${id})">${icon.lines}</g>${nodes.join("")}</svg>`;
+  }
+  var DELETE = `<svg ${ATTRS}><path d="m4 4 8 8M12 4l-8 8" stroke-width="1.5" /></svg>`;
+  function installIcons() {
+    for (const b of el.ptModes) {
+      const mode = b.dataset.mode ?? "";
+      if (ICONS[mode]) b.innerHTML = iconSvg(mode, ICONS[mode]);
+    }
+    el.ptDelete.innerHTML = DELETE;
+  }
 
   // plugins/corner-profiles/src/shared/constants.ts
   var CORNER_IDS = ["tl", "tr", "br", "bl"];
@@ -1239,6 +1416,52 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return path;
   }
 
+  // plugins/corner-profiles/src/ui/labels.ts
+  var CORNER_NAMES = {
+    tl: "Tr\xEAn tr\xE1i",
+    tr: "Tr\xEAn ph\u1EA3i",
+    br: "D\u01B0\u1EDBi ph\u1EA3i",
+    bl: "D\u01B0\u1EDBi tr\xE1i"
+  };
+  var KIND_LABELS = {
+    none: "Kh\xF4ng",
+    round: "Bo tr\xF2n",
+    chamfer: "V\xE1t",
+    concave: "L\xF5m",
+    notch: "Kh\xEDa",
+    steps: "B\u1EADc thang",
+    custom: "T\xF9y ch\u1EC9nh"
+  };
+  var MODE_CAPTIONS = {
+    sharp: "Handle Vector",
+    auto: "Handle Auto",
+    aligned: "Handle Aligned",
+    free: "Handle Free"
+  };
+  var RESET_LABELS = {
+    none: "\u0110\u1EB7t l\u1EA1i v\u1EC1 h\xECnh ch\u1EEF nh\u1EADt",
+    rectangle: "\u0110\u1EB7t l\u1EA1i v\u1EC1 h\xECnh ch\u1EEF nh\u1EADt",
+    main: "\u0110\u1EB7t l\u1EA1i theo main component",
+    mixed: "\u0110\u1EB7t l\u1EA1i"
+  };
+  var UI_TEXT = {
+    allCorners: "T\u1EA5t c\u1EA3 g\xF3c",
+    nCorners: (n) => `${n} g\xF3c`,
+    mixed: "H\u1ED7n h\u1EE3p",
+    snapTip: "Gi\u1EEF Shift \u0111\u1EC3 snap",
+    deleteNode: "Xo\xE1 node",
+    maxNodes: (n) => `M\u1ED9t profile c\xF3 t\u1ED1i \u0111a ${n} node`,
+    defaultProfileName: (n) => `Profile ${n}`,
+    untitled: "Ch\u01B0a \u0111\u1EB7t t\xEAn",
+    useSaved: (name) => `D\xF9ng profile \u0111\xE3 l\u01B0u ${name}`,
+    deleteSaved: (name) => `Xo\xE1 profile \u0111\xE3 l\u01B0u ${name}`,
+    deleteProfile: "Xo\xE1 profile",
+    presetAria: (kind) => `Profile ${KIND_LABELS[kind]}`,
+    selectedSummary: (parts, skipped) => `\u0110\xE3 ch\u1ECDn ${parts.join(" v\xE0 ")}` + (skipped > 0 ? `, b\u1ECF qua ${skipped}` : ""),
+    rectCount: (n) => `${n} h\xECnh ch\u1EEF nh\u1EADt`,
+    profileLayerCount: (n) => `${n} layer profile`
+  };
+
   // plugins/corner-profiles/src/ui/config/normalize.ts
   function normalizeCorner(raw) {
     const c = isRecord(raw) ? raw : {};
@@ -1279,7 +1502,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       if (!isRecord(p)) continue;
       out.push({
         id: String(p.id ?? ""),
-        name: String(p.name ?? "Untitled").slice(0, MAX_PROFILE_NAME),
+        name: String(p.name ?? UI_TEXT.untitled).slice(0, MAX_PROFILE_NAME),
         path: editorPath(p.path)
       });
     }
@@ -1335,34 +1558,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var ex = (u) => E_PAD + u * E_S;
   var ey = (v) => E_PAD + v * E_S;
 
-  // plugins/corner-profiles/src/ui/labels.ts
-  var CORNER_NAMES = {
-    tl: "Top left",
-    tr: "Top right",
-    br: "Bottom right",
-    bl: "Bottom left"
-  };
-  var KIND_LABELS = {
-    none: "None",
-    round: "Round",
-    chamfer: "Chamfer",
-    concave: "Concave",
-    notch: "Notch",
-    steps: "Steps",
-    custom: "Custom"
-  };
-  var MODE_CAPTIONS = {
-    sharp: "Sharp point",
-    auto: "Auto handles",
-    aligned: "Aligned handles",
-    free: "Free handles"
-  };
-  var RESET_LABELS = {
-    none: "Reset to rectangle",
-    rectangle: "Reset to rectangle",
-    main: "Reset to main component",
-    mixed: "Reset"
-  };
+  // plugins/corner-profiles/src/shared/copy.ts
+  var SELECT_RECT = "Ch\u1ECDn m\u1ED9t h\xECnh ch\u1EEF nh\u1EADt";
+  var NAME_REQUIRED = "Nh\u1EADp t\xEAn cho profile";
+  var profileLimit = (max) => `Ch\u1EC9 l\u01B0u t\u1ED1i \u0111a ${max} profile. H\xE3y xo\xE1 b\u1EDBt m\u1ED9t profile \u0111\u1EC3 l\u01B0u th\xEAm.`;
 
   // plugins/corner-profiles/src/ui/state.ts
   var state = {
@@ -1377,7 +1576,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       width: 0,
       height: 0,
       config: null,
-      reason: "Select a rectangle",
+      reason: SELECT_RECT,
       key: ""
     },
     selKey: "",
@@ -1390,7 +1589,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     txn: null,
     lastCommit: { key: "", time: 0 },
     echoes: [],
-    status: { text: "Select a rectangle", level: "info" },
+    status: { text: SELECT_RECT, level: "info" },
     statusHoldUntil: 0,
     anchor: -1,
     drag: null,
@@ -1411,8 +1610,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
   // plugins/corner-profiles/src/ui/render/controls.ts
   function renderPickerLabel() {
     const ids = editedIds();
-    let text = ids.length === 4 ? "All corners" : ids.length === 3 ? "3 corners" : ids.map((id) => CORNER_NAMES[id]).join(", ");
-    if (isMixed()) text += " \xB7 Mixed";
+    let text = ids.length === 4 ? UI_TEXT.allCorners : ids.length === 3 ? UI_TEXT.nCorners(3) : ids.map((id) => CORNER_NAMES[id]).join(", ");
+    if (isMixed()) text += ` \xB7 ${UI_TEXT.mixed}`;
     setText(el.cornerLabel, text);
     el.allCorners.disabled = ids.length === 4;
   }
@@ -1500,11 +1699,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     refreshAuto(p);
     return true;
   }
-  function moveHandle(p, i, side, u, v, alt) {
+  function moveHandle(p, i, side, u, v) {
     const n = p[i];
     setHandle(n, side, u, v);
-    if (alt) n.mode = "free";
-    else if (n.mode !== "free") n.mode = "aligned";
+    if (n.mode !== "free") n.mode = "aligned";
     if (n.mode === "aligned" && i > 0 && i < p.length - 1) {
       const other = side === "in" ? "out" : "in";
       const len = other === "in" ? Math.hypot(n.ix - n.x, n.iy - n.y) : Math.hypot(n.ox - n.x, n.oy - n.y);
@@ -1520,6 +1718,127 @@ input[type=range]:focus-visible::-moz-range-thumb {
     if (i < p.length - 1 && !near(n.ox, n.oy, n.x, n.y)) sides.push("out");
     return sides;
   }
+  function collapsed(p, i) {
+    const n = p[i];
+    const inDead = i === 0 || near(n.ix, n.iy, n.x, n.y);
+    const outDead = i === p.length - 1 || near(n.ox, n.oy, n.x, n.y);
+    return inDead && outDead;
+  }
+  function alignHandles(n) {
+    const inLen = Math.hypot(n.ix - n.x, n.iy - n.y);
+    const outLen = Math.hypot(n.ox - n.x, n.oy - n.y);
+    if (inLen > EPS) placeAlong(n, "out", n.x - n.ix, n.y - n.iy, outLen);
+    else if (outLen > EPS) placeAlong(n, "in", n.x - n.ox, n.y - n.oy, outLen);
+  }
+  function setNodeMode(p, i, mode) {
+    const n = p[i];
+    if (mode === "sharp") {
+      n.ix = n.ox = n.x;
+      n.iy = n.oy = n.y;
+      n.mode = "sharp";
+    } else if (mode === "auto") {
+      n.mode = "auto";
+    } else {
+      if (collapsed(p, i)) autoHandles(p, i);
+      n.mode = mode;
+      if (mode === "aligned" && i > 0 && i < p.length - 1) alignHandles(n);
+    }
+    refreshAuto(p);
+  }
+
+  // plugins/corner-profiles/src/ui/dom/scrub.ts
+  var DRAG_THRESHOLD = 3;
+  var editors = /* @__PURE__ */ new WeakMap();
+  var decimals = /* @__PURE__ */ new WeakMap();
+  function scrub(input2, o) {
+    const s = { input: input2, value: clamp(0, o.min, o.max) };
+    decimals.set(s, o.decimals);
+    const round = (v) => Number(clamp(v, o.min, o.max).toFixed(o.decimals));
+    const emit = (v, final) => editors.get(s)?.(v, final);
+    const show = () => {
+      input2.value = s.value.toFixed(o.decimals);
+    };
+    const commitTyped = () => {
+      const typed = Number(input2.value.trim().replace(",", "."));
+      if (input2.value.trim() === "" || !Number.isFinite(typed)) return show();
+      const v = round(typed);
+      if (v !== s.value) emit(v, true);
+      input2.value = v.toFixed(o.decimals);
+    };
+    let startX = 0;
+    let startValue = 0;
+    let dragging = false;
+    let pressed = false;
+    let latest = 0;
+    const finishDrag = () => {
+      if (!pressed) return;
+      pressed = false;
+      input2.classList.remove("scrubbing");
+      if (dragging) {
+        dragging = false;
+        emit(latest, true);
+      } else {
+        input2.focus();
+        input2.select();
+      }
+    };
+    input2.addEventListener("pointerdown", (e) => {
+      if (input2.disabled || e.button !== 0 || document.activeElement === input2)
+        return;
+      e.preventDefault();
+      pressed = true;
+      dragging = false;
+      startX = e.clientX;
+      startValue = s.value;
+      latest = s.value;
+      input2.setPointerCapture(e.pointerId);
+    });
+    input2.addEventListener("pointermove", (e) => {
+      if (!pressed) return;
+      const dx = e.clientX - startX;
+      if (!dragging) {
+        if (Math.abs(dx) <= DRAG_THRESHOLD) return;
+        dragging = true;
+        input2.classList.add("scrubbing");
+      }
+      latest = round(startValue + dx * o.perPx);
+      input2.value = latest.toFixed(o.decimals);
+      emit(latest, false);
+    });
+    input2.addEventListener("pointerup", finishDrag);
+    input2.addEventListener("lostpointercapture", finishDrag);
+    input2.addEventListener("change", commitTyped);
+    input2.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitTyped();
+        input2.blur();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        show();
+        input2.blur();
+      }
+    });
+    input2.addEventListener("blur", () => {
+      if (!pressed) show();
+    });
+    show();
+    return s;
+  }
+  function setScrubValue(s, v, enabled = v !== null) {
+    if (v !== null) s.value = v;
+    if (s.input.disabled === enabled) s.input.disabled = !enabled;
+    if (document.activeElement === s.input) return;
+    s.input.value = v === null ? "" : s.value.toFixed(decimals.get(s) ?? 2);
+  }
+  function onScrubEdit(s, edit) {
+    editors.set(s, edit);
+  }
+
+  // plugins/corner-profiles/src/ui/dom/coords.ts
+  var options = { min: 0, max: 1, step: 0.01, perPx: 5e-3, decimals: 2 };
+  var coordX = scrub(el.ptX, options);
+  var coordY = scrub(el.ptY, options);
 
   // plugins/corner-profiles/src/ui/render/editor.ts
   function gridPath() {
@@ -1540,15 +1859,15 @@ input[type=range]:focus-visible::-moz-range-thumb {
     if (state.anchor >= disp.length) state.anchor = -1;
     const a = state.anchor;
     const segs = segmentsD(disp, ex, ey);
-    const start = `M${ex(0)} ${ey(1)}`;
-    const cut = `${start}${segs}L${ex(1)} 0L0 0L0 ${ey(1)}Z`;
+    const start2 = `M${ex(0)} ${ey(1)}`;
+    const cut = `${start2}${segs}L${ex(1)} 0L0 0L0 ${ey(1)}Z`;
     const parts = [
       `<rect class="e-bg" x="${E_PAD}" y="${E_PAD}" width="${E_S}" height="${E_S}"/>`,
       `<path class="e-grid" d="${gridPath()}"/>`,
       `<mask id="e-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="${E_SIZE}" height="${E_SIZE}"><rect width="${E_SIZE}" height="${E_SIZE}" fill="#fff"/>${none ? "" : `<path d="${cut}" fill="#000"/>`}</mask>`,
       `<path class="e-material" d="M${ex(0)} ${E_SIZE}V${ey(0)}H${E_SIZE}V${E_SIZE}Z" mask="url(#e-cut)"/>`,
       `<path class="e-edge" d="M${ex(0)} ${E_SIZE}V${ey(0)}H${E_SIZE}"/>`,
-      `<path class="e-curve${none ? " is-none" : ""}" d="${start}${segs}"/>`
+      `<path class="e-curve${none ? " is-none" : ""}" d="${start2}${segs}"/>`
     ];
     if (a >= 0) {
       const n = disp[a];
@@ -1573,18 +1892,21 @@ input[type=range]:focus-visible::-moz-range-thumb {
         );
     });
     setMarkup(el.editor, parts.join(""));
-    renderPointTools(a >= 0 ? disp[a] : null, a, disp.length, none);
+    renderPointTools(a >= 0 ? disp[a] : null, a, disp.length);
   }
-  function renderPointTools(node, a, length, none) {
-    el.ptSharp.disabled = !node;
-    el.ptSmooth.disabled = !node;
-    el.ptDelete.disabled = !(node && a > 0 && a < length - 1);
-    el.ptSharp.classList.toggle("cp-active", !!node && node.mode === "sharp");
-    el.ptSmooth.classList.toggle("cp-active", !!node && node.mode !== "sharp");
-    let hint = "Double-click the curve to add a point";
-    if (node) hint = `${MODE_CAPTIONS[node.mode]} \xB7 Shift snaps \xB7 Alt frees`;
-    else if (none) hint = "Sharp corner. Pick a profile or edit the line.";
-    setText(el.hint, hint);
+  function renderPointTools(node, a, length) {
+    const middle = !!node && a > 0 && a < length - 1;
+    el.ptModes.forEach((b) => {
+      const mode = b.dataset.mode;
+      b.disabled = !node;
+      setAttr(b, "aria-pressed", String(node?.mode === mode));
+      setAttr(b, "title", MODE_CAPTIONS[mode]);
+    });
+    el.ptDelete.disabled = !middle;
+    setAttr(el.ptDelete, "title", UI_TEXT.deleteNode);
+    setScrubValue(coordX, node ? node.x : null, middle);
+    setScrubValue(coordY, node ? node.y : null, middle);
+    setAttr(el.editorWrap, "title", UI_TEXT.snapTip);
   }
 
   // plugins/corner-profiles/src/shared/reset.ts
@@ -1612,10 +1934,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const E = 1 + P;
     const m = (x, y) => `${fmt(x)},${fmt(y)}`;
     let fill;
-    let line;
+    let line2;
     if (kind === "none") {
       fill = `M${m(0, E)}L${m(0, 0)}L${m(E, 0)}L${m(E, E)}Z`;
-      line = `M${m(0, E)}L${m(0, 0)}L${m(E, 0)}`;
+      line2 = `M${m(0, E)}L${m(0, 0)}L${m(E, 0)}`;
     } else {
       const segs = segmentsD(
         path,
@@ -1623,9 +1945,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
         (y) => y
       );
       fill = `M${m(0, 1)}${segs}L${m(E, 0)}L${m(E, E)}L${m(0, E)}Z`;
-      line = `M${m(0, E)}L${m(0, 1)}${segs}L${m(E, 0)}`;
+      line2 = `M${m(0, E)}L${m(0, 1)}${segs}L${m(E, 0)}`;
     }
-    return `<svg viewBox="${-P} ${-P} ${1 + 2 * P} ${1 + 2 * P}" aria-hidden="true"><path class="t-fill" d="${fill}"/><path class="t-line" d="${line}"/></svg>`;
+    return `<svg viewBox="${-P} ${-P} ${1 + 2 * P} ${1 + 2 * P}" aria-hidden="true"><path class="t-fill" d="${fill}"/><path class="t-line" d="${line2}"/></svg>`;
   }
 
   // plugins/corner-profiles/src/ui/render/presets.ts
@@ -1643,7 +1965,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       b.className = "cp-thumb";
       b.title = KIND_LABELS[kind];
       b.dataset.kind = kind;
-      b.setAttribute("aria-label", `${KIND_LABELS[kind]} profile`);
+      b.setAttribute("aria-label", UI_TEXT.presetAria(kind));
       b.setAttribute("aria-pressed", "false");
       b.innerHTML = thumbSvg(
         kind === "custom" ? CUSTOM_ICON : presetPath(kind),
@@ -1686,7 +2008,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
         b.className = "cp-thumb";
         b.title = prof.name;
         b.dataset.use = String(index);
-        b.setAttribute("aria-label", `Use saved profile ${prof.name}`);
+        b.setAttribute("aria-label", UI_TEXT.useSaved(prof.name));
         b.setAttribute(
           "aria-pressed",
           String(!!activeSig && pathSig(prof.path) === activeSig)
@@ -1695,9 +2017,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
         const del = document.createElement("button");
         del.type = "button";
         del.className = "cp-del";
-        del.title = "Delete profile";
+        del.title = UI_TEXT.deleteProfile;
         del.dataset.delete = String(index);
-        del.setAttribute("aria-label", `Delete saved profile ${prof.name}`);
+        del.setAttribute("aria-label", UI_TEXT.deleteSaved(prof.name));
         del.innerHTML = DELETE_ICON;
         item.append(b, del);
         el.saved.appendChild(item);
@@ -1817,14 +2139,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
     };
     const segments = [];
     for (const cubic of cubics) {
-      const start = vertexIndex(cubic.p0);
+      const start2 = vertexIndex(cubic.p0);
       const end = vertexIndex(cubic.p3);
-      const tangentStart = tangent(cubic.c1, vertices[start]);
+      const tangentStart = tangent(cubic.c1, vertices[start2]);
       const tangentEnd = tangent(cubic.c2, vertices[end]);
-      if (start === end && isZeroVector(tangentStart) && isZeroVector(tangentEnd)) {
+      if (start2 === end && isZeroVector(tangentStart) && isZeroVector(tangentEnd)) {
         continue;
       }
-      segments.push({ start, end, tangentStart, tangentEnd });
+      segments.push({ start: start2, end, tangentStart, tangentEnd });
     }
     return {
       vertices,
@@ -1986,22 +2308,15 @@ input[type=range]:focus-visible::-moz-range-thumb {
     renderFooter();
   }
 
-  // plugins/corner-profiles/src/shared/text.ts
-  function plural(count, noun) {
-    return `${count} ${noun}${count === 1 ? "" : "s"}`;
-  }
-
   // plugins/corner-profiles/src/ui/status.ts
   function selectionSummary(sel) {
-    if (!sel.valid) return sel.reason || "Select a rectangle";
+    if (!sel.valid) return sel.reason || SELECT_RECT;
     const parts = [];
     const rects = sel.valid - sel.profileLayers;
-    if (rects > 0) parts.push(plural(rects, "rectangle"));
+    if (rects > 0) parts.push(UI_TEXT.rectCount(rects));
     if (sel.profileLayers > 0)
-      parts.push(plural(sel.profileLayers, "profile layer"));
-    let text = parts.join(" and ") + " selected";
-    if (sel.skipped > 0) text += `, ${sel.skipped} skipped`;
-    return text;
+      parts.push(UI_TEXT.profileLayerCount(sel.profileLayers));
+    return UI_TEXT.selectedSummary(parts, sel.skipped);
   }
   var statusTimer = 0;
   function showStatus(text, level, holdMs) {
@@ -2285,6 +2600,24 @@ input[type=range]:focus-visible::-moz-range-thumb {
     el.reset.addEventListener("click", () => post({ type: "reset" }));
   }
 
+  // plugins/corner-profiles/src/ui/interact/coords.ts
+  var start = null;
+  function editAxis(axis, value, final) {
+    start ?? (start = clonePath(displayPath(primary())));
+    const disp = clonePath(start);
+    if (final) start = null;
+    const n = disp[state.anchor];
+    if (!n) return;
+    const x = axis === "x" ? value : n.x;
+    const y = axis === "y" ? value : n.y;
+    if (!moveAnchor(disp, state.anchor, x, y)) return;
+    writeDisplayPath(disp, final);
+  }
+  function installCoords() {
+    onScrubEdit(coordX, (v, final) => editAxis("x", v, final));
+    onScrubEdit(coordY, (v, final) => editAxis("y", v, final));
+  }
+
   // plugins/corner-profiles/src/ui/interact/editor.ts
   function editorPoint(e) {
     const r = el.editor.getBoundingClientRect();
@@ -2320,6 +2653,19 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const disp = displayPath(primary());
     const hit = hitTest(pt, disp);
     if (!hit) {
+      const near2 = nearestOnPath(disp, pt.u, pt.v);
+      if (near2.seg >= 0 && near2.d * E_S <= 8) {
+        if (disp.length >= MAX_PATH_NODES) {
+          showStatus(UI_TEXT.maxNodes(MAX_PATH_NODES), "error", 4e3);
+          return;
+        }
+        state.anchor = splitSegment(disp, near2.seg, near2.t);
+        writeDisplayPath(disp, false);
+        const inserted = displayPath(primary());
+        const node = inserted[state.anchor];
+        beginDrag(e, "anchor", state.anchor, void 0, inserted, node, pt, true);
+        return;
+      }
       if (state.anchor !== -1) {
         state.anchor = -1;
         renderEditor();
@@ -2327,15 +2673,18 @@ input[type=range]:focus-visible::-moz-range-thumb {
       return;
     }
     if (hit.type === "anchor") state.anchor = hit.index;
+    beginDrag(e, hit.type, hit.index, hit.side, disp, hit, pt, false);
+  }
+  function beginDrag(e, type, index, side, start2, at, pt, moved) {
     state.drag = {
-      type: hit.type,
-      index: hit.index,
-      side: hit.side,
-      start: disp,
-      offU: hit.x - pt.u,
-      offV: hit.y - pt.v,
+      type,
+      index,
+      side,
+      start: start2,
+      offU: at.x - pt.u,
+      offV: at.y - pt.v,
       pointerId: e.pointerId,
-      moved: false
+      moved
     };
     try {
       el.editor.setPointerCapture(e.pointerId);
@@ -2362,7 +2711,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const disp = clonePath(drag.start);
     if (drag.type === "anchor") {
       if (!moveAnchor(disp, drag.index, u, v)) return;
-    } else if (drag.side) moveHandle(disp, drag.index, drag.side, u, v, e.altKey);
+    } else if (drag.side) moveHandle(disp, drag.index, drag.side, u, v);
     drag.moved = true;
     writeDisplayPath(disp, false);
   }
@@ -2384,30 +2733,12 @@ input[type=range]:focus-visible::-moz-range-thumb {
     else if (nearestOnPath(disp, pt.u, pt.v).d * E_S <= 8) cursor = "crosshair";
     if (el.editor.style.cursor !== cursor) el.editor.style.cursor = cursor;
   }
-  function onDoubleClick(e) {
-    const pt = editorPoint(e);
-    const disp = displayPath(primary());
-    if (hitTest(pt, disp)) return;
-    const hit = nearestOnPath(disp, pt.u, pt.v);
-    if (hit.seg < 0 || hit.d * E_S > 8) return;
-    if (disp.length >= MAX_PATH_NODES) {
-      showStatus(
-        `A profile can have at most ${MAX_PATH_NODES} points`,
-        "error",
-        4e3
-      );
-      return;
-    }
-    state.anchor = splitSegment(disp, hit.seg, hit.t);
-    writeDisplayPath(disp, true);
-  }
   function installEditor() {
     el.editor.addEventListener("pointerdown", onPointerDown);
     el.editor.addEventListener("pointermove", onPointerMove);
     el.editor.addEventListener("pointerup", endDrag);
     el.editor.addEventListener("pointercancel", endDrag);
     el.editor.addEventListener("lostpointercapture", endDrag);
-    el.editor.addEventListener("dblclick", onDoubleClick);
   }
 
   // plugins/corner-profiles/src/ui/interact/picker.ts
@@ -2462,18 +2793,17 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const n = disp[state.anchor];
     if (!n) return;
     const before = pathSig(disp) + n.mode;
-    n.mode = mode;
-    if (mode === "sharp") {
-      n.ix = n.ox = n.x;
-      n.iy = n.oy = n.y;
-    }
-    refreshAuto(disp);
+    setNodeMode(disp, state.anchor, mode);
     if (pathSig(disp) + n.mode === before) return;
     writeDisplayPath(disp, true);
   }
   function installPoints() {
-    el.ptSharp.addEventListener("click", () => setAnchorMode("sharp"));
-    el.ptSmooth.addEventListener("click", () => setAnchorMode("auto"));
+    for (const b of el.ptModes) {
+      b.addEventListener("click", () => {
+        const mode = b.dataset.mode;
+        if (NODE_MODES.includes(mode)) setAnchorMode(mode);
+      });
+    }
     el.ptDelete.addEventListener("click", deleteAnchor);
     el.editorWrap.addEventListener("keydown", (e) => {
       if (e.key === "Delete" || e.key === "Backspace") {
@@ -2513,7 +2843,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
   function openSave() {
     state.saving = true;
-    el.saveName.value = `Profile ${state.profiles.length + 1}`;
+    el.saveName.value = UI_TEXT.defaultProfileName(state.profiles.length + 1);
     renderSaved();
     nextFrame(focusSaveName);
   }
@@ -2524,11 +2854,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
   function confirmSave() {
     const name = el.saveName.value.trim().slice(0, MAX_PROFILE_NAME);
     if (!name) {
-      showStatus("Enter a name for the profile", "error", 4e3);
+      showStatus(NAME_REQUIRED, "error", 4e3);
       return;
     }
     if (state.profiles.length >= MAX_PROFILES) {
-      showStatus(`You can save up to ${MAX_PROFILES} profiles`, "error", 4e3);
+      showStatus(profileLimit(MAX_PROFILES), "error", 4e3);
       return;
     }
     post({ type: "save-profile", name, path: displayPath(primary()) });
@@ -2587,6 +2917,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
   installProfiles();
   installEditor();
   installPoints();
+  installIcons();
+  installCoords();
   installShortcuts();
   reportHeight();
   buildPresets();

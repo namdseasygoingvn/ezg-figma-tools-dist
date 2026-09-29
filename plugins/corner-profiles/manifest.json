@@ -16,7 +16,7 @@
   "relaunchButtons": [
     {
       "command": "edit",
-      "name": "Edit corner profiles"
+      "name": "Sửa corner profile"
     }
   ]
 }
