@@ -1,0 +1,2599 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Corner Profiles</title>
+    <style>
+      /* plugins/corner-profiles/src/ui/styles/base.css */
+:root {
+  color-scheme: light;
+  --cp-focus: var(--figma-color-border-selected, #0d99ff);
+}
+:root.figma-dark {
+  color-scheme: dark;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  background: var(--figma-color-bg, #fff);
+  color: var(--figma-color-text, #1e1e1e);
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+input {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+[hidden] {
+  display: none !important;
+}
+
+/* plugins/corner-profiles/src/ui/styles/layout.css */
+#plugin-root {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.cp-group {
+  padding: 8px 0;
+}
+.cp-group + .cp-group {
+  border-top: 1px solid var(--figma-color-border, #e6e6e6);
+}
+.cp-group-title {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  margin: 0;
+  padding: 0 16px;
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--figma-color-text, #1e1e1e);
+}
+.cp-block {
+  padding: 0 16px;
+}
+.cp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+}
+.cp-field {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 48px;
+  align-items: center;
+  column-gap: 8px;
+  min-height: 32px;
+  padding: 0 16px;
+}
+.cp-field > label {
+  color: var(--figma-color-text-secondary, #666);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cp-field > .cp-switch {
+  justify-self: start;
+}
+.cp-caption {
+  color: var(--figma-color-text-secondary, #666);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.cp-hint {
+  margin: 6px 0 0;
+  color: var(--figma-color-text-tertiary, #999);
+  text-align: center;
+}
+.cp-empty {
+  margin: 0 0 4px;
+  color: var(--figma-color-text-tertiary, #999);
+}
+
+/* plugins/corner-profiles/src/ui/styles/buttons.css */
+.cp-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--figma-color-bg-brand, #0d99ff);
+  color: var(--figma-color-text-onbrand, #fff);
+  font-weight: 500;
+  white-space: nowrap;
+  outline: none;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cp-btn:enabled:hover {
+  background: var(--figma-color-bg-brand-hover, #0a8ae6);
+}
+.cp-btn:enabled:active {
+  background: var(--figma-color-bg-brand-pressed, #007be5);
+}
+.cp-btn:focus-visible {
+  outline: 1px solid var(--cp-focus);
+  outline-offset: 1px;
+}
+.cp-btn:disabled {
+  background: var(--figma-color-bg-disabled, #d9d9d9);
+  color: var(--figma-color-text-ondisabled, #fff);
+}
+.cp-btn.secondary,
+.cp-btn.ghost {
+  background: transparent;
+  color: var(--figma-color-text, #1e1e1e);
+}
+.cp-btn.secondary {
+  box-shadow: inset 0 0 0 1px var(--figma-color-border, #e6e6e6);
+}
+.cp-btn.secondary:enabled:hover,
+.cp-btn.ghost:enabled:hover {
+  background: var(--figma-color-bg-hover, #f5f5f5);
+}
+.cp-btn.secondary:enabled:active,
+.cp-btn.ghost:enabled:active {
+  background: var(--figma-color-bg-pressed, #e6e6e6);
+}
+.cp-btn.secondary:disabled,
+.cp-btn.ghost:disabled {
+  background: transparent;
+  color: var(--figma-color-text-disabled, #b3b3b3);
+}
+.cp-btn.secondary:disabled {
+  box-shadow: inset 0 0 0 1px var(--figma-color-border-disabled, #e6e6e6);
+}
+.cp-btn.cp-active,
+.cp-btn.cp-active:enabled:hover {
+  background: var(--figma-color-bg-selected, #e5f4ff);
+  box-shadow: inset 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
+  color: var(--figma-color-text, #1e1e1e);
+}
+
+/* plugins/corner-profiles/src/ui/styles/inputs.css */
+input[type=text],
+input[type=number] {
+  appearance: none;
+  -moz-appearance: textfield;
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: var(--figma-color-bg-secondary, #f5f5f5);
+  color: var(--figma-color-text, #1e1e1e);
+  outline: none;
+}
+input[type=text]:hover,
+input[type=number]:hover {
+  border-color: var(--figma-color-border, #e6e6e6);
+}
+input[type=text]:focus,
+input[type=number]:focus {
+  border-color: var(--figma-color-border-selected, #0d99ff);
+}
+input::placeholder {
+  color: var(--figma-color-text-tertiary, #b3b3b3);
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input:disabled {
+  color: var(--figma-color-text-disabled, #b3b3b3);
+}
+
+/* plugins/corner-profiles/src/ui/styles/slider.css */
+input[type=range] {
+  --track: var(--figma-color-bg-tertiary, #e6e6e6);
+  --active: var(--figma-color-bg-brand, #0d99ff);
+  --stop: calc(6px + (100% - 12px) * var(--fill, 0));
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: 16px;
+  background: transparent;
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background:
+    linear-gradient(
+      to right,
+      var(--active) var(--stop),
+      var(--track) var(--stop));
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+input[type=range]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--cp-focus);
+}
+input[type=range]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--track);
+}
+input[type=range]::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--active);
+}
+input[type=range]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+input[type=range]:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--cp-focus);
+}
+
+/* plugins/corner-profiles/src/ui/styles/switch.css */
+.cp-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: 24px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--figma-color-icon-tertiary, #b3b3b3);
+  outline: none;
+  cursor: default;
+  transition: background-color 0.12s ease;
+}
+.cp-switch::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--figma-color-icon-onbrand, #fff);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.12s ease;
+}
+.cp-switch:checked {
+  background: var(--figma-color-bg-brand, #0d99ff);
+}
+.cp-switch:checked::before {
+  transform: translateX(10px);
+}
+.cp-switch:focus-visible {
+  outline: 1px solid var(--cp-focus);
+  outline-offset: 1px;
+}
+.cp-switch:disabled {
+  opacity: 0.4;
+}
+
+/* plugins/corner-profiles/src/ui/styles/shape.css */
+.cp-shape {
+  display: block;
+  margin-top: 4px;
+  border-radius: 5px;
+  background: var(--figma-color-bg-secondary, #f5f5f5);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cp-shape .s-bounds {
+  fill: none;
+  stroke: var(--figma-color-border, #e6e6e6);
+  stroke-dasharray: 2 2;
+}
+.cp-shape .s-shape {
+  fill: var(--figma-color-bg-tertiary, #e6e6e6);
+  stroke: var(--figma-color-border-strong, #2c2c2c);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.cp-shape .s-edge {
+  fill: none;
+  stroke: var(--figma-color-border-strong, #2c2c2c);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.cp-shape .s-hot {
+  cursor: pointer;
+  outline: none;
+}
+.cp-shape .s-hit {
+  fill: transparent;
+}
+.cp-shape .s-dot {
+  fill: var(--figma-color-bg, #fff);
+  stroke: var(--figma-color-border-strong, #2c2c2c);
+  stroke-width: 1;
+}
+.cp-shape .s-hot:hover .s-dot {
+  stroke: var(--figma-color-bg-brand, #0d99ff);
+}
+.cp-shape .s-hot.is-on .s-dot {
+  fill: var(--figma-color-bg-brand, #0d99ff);
+  stroke: var(--figma-color-bg-brand, #0d99ff);
+}
+.cp-shape .s-hot:focus-visible .s-dot {
+  stroke: var(--figma-color-border-selected-strong, #0d99ff);
+  stroke-width: 2;
+}
+.cp-shape .s-bracket {
+  fill: none;
+  stroke: var(--figma-color-bg-brand, #0d99ff);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* plugins/corner-profiles/src/ui/styles/thumbs.css */
+.cp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cp-thumb {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 34px;
+  border-radius: 5px;
+  background: var(--figma-color-bg-secondary, #f5f5f5);
+  box-shadow: inset 0 0 0 1px transparent;
+  color: var(--figma-color-icon, #2c2c2c);
+  cursor: default;
+}
+.cp-thumb:hover {
+  background: var(--figma-color-bg-hover, #ededed);
+}
+.cp-thumb:active {
+  background: var(--figma-color-bg-tertiary, #e6e6e6);
+}
+.cp-thumb[aria-pressed=true] {
+  background: var(--figma-color-bg-selected, #e5f4ff);
+  box-shadow: inset 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
+  color: var(--figma-color-icon-brand, #0d99ff);
+}
+.cp-thumb:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--figma-color-border-selected, #0d99ff);
+}
+.cp-thumb svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+}
+.cp-thumb .t-fill {
+  fill: var(--figma-color-bg-tertiary, #e6e6e6);
+}
+.cp-thumb[aria-pressed=true] .t-fill {
+  fill: var(--figma-color-bg-selected-strong, #bde3ff);
+}
+.cp-thumb .t-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+
+/* plugins/corner-profiles/src/ui/styles/saved.css */
+.cp-saved-head {
+  margin-top: 8px;
+}
+.cp-saved {
+  margin-top: 4px;
+}
+.cp-saved-item {
+  position: relative;
+}
+.cp-del {
+  all: unset;
+  box-sizing: border-box;
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: var(--figma-color-bg, #fff);
+  color: var(--figma-color-icon-secondary, #666);
+  box-shadow: 0 0 0 1px var(--figma-color-border-strong, #2c2c2c);
+  opacity: 0;
+  cursor: default;
+}
+.cp-saved-item:hover .cp-del,
+.cp-saved-item:focus-within .cp-del {
+  opacity: 1;
+}
+.cp-del:hover {
+  color: var(--figma-color-icon-danger, #f24822);
+}
+.cp-del:focus-visible {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--cp-focus);
+}
+.cp-del svg {
+  width: 8px;
+  height: 8px;
+  display: block;
+}
+.cp-del path {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  fill: none;
+  stroke-linecap: round;
+}
+.cp-save-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin: 4px 0;
+}
+.cp-save-row input {
+  flex: 1 1 auto;
+}
+.cp-save-row .cp-btn {
+  flex: 0 0 auto;
+}
+
+/* plugins/corner-profiles/src/ui/styles/editor.css */
+.cp-editor-wrap {
+  width: fit-content;
+  margin: 0 auto;
+  border-radius: 5px;
+  outline: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cp-editor-wrap:focus-visible {
+  box-shadow: 0 0 0 2px var(--figma-color-border-selected, #0d99ff);
+}
+#editor {
+  display: block;
+}
+#editor .e-bg {
+  fill: var(--figma-color-bg-secondary, #f5f5f5);
+}
+#editor .e-grid {
+  fill: none;
+  stroke: var(--figma-color-border, #e6e6e6);
+  stroke-width: 1;
+}
+#editor .e-material {
+  fill: var(--figma-color-bg-brand-tertiary, #e5f4ff);
+}
+#editor .e-edge {
+  fill: none;
+  stroke: var(--figma-color-border-strong, #2c2c2c);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+#editor .e-curve {
+  fill: none;
+  stroke: var(--figma-color-icon, #2c2c2c);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+#editor .e-curve.is-none {
+  stroke: var(--figma-color-icon-tertiary, #b3b3b3);
+  stroke-dasharray: 4 3;
+}
+#editor .e-hline {
+  stroke: var(--figma-color-bg-brand, #0d99ff);
+  stroke-width: 1;
+}
+#editor .e-handle {
+  fill: var(--figma-color-bg, #fff);
+  stroke: var(--figma-color-bg-brand, #0d99ff);
+  stroke-width: 1.5;
+}
+#editor .e-anchor {
+  fill: var(--figma-color-bg, #fff);
+  stroke: var(--figma-color-icon, #2c2c2c);
+  stroke-width: 1.5;
+}
+#editor .e-anchor.is-end {
+  fill: var(--figma-color-icon-tertiary, #b3b3b3);
+}
+#editor .e-anchor.is-selected {
+  fill: var(--figma-color-bg-brand, #0d99ff);
+  stroke: var(--figma-color-bg-brand, #0d99ff);
+}
+.cp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+.cp-toolbar .cp-spacer {
+  flex: 1 1 auto;
+}
+
+/* plugins/corner-profiles/src/ui/styles/footer.css */
+.cp-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--figma-color-border, #e6e6e6);
+  background: var(--figma-color-bg, #fff);
+}
+.cp-footer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+.cp-footer-row > .cp-btn {
+  flex: 1 1 0;
+}
+.cp-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--figma-color-text-secondary, #666);
+}
+.cp-status[data-level=error] {
+  color: var(--figma-color-text-danger, #dc3412);
+}
+.cp-status[data-level=success] {
+  color: var(--figma-color-text-success, #14ae5c);
+}
+.cp-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  color: var(--figma-color-text, #1e1e1e);
+  cursor: default;
+}
+
+/* plugins/corner-profiles/src/ui/styles/index.css */
+
+    </style>
+  </head>
+  <body>
+    <div id="plugin-root">
+      <main class="cp-content">
+        <section class="cp-group" aria-label="Corners">
+          <div class="cp-block">
+            <div class="cp-row">
+              <span class="cp-caption" id="corner-label">All corners</span>
+              <button class="cp-btn ghost" id="all-corners">All corners</button>
+            </div>
+            <svg
+              id="shape-svg"
+              class="cp-shape"
+              role="group"
+              aria-label="Shape preview. Click a corner to edit it, Shift-click to add or remove corners."
+            ></svg>
+          </div>
+        </section>
+
+        <section class="cp-group" aria-labelledby="profile-title">
+          <h2 class="cp-group-title" id="profile-title">Profile</h2>
+          <div class="cp-block">
+            <div
+              class="cp-grid"
+              id="presets"
+              role="group"
+              aria-label="Profile presets"
+            ></div>
+          </div>
+          <div class="cp-field" id="steps-field" hidden>
+            <label id="steps-label" for="steps">Steps</label>
+            <input
+              type="range"
+              id="steps-range"
+              aria-labelledby="steps-label"
+            />
+            <input type="number" id="steps" step="1" />
+          </div>
+          <div class="cp-field" id="flip-field" hidden>
+            <label for="flip">Flip</label>
+            <input type="checkbox" role="switch" class="cp-switch" id="flip" />
+          </div>
+          <div class="cp-block">
+            <div class="cp-row cp-saved-head">
+              <span class="cp-caption">Saved profiles</span>
+              <button class="cp-btn ghost" id="save-open">Save profile</button>
+            </div>
+            <div class="cp-save-row" id="save-row" hidden>
+              <input
+                type="text"
+                id="save-name"
+                placeholder="Profile name"
+                aria-label="Profile name"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button class="cp-btn" id="save-confirm">Save</button>
+              <button class="cp-btn ghost" id="save-cancel">Cancel</button>
+            </div>
+            <p class="cp-empty" id="saved-empty">No saved profiles yet</p>
+            <div class="cp-grid cp-saved" id="saved"></div>
+          </div>
+        </section>
+
+        <section class="cp-group" aria-labelledby="size-title">
+          <h2 class="cp-group-title" id="size-title">Size</h2>
+          <div class="cp-field" id="size-field">
+            <label id="size-label" for="size">Size</label>
+            <input type="range" id="size-range" aria-labelledby="size-label" />
+            <input type="number" id="size" min="0" step="1" />
+          </div>
+          <div class="cp-field">
+            <label for="asym">Asymmetric</label>
+            <input type="checkbox" role="switch" class="cp-switch" id="asym" />
+          </div>
+          <div class="cp-field" id="sx-field" hidden>
+            <label id="sx-label" for="sx">Horizontal</label>
+            <input type="range" id="sx-range" aria-labelledby="sx-label" />
+            <input type="number" id="sx" min="0" step="1" />
+          </div>
+          <div class="cp-field" id="sy-field" hidden>
+            <label id="sy-label" for="sy">Vertical</label>
+            <input type="range" id="sy-range" aria-labelledby="sy-label" />
+            <input type="number" id="sy" min="0" step="1" />
+          </div>
+        </section>
+
+        <section class="cp-group" aria-labelledby="curve-title">
+          <h2 class="cp-group-title" id="curve-title">Curve</h2>
+          <div class="cp-block">
+            <div
+              class="cp-editor-wrap"
+              id="editor-wrap"
+              tabindex="0"
+              role="application"
+              aria-label="Profile curve editor"
+            >
+              <svg id="editor"></svg>
+            </div>
+            <div class="cp-toolbar">
+              <button class="cp-btn secondary" id="pt-sharp">Sharp</button>
+              <button class="cp-btn secondary" id="pt-smooth">Smooth</button>
+              <span class="cp-spacer"></span>
+              <button class="cp-btn ghost" id="pt-delete">Delete point</button>
+            </div>
+            <p class="cp-hint" id="editor-hint"></p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="cp-footer">
+        <div class="cp-footer-row">
+          <span class="cp-status" id="status" role="status" aria-live="polite"
+            >Select a rectangle</span
+          >
+          <label class="cp-live">
+            <span>Live update</span>
+            <input type="checkbox" role="switch" class="cp-switch" id="live" />
+          </label>
+        </div>
+        <div class="cp-footer-row">
+          <button class="cp-btn secondary" id="reset" disabled>
+            Reset to rectangle
+          </button>
+          <button class="cp-btn" id="apply" disabled>Apply</button>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      "use strict";
+(() => {
+  // plugins/corner-profiles/src/shared/values.ts
+  function isRecord(value) {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+  function isFiniteNumber(value) {
+    return typeof value === "number" && isFinite(value);
+  }
+  function finiteOr(value, fallback) {
+    return isFiniteNumber(value) ? value : fallback;
+  }
+  function toNumber(value, fallback) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+  function clamp01(value) {
+    return clamp(value, 0, 1);
+  }
+
+  // plugins/corner-profiles/src/ui/bridge.ts
+  function post(message) {
+    parent.postMessage({ pluginMessage: message }, "*");
+  }
+  function onSandboxMessage(handler) {
+    window.addEventListener("message", (event) => {
+      const data = event.data;
+      const message = isRecord(data) ? data.pluginMessage : void 0;
+      if (message && typeof message === "object")
+        handler(message);
+    });
+  }
+
+  // plugins/corner-profiles/src/ui/dom/props.ts
+  var TEXT_ENTRY = 'input:not([type=range]):not([type=checkbox]):not([type=radio]), textarea, [contenteditable]:not([contenteditable="false"])';
+  function isTextEntry(node) {
+    return node instanceof Element && node.matches(TEXT_ENTRY);
+  }
+  function setAttr(node, name, value) {
+    if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+  }
+  function setText(node, text) {
+    if (node.textContent !== text) node.textContent = text;
+  }
+  function setSvgSize(node, w, h) {
+    setAttr(node, "width", String(w));
+    setAttr(node, "height", String(h));
+    setAttr(node, "viewBox", `0 0 ${w} ${h}`);
+  }
+  var markup = /* @__PURE__ */ new WeakMap();
+  function setMarkup(node, html) {
+    if (markup.get(node) === html) return false;
+    markup.set(node, html);
+    node.innerHTML = html;
+    return true;
+  }
+
+  // plugins/corner-profiles/src/ui/dom/slider.ts
+  var bound = (attr, fallback) => attr === "" ? fallback : toNumber(attr, fallback);
+  function slider(range, input2) {
+    range.min = input2.min;
+    range.max = input2.max || "100";
+    range.step = input2.step || "1";
+    const s = { range, input: input2, value: bound(input2.value, 0) };
+    syncFill(s);
+    return s;
+  }
+  function syncFill(s) {
+    const lo = bound(s.range.min, 0);
+    const span = bound(s.range.max, 100) - lo;
+    const at = span > 0 ? (s.range.valueAsNumber - lo) / span : 0;
+    s.range.style.setProperty("--fill", String(clamp(at, 0, 1)));
+  }
+  function setSliderMax(s, max) {
+    setAttr(s.range, "max", max);
+    setAttr(s.input, "max", max);
+    syncFill(s);
+  }
+  function setSliderBounds(s, min, max) {
+    setAttr(s.range, "min", String(min));
+    setAttr(s.input, "min", String(min));
+    setSliderMax(s, String(max));
+  }
+  function setSliderValue(s, v) {
+    s.value = Math.round(v * 100) / 100;
+    const text = String(s.value);
+    if (s.range.value !== text) s.range.value = text;
+    syncFill(s);
+    if (document.activeElement !== s.input && s.input.value !== text)
+      s.input.value = text;
+  }
+  function typedValue(s) {
+    const typed = s.input.valueAsNumber;
+    return clamp(
+      Number.isFinite(typed) ? typed : s.value,
+      bound(s.input.min, -Infinity),
+      bound(s.input.max, Infinity)
+    );
+  }
+  function onSliderEdit(s, edit) {
+    s.range.addEventListener("input", () => edit(s.range.valueAsNumber, false));
+    s.range.addEventListener("change", () => edit(s.range.valueAsNumber, true));
+    const commitInput = () => {
+      const v = typedValue(s);
+      if (v !== s.value) edit(v, true);
+      s.input.value = String(s.value);
+    };
+    s.input.addEventListener("change", commitInput);
+    s.input.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      commitInput();
+      s.input.select();
+    });
+  }
+
+  // plugins/corner-profiles/src/ui/dom/elements.ts
+  function byId(id, type) {
+    const node = document.getElementById(id);
+    if (!(node instanceof type)) throw new Error(`ui.html is missing #${id}`);
+    return node;
+  }
+  var block = (id) => byId(id, HTMLElement);
+  var button = (id) => byId(id, HTMLButtonElement);
+  var input = (id) => byId(id, HTMLInputElement);
+  var svg = (id) => byId(id, SVGSVGElement);
+  var sliderFor = (id) => slider(input(`${id}-range`), input(id));
+  var el = {
+    root: block("plugin-root"),
+    cornerLabel: block("corner-label"),
+    allCorners: button("all-corners"),
+    shape: svg("shape-svg"),
+    presets: block("presets"),
+    stepsField: block("steps-field"),
+    steps: sliderFor("steps"),
+    flipField: block("flip-field"),
+    flip: input("flip"),
+    saveOpen: button("save-open"),
+    saveRow: block("save-row"),
+    saveName: input("save-name"),
+    saveConfirm: button("save-confirm"),
+    saveCancel: button("save-cancel"),
+    saved: block("saved"),
+    savedEmpty: block("saved-empty"),
+    sizeField: block("size-field"),
+    size: sliderFor("size"),
+    asym: input("asym"),
+    sxField: block("sx-field"),
+    sx: sliderFor("sx"),
+    syField: block("sy-field"),
+    sy: sliderFor("sy"),
+    editorWrap: block("editor-wrap"),
+    editor: svg("editor"),
+    ptSharp: button("pt-sharp"),
+    ptSmooth: button("pt-smooth"),
+    ptDelete: button("pt-delete"),
+    hint: block("editor-hint"),
+    status: block("status"),
+    live: input("live"),
+    reset: button("reset"),
+    apply: button("apply")
+  };
+  var sliders = [el.size, el.sx, el.sy, el.steps];
+
+  // plugins/corner-profiles/src/shared/constants.ts
+  var CORNER_IDS = ["tl", "tr", "br", "bl"];
+  var CORNER_KINDS = [
+    "none",
+    "round",
+    "chamfer",
+    "concave",
+    "notch",
+    "steps",
+    "custom"
+  ];
+  var NODE_MODES = [
+    "sharp",
+    "auto",
+    "aligned",
+    "free"
+  ];
+  var KAPPA = 0.5522847498307936;
+  var EPS = 1e-6;
+  var MIN_CORNER_SIZE = 0.01;
+  var CUTTER_BLEED = 1;
+  var MAX_PATH_NODES = 64;
+  var MAX_PROFILES = 32;
+  var MAX_PROFILE_NAME = 40;
+  var MIN_STEPS = 2;
+  var MAX_STEPS = 12;
+  var DEFAULT_STEPS = 3;
+  var PREVIEW_FALLBACK = { width: 160, height: 100 };
+
+  // plugins/corner-profiles/src/shared/path.ts
+  function reversePath(path) {
+    return path.slice().reverse().map((n) => ({
+      x: n.x,
+      y: n.y,
+      ix: n.ox,
+      iy: n.oy,
+      ox: n.ix,
+      oy: n.iy,
+      mode: n.mode
+    }));
+  }
+  function flipPath(path) {
+    return reversePath(
+      path.map((n) => ({
+        x: n.y,
+        y: n.x,
+        ix: n.iy,
+        iy: n.ix,
+        ox: n.oy,
+        oy: n.ox,
+        mode: n.mode
+      }))
+    );
+  }
+  function clonePath(path) {
+    return path.map((n) => ({
+      x: n.x,
+      y: n.y,
+      ix: n.ix,
+      iy: n.iy,
+      ox: n.ox,
+      oy: n.oy,
+      mode: n.mode
+    }));
+  }
+
+  // plugins/corner-profiles/src/shared/corners.ts
+  function mapCorners(fn) {
+    return { tl: fn("tl"), tr: fn("tr"), br: fn("br"), bl: fn("bl") };
+  }
+  function cloneCorner(c) {
+    return {
+      kind: c.kind,
+      sx: c.sx,
+      sy: c.sy,
+      asym: c.asym,
+      flip: c.flip,
+      steps: c.steps,
+      path: clonePath(c.path)
+    };
+  }
+  function cloneShape(shape) {
+    return mapCorners((id) => cloneCorner(shape[id]));
+  }
+
+  // plugins/corner-profiles/src/shared/presets.ts
+  function profileNode(x, y, mode = "sharp") {
+    return { x, y, ix: x, iy: y, ox: x, oy: y, mode };
+  }
+  function clampSteps(value) {
+    return Math.round(clamp(finiteOr(value, DEFAULT_STEPS), MIN_STEPS, MAX_STEPS));
+  }
+  function presetPath(kind, steps = DEFAULT_STEPS) {
+    const K = KAPPA;
+    switch (kind) {
+      case "round":
+        return [
+          { x: 0, y: 1, ix: 0, iy: 1, ox: 0, oy: 1 - K, mode: "aligned" },
+          { x: 1, y: 0, ix: 1 - K, iy: 0, ox: 1, oy: 0, mode: "aligned" }
+        ];
+      case "concave":
+        return [
+          { x: 0, y: 1, ix: 0, iy: 1, ox: K, oy: 1, mode: "aligned" },
+          { x: 1, y: 0, ix: 1, iy: K, ox: 1, oy: 0, mode: "aligned" }
+        ];
+      case "notch":
+        return [profileNode(0, 1), profileNode(1, 1), profileNode(1, 0)];
+      case "steps": {
+        const n = clampSteps(steps);
+        const path = [profileNode(0, 1)];
+        for (let i = 1; i <= n; i++) {
+          path.push(profileNode(i / n, 1 - (i - 1) / n));
+          path.push(profileNode(i / n, 1 - i / n));
+        }
+        return path;
+      }
+      default:
+        return [profileNode(0, 1), profileNode(1, 0)];
+    }
+  }
+
+  // plugins/corner-profiles/src/shared/sanitize.ts
+  function isCornerKind(value) {
+    return CORNER_KINDS.some((kind) => kind === value);
+  }
+  function isNodeMode(value) {
+    return NODE_MODES.some((mode) => mode === value);
+  }
+  function sanitizeHandle(hx, hy, ax, ay) {
+    if (!isFiniteNumber(hx) || !isFiniteNumber(hy)) return { x: ax, y: ay };
+    return { x: clamp01(hx), y: clamp01(hy) };
+  }
+  function dragHandle(hx, hy, ax, ay, tx, ty) {
+    if (Math.abs(hx - ax) < EPS && Math.abs(hy - ay) < EPS)
+      return { x: tx, y: ty };
+    return { x: clamp01(hx + (tx - ax)), y: clamp01(hy + (ty - ay)) };
+  }
+  function sanitizePath(raw) {
+    if (!Array.isArray(raw) || raw.length < 2 || raw.length > MAX_PATH_NODES) {
+      return presetPath("chamfer");
+    }
+    const path = [];
+    for (const item of raw) {
+      if (!isRecord(item) || !isFiniteNumber(item.x) || !isFiniteNumber(item.y)) {
+        return presetPath("chamfer");
+      }
+      const x = clamp01(item.x);
+      const y = clamp01(item.y);
+      const inHandle = sanitizeHandle(item.ix, item.iy, x, y);
+      const outHandle = sanitizeHandle(item.ox, item.oy, x, y);
+      path.push({
+        x,
+        y,
+        ix: inHandle.x,
+        iy: inHandle.y,
+        ox: outHandle.x,
+        oy: outHandle.y,
+        mode: isNodeMode(item.mode) ? item.mode : "sharp"
+      });
+    }
+    const first = path[0];
+    const last = path[path.length - 1];
+    const firstOut = dragHandle(first.ox, first.oy, first.x, first.y, 0, 1);
+    const lastIn = dragHandle(last.ix, last.iy, last.x, last.y, 1, 0);
+    path[0] = {
+      x: 0,
+      y: 1,
+      ix: 0,
+      iy: 1,
+      ox: firstOut.x,
+      oy: firstOut.y,
+      mode: first.mode
+    };
+    path[path.length - 1] = {
+      x: 1,
+      y: 0,
+      ix: lastIn.x,
+      iy: lastIn.y,
+      ox: 1,
+      oy: 0,
+      mode: last.mode
+    };
+    return path;
+  }
+  function sanitizeCorner(raw) {
+    const src = isRecord(raw) ? raw : {};
+    return {
+      kind: isCornerKind(src.kind) ? src.kind : "none",
+      sx: Math.max(0, finiteOr(src.sx, 0)),
+      sy: Math.max(0, finiteOr(src.sy, 0)),
+      asym: src.asym === true,
+      flip: src.flip === true,
+      steps: clampSteps(src.steps),
+      path: sanitizePath(src.path)
+    };
+  }
+  function sanitizeShape(raw) {
+    const src = isRecord(raw) ? raw : {};
+    return mapCorners((id) => sanitizeCorner(src[id]));
+  }
+
+  // plugins/corner-profiles/src/ui/format.ts
+  var fmt = (n) => String(Math.round(n * 1e3) / 1e3);
+
+  // plugins/corner-profiles/src/ui/curve/bezier.ts
+  var near = (ax, ay, bx, by, eps = EPS) => Math.abs(ax - bx) <= eps && Math.abs(ay - by) <= eps;
+  function segPoints(a, b) {
+    return [a.x, a.y, a.ox, a.oy, b.ix, b.iy, b.x, b.y];
+  }
+  function bez(P, t) {
+    const m = 1 - t;
+    const a = m * m * m;
+    const b = 3 * m * m * t;
+    const c = 3 * m * t * t;
+    const d = t * t * t;
+    return [
+      a * P[0] + b * P[2] + c * P[4] + d * P[6],
+      a * P[1] + b * P[3] + c * P[5] + d * P[7]
+    ];
+  }
+  function isStraight(a, b) {
+    return near(a.ox, a.oy, a.x, a.y) && near(b.ix, b.iy, b.x, b.y);
+  }
+  function segmentsD(p, mx, my) {
+    let d = "";
+    for (let i = 0; i < p.length - 1; i++) {
+      const a = p[i];
+      const b = p[i + 1];
+      if (isStraight(a, b)) d += `L${fmt(mx(b.x))} ${fmt(my(b.y))}`;
+      else
+        d += `C${fmt(mx(a.ox))} ${fmt(my(a.oy))} ${fmt(mx(b.ix))} ${fmt(my(b.iy))} ${fmt(mx(b.x))} ${fmt(my(b.y))}`;
+    }
+    return d;
+  }
+  function nearestOnPath(p, u, v) {
+    let best = { seg: -1, t: 0, d: Infinity };
+    const N = 48;
+    for (let i = 0; i < p.length - 1; i++) {
+      const P = segPoints(p[i], p[i + 1]);
+      const dist = (t2) => {
+        const q = bez(P, t2);
+        return (q[0] - u) * (q[0] - u) + (q[1] - v) * (q[1] - v);
+      };
+      let bt = 0;
+      let bd = Infinity;
+      for (let k = 0; k <= N; k++) {
+        const d2 = dist(k / N);
+        if (d2 < bd) {
+          bd = d2;
+          bt = k / N;
+        }
+      }
+      let lo = Math.max(0, bt - 1 / N);
+      let hi = Math.min(1, bt + 1 / N);
+      for (let it = 0; it < 24; it++) {
+        const m1 = lo + (hi - lo) / 3;
+        const m2 = hi - (hi - lo) / 3;
+        if (dist(m1) < dist(m2)) hi = m2;
+        else lo = m1;
+      }
+      const t = (lo + hi) / 2;
+      const d = Math.sqrt(dist(t));
+      if (d < best.d) best = { seg: i, t, d };
+    }
+    return best;
+  }
+  function splitSegment(p, seg, t) {
+    const a = p[seg];
+    const b = p[seg + 1];
+    const P = segPoints(a, b);
+    if (isStraight(a, b)) {
+      const q = bez(P, t);
+      p.splice(seg + 1, 0, profileNode(q[0], q[1]));
+      return seg + 1;
+    }
+    const lerp = (i, j) => [
+      P[i] + (P[j] - P[i]) * t,
+      P[i + 1] + (P[j + 1] - P[i + 1]) * t
+    ];
+    const p01 = lerp(0, 2);
+    const p12 = lerp(2, 4);
+    const p23 = lerp(4, 6);
+    const L = (q, r) => [
+      q[0] + (r[0] - q[0]) * t,
+      q[1] + (r[1] - q[1]) * t
+    ];
+    const p012 = L(p01, p12);
+    const p123 = L(p12, p23);
+    const m = L(p012, p123);
+    a.ox = p01[0];
+    a.oy = p01[1];
+    b.ix = p23[0];
+    b.iy = p23[1];
+    if (a.mode === "auto") a.mode = "aligned";
+    if (b.mode === "auto") b.mode = "aligned";
+    p.splice(seg + 1, 0, {
+      x: m[0],
+      y: m[1],
+      ix: p012[0],
+      iy: p012[1],
+      ox: p123[0],
+      oy: p123[1],
+      mode: "aligned"
+    });
+    return seg + 1;
+  }
+
+  // plugins/corner-profiles/src/ui/curve/modes.ts
+  function isSymmetric(p) {
+    const f = flipPath(p);
+    for (let i = 0; i < p.length; i++) {
+      const a = p[i];
+      const b = f[i];
+      if (!near(a.x, a.y, b.x, b.y, 1e-5) || !near(a.ix, a.iy, b.ix, b.iy, 1e-5) || !near(a.ox, a.oy, b.ox, b.oy, 1e-5))
+        return false;
+    }
+    return true;
+  }
+  function inferMode(n) {
+    const hasIn = !near(n.ix, n.iy, n.x, n.y);
+    const hasOut = !near(n.ox, n.oy, n.x, n.y);
+    if (!hasIn && !hasOut) return "sharp";
+    if (hasIn && hasOut) {
+      const ax = n.x - n.ix;
+      const ay = n.y - n.iy;
+      const bx = n.ox - n.x;
+      const by = n.oy - n.y;
+      const cross = ax * by - ay * bx;
+      if (Math.abs(cross) <= 1e-4 * Math.hypot(ax, ay) * Math.hypot(bx, by) && ax * bx + ay * by > 0)
+        return "aligned";
+    }
+    return "free";
+  }
+  function editorPath(raw) {
+    const path = sanitizePath(raw);
+    for (const n of path) {
+      if (n.mode === "sharp" && inferMode(n) !== "sharp") n.mode = inferMode(n);
+    }
+    return path;
+  }
+
+  // plugins/corner-profiles/src/ui/config/normalize.ts
+  function normalizeCorner(raw) {
+    const c = isRecord(raw) ? raw : {};
+    const kind = CORNER_KINDS.find((k) => k === c.kind) ?? "none";
+    const steps = clampSteps(c.steps);
+    const sx = Math.max(0, toNumber(c.sx, 0));
+    const sy = Math.max(0, toNumber(c.sy, 0));
+    const path = kind === "custom" || kind === "none" ? editorPath(c.path) : presetPath(kind, steps);
+    return {
+      kind,
+      sx,
+      sy,
+      asym: typeof c.asym === "boolean" ? c.asym : Math.abs(sx - sy) > EPS,
+      flip: c.flip === true,
+      steps,
+      path
+    };
+  }
+  function normalizeShape(raw) {
+    const s = isRecord(raw) ? raw : {};
+    return mapCorners((id) => normalizeCorner(s[id]));
+  }
+  function defaultShape() {
+    return mapCorners(() => ({
+      kind: "round",
+      sx: 16,
+      sy: 16,
+      asym: false,
+      flip: false,
+      steps: DEFAULT_STEPS,
+      path: presetPath("round")
+    }));
+  }
+  function normalizeProfiles(list) {
+    if (!Array.isArray(list)) return [];
+    const out = [];
+    for (const p of list) {
+      if (!isRecord(p)) continue;
+      out.push({
+        id: String(p.id ?? ""),
+        name: String(p.name ?? "Untitled").slice(0, MAX_PROFILE_NAME),
+        path: editorPath(p.path)
+      });
+    }
+    return out.slice(0, MAX_PROFILES);
+  }
+  function normalizeSelection(raw) {
+    const s = isRecord(raw) ? raw : {};
+    const count = (v) => Math.max(0, Math.round(toNumber(v, 0)));
+    return {
+      total: count(s.total),
+      valid: count(s.valid),
+      profileLayers: count(s.profileLayers),
+      nestedLayers: count(s.nestedLayers),
+      skipped: count(s.skipped),
+      width: Math.max(0, toNumber(s.width, 0)),
+      height: Math.max(0, toNumber(s.height, 0)),
+      config: s.config && typeof s.config === "object" ? normalizeShape(s.config) : null,
+      reason: typeof s.reason === "string" && s.reason ? s.reason : null,
+      key: typeof s.key === "string" ? s.key : ""
+    };
+  }
+
+  // plugins/corner-profiles/src/ui/config/signature.ts
+  var r4 = (v) => Math.round(v * 1e4);
+  function pathSig(p) {
+    return p.map((n) => [n.x, n.y, n.ix, n.iy, n.ox, n.oy].map(r4).join(",")).join(";");
+  }
+  var modeSig = (p) => p.map((n) => n.mode).join();
+  function cornerSig(c) {
+    return [
+      c.kind,
+      Math.round(c.sx * 100),
+      Math.round(c.sy * 100),
+      c.flip ? 1 : 0,
+      c.kind === "none" ? "" : pathSig(c.path)
+    ].join("|");
+  }
+  function shapeSig(s) {
+    return CORNER_IDS.map((id) => cornerSig(s[id])).join("/");
+  }
+
+  // plugins/corner-profiles/src/ui/constants.ts
+  var HISTORY_MAX = 50;
+  var SNAP = 0.05;
+  var MERGE_MS = 600;
+  var ECHO_MS = 4e3;
+  var E_SIZE = 260;
+  var E_PAD = 20;
+  var E_S = E_SIZE - 2 * E_PAD;
+  var P_W = 268;
+  var P_H = 120;
+  var P_PAD = 16;
+  var ex = (u) => E_PAD + u * E_S;
+  var ey = (v) => E_PAD + v * E_S;
+
+  // plugins/corner-profiles/src/ui/labels.ts
+  var CORNER_NAMES = {
+    tl: "Top left",
+    tr: "Top right",
+    br: "Bottom right",
+    bl: "Bottom left"
+  };
+  var KIND_LABELS = {
+    none: "None",
+    round: "Round",
+    chamfer: "Chamfer",
+    concave: "Concave",
+    notch: "Notch",
+    steps: "Steps",
+    custom: "Custom"
+  };
+  var MODE_CAPTIONS = {
+    sharp: "Sharp point",
+    auto: "Auto handles",
+    aligned: "Aligned handles",
+    free: "Free handles"
+  };
+  var RESET_LABELS = {
+    none: "Reset to rectangle",
+    rectangle: "Reset to rectangle",
+    main: "Reset to main component",
+    mixed: "Reset"
+  };
+
+  // plugins/corner-profiles/src/ui/state.ts
+  var state = {
+    live: true,
+    profiles: [],
+    sel: {
+      total: 0,
+      valid: 0,
+      profileLayers: 0,
+      nestedLayers: 0,
+      skipped: 0,
+      width: 0,
+      height: 0,
+      config: null,
+      reason: "Select a rectangle",
+      key: ""
+    },
+    selKey: "",
+    config: defaultShape(),
+    edit: new Set(CORNER_IDS),
+    width: PREVIEW_FALLBACK.width,
+    height: PREVIEW_FALLBACK.height,
+    past: [],
+    future: [],
+    txn: null,
+    lastCommit: { key: "", time: 0 },
+    echoes: [],
+    status: { text: "Select a rectangle", level: "info" },
+    statusHoldUntil: 0,
+    anchor: -1,
+    drag: null,
+    saving: false
+  };
+  var editedIds = () => CORNER_IDS.filter((id) => state.edit.has(id));
+  var primaryId = () => state.edit.values().next().value ?? "tl";
+  var primary = () => state.config[primaryId()];
+  var displayPath = (c) => c.flip ? flipPath(c.path) : clonePath(c.path);
+  var defaultSize = () => Math.max(1, Math.round(Math.min(state.width, state.height) / 4));
+  function isMixed() {
+    const ids = editedIds();
+    if (ids.length < 2) return false;
+    const first = cornerSig(state.config[ids[0]]);
+    return ids.some((id) => cornerSig(state.config[id]) !== first);
+  }
+
+  // plugins/corner-profiles/src/ui/render/controls.ts
+  function renderPickerLabel() {
+    const ids = editedIds();
+    let text = ids.length === 4 ? "All corners" : ids.length === 3 ? "3 corners" : ids.map((id) => CORNER_NAMES[id]).join(", ");
+    if (isMixed()) text += " \xB7 Mixed";
+    setText(el.cornerLabel, text);
+    el.allCorners.disabled = ids.length === 4;
+  }
+  var sliderMax = (value) => String(Math.max(1, Math.ceil(value)));
+  function renderControls() {
+    const p = primary();
+    setSliderMax(el.size, sliderMax(Math.min(state.width, state.height)));
+    setSliderMax(el.sx, sliderMax(state.width));
+    setSliderMax(el.sy, sliderMax(state.height));
+    el.sizeField.hidden = p.asym;
+    el.sxField.hidden = !p.asym;
+    el.syField.hidden = !p.asym;
+    setSliderValue(el.size, p.sx);
+    setSliderValue(el.sx, p.sx);
+    setSliderValue(el.sy, p.sy);
+    el.asym.checked = p.asym;
+    if (!state.drag) {
+      el.stepsField.hidden = p.kind !== "steps";
+      el.flipField.hidden = p.kind === "none" || isSymmetric(p.path);
+    }
+    setSliderBounds(el.steps, MIN_STEPS, MAX_STEPS);
+    setSliderValue(el.steps, p.steps);
+    el.flip.checked = p.flip;
+  }
+
+  // plugins/corner-profiles/src/ui/curve/handles.ts
+  function rayLimit(ax, ay, dx, dy, len) {
+    let t = len;
+    if (dx > EPS) t = Math.min(t, (1 - ax) / dx);
+    else if (dx < -EPS) t = Math.min(t, -ax / dx);
+    if (dy > EPS) t = Math.min(t, (1 - ay) / dy);
+    else if (dy < -EPS) t = Math.min(t, -ay / dy);
+    return Math.max(0, t);
+  }
+  function setHandle(n, side, x, y) {
+    if (side === "in") {
+      n.ix = x;
+      n.iy = y;
+    } else {
+      n.ox = x;
+      n.oy = y;
+    }
+  }
+  function placeAlong(n, side, dx, dy, len) {
+    const dl = Math.hypot(dx, dy);
+    if (dl <= EPS || len <= EPS) {
+      setHandle(n, side, n.x, n.y);
+      return;
+    }
+    const t = rayLimit(n.x, n.y, dx / dl, dy / dl, len);
+    setHandle(n, side, n.x + dx / dl * t, n.y + dy / dl * t);
+  }
+  function autoHandles(p, i) {
+    const n = p[i];
+    const prev = p[i - 1];
+    const next = p[i + 1];
+    const from = prev ?? n;
+    const to = next ?? n;
+    const tx = to.x - from.x;
+    const ty = to.y - from.y;
+    if (prev)
+      placeAlong(n, "in", -tx, -ty, Math.hypot(n.x - prev.x, n.y - prev.y) / 3);
+    else setHandle(n, "in", n.x, n.y);
+    if (next)
+      placeAlong(n, "out", tx, ty, Math.hypot(next.x - n.x, next.y - n.y) / 3);
+    else setHandle(n, "out", n.x, n.y);
+  }
+  function refreshAuto(p) {
+    for (let i = 0; i < p.length; i++) if (p[i].mode === "auto") autoHandles(p, i);
+  }
+  function moveAnchor(p, i, u, v) {
+    if (i <= 0 || i >= p.length - 1) return false;
+    const n = p[i];
+    const din = [n.ix - n.x, n.iy - n.y];
+    const dout = [n.ox - n.x, n.oy - n.y];
+    n.x = u;
+    n.y = v;
+    if (n.mode === "sharp") {
+      n.ix = n.ox = u;
+      n.iy = n.oy = v;
+    } else if (n.mode !== "auto") {
+      placeAlong(n, "in", din[0], din[1], Math.hypot(din[0], din[1]));
+      placeAlong(n, "out", dout[0], dout[1], Math.hypot(dout[0], dout[1]));
+    }
+    refreshAuto(p);
+    return true;
+  }
+  function moveHandle(p, i, side, u, v, alt) {
+    const n = p[i];
+    setHandle(n, side, u, v);
+    if (alt) n.mode = "free";
+    else if (n.mode !== "free") n.mode = "aligned";
+    if (n.mode === "aligned" && i > 0 && i < p.length - 1) {
+      const other = side === "in" ? "out" : "in";
+      const len = other === "in" ? Math.hypot(n.ix - n.x, n.iy - n.y) : Math.hypot(n.ox - n.x, n.oy - n.y);
+      placeAlong(n, other, n.x - u, n.y - v, len);
+    }
+    refreshAuto(p);
+  }
+  function visibleHandles(p, i) {
+    const n = p[i];
+    if (!n || n.mode === "sharp") return [];
+    const sides = [];
+    if (i > 0 && !near(n.ix, n.iy, n.x, n.y)) sides.push("in");
+    if (i < p.length - 1 && !near(n.ox, n.oy, n.x, n.y)) sides.push("out");
+    return sides;
+  }
+
+  // plugins/corner-profiles/src/ui/render/editor.ts
+  function gridPath() {
+    const lo = E_PAD;
+    const hi = E_PAD + E_S;
+    let grid = "";
+    for (let k = 1; k < 10; k++) {
+      const q = fmt(E_PAD + k * E_S / 10);
+      grid += `M${q} ${lo}V${hi}M${lo} ${q}H${hi}`;
+    }
+    return grid;
+  }
+  function renderEditor() {
+    setSvgSize(el.editor, E_SIZE, E_SIZE);
+    const c = primary();
+    const disp = displayPath(c);
+    const none = c.kind === "none";
+    if (state.anchor >= disp.length) state.anchor = -1;
+    const a = state.anchor;
+    const segs = segmentsD(disp, ex, ey);
+    const start = `M${ex(0)} ${ey(1)}`;
+    const cut = `${start}${segs}L${ex(1)} 0L0 0L0 ${ey(1)}Z`;
+    const parts = [
+      `<rect class="e-bg" x="${E_PAD}" y="${E_PAD}" width="${E_S}" height="${E_S}"/>`,
+      `<path class="e-grid" d="${gridPath()}"/>`,
+      `<mask id="e-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="${E_SIZE}" height="${E_SIZE}"><rect width="${E_SIZE}" height="${E_SIZE}" fill="#fff"/>${none ? "" : `<path d="${cut}" fill="#000"/>`}</mask>`,
+      `<path class="e-material" d="M${ex(0)} ${E_SIZE}V${ey(0)}H${E_SIZE}V${E_SIZE}Z" mask="url(#e-cut)"/>`,
+      `<path class="e-edge" d="M${ex(0)} ${E_SIZE}V${ey(0)}H${E_SIZE}"/>`,
+      `<path class="e-curve${none ? " is-none" : ""}" d="${start}${segs}"/>`
+    ];
+    if (a >= 0) {
+      const n = disp[a];
+      for (const side of visibleHandles(disp, a)) {
+        const hx = fmt(ex(side === "in" ? n.ix : n.ox));
+        const hy = fmt(ey(side === "in" ? n.iy : n.oy));
+        parts.push(
+          `<line class="e-hline" x1="${fmt(ex(n.x))}" y1="${fmt(ey(n.y))}" x2="${hx}" y2="${hy}"/>`
+        );
+        parts.push(`<circle class="e-handle" cx="${hx}" cy="${hy}" r="3.5"/>`);
+      }
+    }
+    disp.forEach((n, i) => {
+      const cls = "e-anchor" + (i === a ? " is-selected" : "") + (i === 0 || i === disp.length - 1 ? " is-end" : "");
+      if (n.mode === "sharp")
+        parts.push(
+          `<rect class="${cls}" x="${fmt(ex(n.x) - 4)}" y="${fmt(ey(n.y) - 4)}" width="8" height="8"/>`
+        );
+      else
+        parts.push(
+          `<circle class="${cls}" cx="${fmt(ex(n.x))}" cy="${fmt(ey(n.y))}" r="4.5"/>`
+        );
+    });
+    setMarkup(el.editor, parts.join(""));
+    renderPointTools(a >= 0 ? disp[a] : null, a, disp.length, none);
+  }
+  function renderPointTools(node, a, length, none) {
+    el.ptSharp.disabled = !node;
+    el.ptSmooth.disabled = !node;
+    el.ptDelete.disabled = !(node && a > 0 && a < length - 1);
+    el.ptSharp.classList.toggle("cp-active", !!node && node.mode === "sharp");
+    el.ptSmooth.classList.toggle("cp-active", !!node && node.mode !== "sharp");
+    let hint = "Double-click the curve to add a point";
+    if (node) hint = `${MODE_CAPTIONS[node.mode]} \xB7 Shift snaps \xB7 Alt frees`;
+    else if (none) hint = "Sharp corner. Pick a profile or edit the line.";
+    setText(el.hint, hint);
+  }
+
+  // plugins/corner-profiles/src/shared/reset.ts
+  function resetMode(sel) {
+    if (sel.profileLayers <= 0) return "none";
+    if (sel.nestedLayers <= 0) return "rectangle";
+    return sel.nestedLayers >= sel.profileLayers ? "main" : "mixed";
+  }
+
+  // plugins/corner-profiles/src/ui/render/footer.ts
+  function renderFooter() {
+    setText(el.status, state.status.text);
+    el.status.setAttribute("data-level", state.status.level);
+    el.status.title = state.status.text;
+    el.live.checked = state.live;
+    el.apply.disabled = !(state.sel.valid > 0);
+    const reset = resetMode(state.sel);
+    setText(el.reset, RESET_LABELS[reset]);
+    el.reset.disabled = reset === "none";
+  }
+
+  // plugins/corner-profiles/src/ui/render/thumb.ts
+  function thumbSvg(path, kind) {
+    const P = 0.14;
+    const E = 1 + P;
+    const m = (x, y) => `${fmt(x)},${fmt(y)}`;
+    let fill;
+    let line;
+    if (kind === "none") {
+      fill = `M${m(0, E)}L${m(0, 0)}L${m(E, 0)}L${m(E, E)}Z`;
+      line = `M${m(0, E)}L${m(0, 0)}L${m(E, 0)}`;
+    } else {
+      const segs = segmentsD(
+        path,
+        (x) => x,
+        (y) => y
+      );
+      fill = `M${m(0, 1)}${segs}L${m(E, 0)}L${m(E, E)}L${m(0, E)}Z`;
+      line = `M${m(0, E)}L${m(0, 1)}${segs}L${m(E, 0)}`;
+    }
+    return `<svg viewBox="${-P} ${-P} ${1 + 2 * P} ${1 + 2 * P}" aria-hidden="true"><path class="t-fill" d="${fill}"/><path class="t-line" d="${line}"/></svg>`;
+  }
+
+  // plugins/corner-profiles/src/ui/render/presets.ts
+  var CUSTOM_ICON = [
+    { x: 0, y: 1, ix: 0, iy: 1, ox: 0.08, oy: 0.55, mode: "aligned" },
+    { x: 0.5, y: 0.5, ix: 0.25, iy: 0.62, ox: 0.75, oy: 0.38, mode: "aligned" },
+    { x: 1, y: 0, ix: 0.45, iy: 0.08, ox: 1, oy: 0, mode: "aligned" }
+  ];
+  var presetButtons = {};
+  var customThumbSig = "";
+  function buildPresets() {
+    for (const kind of CORNER_KINDS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "cp-thumb";
+      b.title = KIND_LABELS[kind];
+      b.dataset.kind = kind;
+      b.setAttribute("aria-label", `${KIND_LABELS[kind]} profile`);
+      b.setAttribute("aria-pressed", "false");
+      b.innerHTML = thumbSvg(
+        kind === "custom" ? CUSTOM_ICON : presetPath(kind),
+        kind
+      );
+      presetButtons[kind] = b;
+      el.presets.appendChild(b);
+    }
+  }
+  function renderPresets() {
+    const p = primary();
+    for (const kind of CORNER_KINDS) {
+      const b = presetButtons[kind];
+      if (b) setAttr(b, "aria-pressed", String(p.kind === kind));
+    }
+    const customPath = p.kind === "custom" ? displayPath(p) : CUSTOM_ICON;
+    const sig = pathSig(customPath);
+    const custom = presetButtons.custom;
+    if (custom && sig !== customThumbSig) {
+      customThumbSig = sig;
+      custom.innerHTML = thumbSvg(customPath, "custom");
+    }
+  }
+
+  // plugins/corner-profiles/src/ui/render/saved.ts
+  var DELETE_ICON = '<svg viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 1.5l5 5M6.5 1.5l-5 5"/></svg>';
+  var savedKey = null;
+  function renderSaved() {
+    const p = primary();
+    const activeSig = p.kind === "custom" && !p.flip ? pathSig(p.path) : "";
+    const key = state.profiles.map((prof) => `${prof.id}:${prof.name}`).join("|") + "#" + activeSig;
+    if (key !== savedKey) {
+      savedKey = key;
+      el.saved.textContent = "";
+      state.profiles.forEach((prof, index) => {
+        const item = document.createElement("div");
+        item.className = "cp-saved-item";
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "cp-thumb";
+        b.title = prof.name;
+        b.dataset.use = String(index);
+        b.setAttribute("aria-label", `Use saved profile ${prof.name}`);
+        b.setAttribute(
+          "aria-pressed",
+          String(!!activeSig && pathSig(prof.path) === activeSig)
+        );
+        b.innerHTML = thumbSvg(prof.path, "custom");
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "cp-del";
+        del.title = "Delete profile";
+        del.dataset.delete = String(index);
+        del.setAttribute("aria-label", `Delete saved profile ${prof.name}`);
+        del.innerHTML = DELETE_ICON;
+        item.append(b, del);
+        el.saved.appendChild(item);
+      });
+    }
+    el.savedEmpty.hidden = state.profiles.length > 0;
+    el.saveRow.hidden = !state.saving;
+    el.saveOpen.hidden = state.saving;
+    el.saveOpen.disabled = state.profiles.length >= MAX_PROFILES;
+  }
+
+  // plugins/corner-profiles/src/shared/cubics.ts
+  function effectiveSizes(shape, width, height) {
+    const w = Math.max(0, finiteOr(width, 0));
+    const h = Math.max(0, finiteOr(height, 0));
+    const requested = (c) => c.kind === "none" ? { sx: 0, sy: 0 } : { sx: c.sx, sy: c.sy };
+    const tl = requested(shape.tl);
+    const tr = requested(shape.tr);
+    const br = requested(shape.br);
+    const bl = requested(shape.bl);
+    const fit = (length, a, b) => a + b > length ? length / (a + b) : 1;
+    const top = fit(w, tl.sx, tr.sx);
+    const bottom = fit(w, bl.sx, br.sx);
+    const left = fit(h, tl.sy, bl.sy);
+    const right = fit(h, tr.sy, br.sy);
+    const scaled = (s, f) => ({
+      sx: s.sx * f,
+      sy: s.sy * f
+    });
+    return {
+      tl: scaled(tl, Math.min(top, left)),
+      tr: scaled(tr, Math.min(top, right)),
+      br: scaled(br, Math.min(bottom, right)),
+      bl: scaled(bl, Math.min(bottom, left))
+    };
+  }
+  function isSharpCorner(corner, size) {
+    return corner.kind === "none" || size.sx < MIN_CORNER_SIZE || size.sy < MIN_CORNER_SIZE;
+  }
+  function cornerFrame(id, w, h) {
+    const frames = {
+      tl: { o: { x: 0, y: 0 }, u: { x: 1, y: 0 }, v: { x: 0, y: 1 } },
+      tr: { o: { x: w, y: 0 }, u: { x: -1, y: 0 }, v: { x: 0, y: 1 } },
+      br: { o: { x: w, y: h }, u: { x: -1, y: 0 }, v: { x: 0, y: -1 } },
+      bl: { o: { x: 0, y: h }, u: { x: 1, y: 0 }, v: { x: 0, y: -1 } }
+    };
+    return frames[id];
+  }
+  function cornerCubics(id, corner, size, frame, w, h) {
+    if (isSharpCorner(corner, size)) return [];
+    const map = (u, v) => ({
+      x: clamp(
+        frame.o.x + u * size.sx * frame.u.x + v * size.sy * frame.v.x,
+        0,
+        w
+      ),
+      y: clamp(
+        frame.o.y + u * size.sx * frame.u.y + v * size.sy * frame.v.y,
+        0,
+        h
+      )
+    });
+    let path = corner.flip ? flipPath(corner.path) : corner.path;
+    if (id === "tr" || id === "bl") path = reversePath(path);
+    const cubics = [];
+    for (let i = 0; i + 1 < path.length; i++) {
+      const a = path[i];
+      const b = path[i + 1];
+      cubics.push({
+        p0: map(a.x, a.y),
+        c1: map(a.ox, a.oy),
+        c2: map(b.ix, b.iy),
+        p3: map(b.x, b.y)
+      });
+    }
+    return cubics;
+  }
+  function resolveCorners(shape, width, height) {
+    const config = sanitizeShape(shape);
+    const w = Math.max(0, finiteOr(width, 0));
+    const h = Math.max(0, finiteOr(height, 0));
+    const sizes = effectiveSizes(config, w, h);
+    return CORNER_IDS.map((id) => {
+      const frame = cornerFrame(id, w, h);
+      const size = sizes[id];
+      return {
+        id,
+        frame,
+        size,
+        cubics: cornerCubics(id, config[id], size, frame, w, h)
+      };
+    });
+  }
+  function lineCubic(a, b) {
+    return { p0: a, c1: a, c2: b, p3: b };
+  }
+
+  // plugins/corner-profiles/src/shared/network.ts
+  function nearPoint(a, b) {
+    return Math.abs(a.x - b.x) < EPS && Math.abs(a.y - b.y) < EPS;
+  }
+  function isZeroVector(t) {
+    return Math.abs(t.x) < EPS && Math.abs(t.y) < EPS;
+  }
+  function tangent(control, anchor) {
+    const t = { x: control.x - anchor.x, y: control.y - anchor.y };
+    return isZeroVector(t) ? { x: 0, y: 0 } : t;
+  }
+  function networkFromCubics(cubics) {
+    const vertices = [];
+    const vertexIndex = (p) => {
+      for (let i = 0; i < vertices.length; i++) {
+        if (nearPoint(vertices[i], p)) return i;
+      }
+      vertices.push({ x: p.x, y: p.y });
+      return vertices.length - 1;
+    };
+    const segments = [];
+    for (const cubic of cubics) {
+      const start = vertexIndex(cubic.p0);
+      const end = vertexIndex(cubic.p3);
+      const tangentStart = tangent(cubic.c1, vertices[start]);
+      const tangentEnd = tangent(cubic.c2, vertices[end]);
+      if (start === end && isZeroVector(tangentStart) && isZeroVector(tangentEnd)) {
+        continue;
+      }
+      segments.push({ start, end, tangentStart, tangentEnd });
+    }
+    return {
+      vertices,
+      segments,
+      regions: segments.length ? [{ windingRule: "NONZERO", loops: [segments.map((_, i) => i)] }] : []
+    };
+  }
+
+  // plugins/corner-profiles/src/shared/cutters.ts
+  function along(p, d, t) {
+    return { x: p.x + t * d.x, y: p.y + t * d.y };
+  }
+  function distance(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+  function outward(p, corner, bleed) {
+    const { frame, size } = corner;
+    const vertical = along(frame.o, frame.v, size.sy);
+    const horizontal = along(frame.o, frame.u, size.sx);
+    const onVertical = distance(p, vertical) <= distance(p, horizontal);
+    return along(p, onVertical ? frame.u : frame.v, -bleed);
+  }
+  function cutterLoop(corner, bleed) {
+    const { cubics, frame } = corner;
+    const first = cubics[0].p0;
+    const last = cubics[cubics.length - 1].p3;
+    const outFirst = outward(first, corner, bleed);
+    const outLast = outward(last, corner, bleed);
+    const outer = along(along(frame.o, frame.u, -bleed), frame.v, -bleed);
+    return cubics.concat([
+      lineCubic(last, outLast),
+      lineCubic(outLast, outer),
+      lineCubic(outer, outFirst),
+      lineCubic(outFirst, first)
+    ]);
+  }
+  function specFromLoop(corner, loop) {
+    const points = loop.flatMap((c) => [c.p0, c.c1, c.c2, c.p3]);
+    const xs = points.map((p) => p.x);
+    const ys = points.map((p) => p.y);
+    const x = Math.min(...xs);
+    const y = Math.min(...ys);
+    const shift = (p) => ({ x: p.x - x, y: p.y - y });
+    const local = loop.map((c) => ({
+      p0: shift(c.p0),
+      c1: shift(c.c1),
+      c2: shift(c.c2),
+      p3: shift(c.p3)
+    }));
+    return {
+      corner: corner.id,
+      x,
+      y,
+      width: Math.max(...xs) - x,
+      height: Math.max(...ys) - y,
+      network: networkFromCubics(local),
+      constraints: {
+        horizontal: corner.frame.u.x > 0 ? "MIN" : "MAX",
+        vertical: corner.frame.v.y > 0 ? "MIN" : "MAX"
+      }
+    };
+  }
+  function buildCutters(shape, width, height, bleed = CUTTER_BLEED) {
+    return resolveCorners(shape, width, height).filter((corner) => corner.cubics.length > 0).map((corner) => specFromLoop(corner, cutterLoop(corner, bleed)));
+  }
+
+  // plugins/corner-profiles/src/shared/svg.ts
+  function formatNumber(n) {
+    const rounded = Math.round(n * 1e4) / 1e4;
+    return String(rounded === 0 ? 0 : rounded);
+  }
+  function networkToPathData(network, dx = 0, dy = 0) {
+    const { vertices, segments } = network;
+    if (!segments.length) return "";
+    const parts = [];
+    const point = (x, y) => parts.push(formatNumber(x + dx), formatNumber(y + dy));
+    let current = -1;
+    for (const segment of segments) {
+      const p0 = vertices[segment.start];
+      const p3 = vertices[segment.end];
+      if (segment.start !== current) {
+        parts.push("M");
+        point(p0.x, p0.y);
+      }
+      const ts = segment.tangentStart;
+      const te = segment.tangentEnd;
+      if (isZeroVector(ts) && isZeroVector(te)) {
+        parts.push("L");
+      } else {
+        parts.push("C");
+        point(p0.x + ts.x, p0.y + ts.y);
+        point(p3.x + te.x, p3.y + te.y);
+      }
+      point(p3.x, p3.y);
+      current = segment.end;
+    }
+    parts.push("Z");
+    return parts.join(" ");
+  }
+  function cutterPathData(shape, width, height, bleed = CUTTER_BLEED) {
+    return buildCutters(shape, width, height, bleed).map(
+      (c) => networkToPathData(c.network, c.x, c.y)
+    );
+  }
+
+  // plugins/corner-profiles/src/ui/render/shape.ts
+  var FAR = `x="-1e5" y="-1e5" width="2e5" height="2e5"`;
+  function renderShape() {
+    setSvgSize(el.shape, P_W, P_H);
+    const focusedCorner = document.activeElement?.getAttribute("data-corner");
+    const w = state.width;
+    const h = state.height;
+    const s = Math.min((P_W - 2 * P_PAD) / w, (P_H - 2 * P_PAD) / h);
+    const ox = (P_W - w * s) / 2;
+    const oy = (P_H - h * s) / 2;
+    const x1 = ox + w * s;
+    const y1 = oy + h * s;
+    const parts = [
+      `<rect class="s-bounds" x="${fmt(ox)}" y="${fmt(oy)}" width="${fmt(w * s)}" height="${fmt(h * s)}"/>`
+    ];
+    const cuts = cutterPathData(state.config, w, h, 2 / s);
+    const holes = cuts.map((d) => `<path d="${d}" fill="#000"/>`).join("");
+    const edges = cuts.map((d) => `<path class="s-edge" d="${d}"/>`).join("");
+    const box = `x="0" y="0" width="${fmt(w)}" height="${fmt(h)}"`;
+    parts.push(
+      `<g transform="translate(${fmt(ox)} ${fmt(oy)}) scale(${s})"><mask id="s-cuts" maskUnits="userSpaceOnUse" ${FAR}><rect ${FAR} fill="#fff"/>${holes}</mask><clipPath id="s-clip"><rect ${box}/></clipPath><rect class="s-shape" ${box} mask="url(#s-cuts)"/><g clip-path="url(#s-clip)" mask="url(#s-cuts)">${edges}</g></g>`
+    );
+    const pos = {
+      tl: [ox, oy, 1, 1],
+      tr: [x1, oy, -1, 1],
+      br: [x1, y1, -1, -1],
+      bl: [ox, y1, 1, -1]
+    };
+    const arm = Math.min(14, w * s / 3, h * s / 3);
+    for (const id of CORNER_IDS) {
+      const [cx, cy, dx, dy] = pos[id];
+      const on = state.edit.has(id);
+      parts.push(
+        `<g class="s-hot${on ? " is-on" : ""}" data-corner="${id}" tabindex="0" role="button" aria-pressed="${on}" aria-label="${CORNER_NAMES[id]} corner"><title>${CORNER_NAMES[id]}</title>` + (on ? `<path class="s-bracket" d="M${fmt(cx + dx * arm)} ${fmt(cy)}H${fmt(cx)}V${fmt(cy + dy * arm)}"/>` : "") + `<rect class="s-hit" x="${fmt(cx - 12)}" y="${fmt(cy - 12)}" width="24" height="24"/><rect class="s-dot" x="${fmt(cx - 4.5)}" y="${fmt(cy - 4.5)}" width="9" height="9" rx="2"/></g>`
+      );
+    }
+    if (!setMarkup(el.shape, parts.join(""))) return;
+    if (focusedCorner) {
+      const again = el.shape.querySelector(
+        `[data-corner="${focusedCorner}"]`
+      );
+      if (again) again.focus();
+    }
+  }
+
+  // plugins/corner-profiles/src/ui/render/index.ts
+  function render() {
+    renderPickerLabel();
+    renderShape();
+    renderPresets();
+    renderSaved();
+    renderControls();
+    renderEditor();
+    renderFooter();
+  }
+
+  // plugins/corner-profiles/src/shared/text.ts
+  function plural(count, noun) {
+    return `${count} ${noun}${count === 1 ? "" : "s"}`;
+  }
+
+  // plugins/corner-profiles/src/ui/status.ts
+  function selectionSummary(sel) {
+    if (!sel.valid) return sel.reason || "Select a rectangle";
+    const parts = [];
+    const rects = sel.valid - sel.profileLayers;
+    if (rects > 0) parts.push(plural(rects, "rectangle"));
+    if (sel.profileLayers > 0)
+      parts.push(plural(sel.profileLayers, "profile layer"));
+    let text = parts.join(" and ") + " selected";
+    if (sel.skipped > 0) text += `, ${sel.skipped} skipped`;
+    return text;
+  }
+  var statusTimer = 0;
+  function showStatus(text, level, holdMs) {
+    clearTimeout(statusTimer);
+    state.status = { text, level };
+    state.statusHoldUntil = holdMs ? Date.now() + holdMs : 0;
+    if (holdMs)
+      statusTimer = setTimeout(() => {
+        state.statusHoldUntil = 0;
+        showSelectionStatus();
+      }, holdMs);
+    renderFooter();
+  }
+  function showSelectionStatus() {
+    if (Date.now() < state.statusHoldUntil) return;
+    state.status = { text: selectionSummary(state.sel), level: "info" };
+    renderFooter();
+  }
+
+  // plugins/corner-profiles/src/ui/incoming.ts
+  function adoptSelection(incoming, key) {
+    if (key === state.selKey) {
+      const sig = shapeSig(incoming);
+      if (sig === shapeSig(state.config)) return;
+      const now = Date.now();
+      state.echoes = state.echoes.filter((e) => now - e.time < ECHO_MS);
+      if (state.echoes.some((e) => e.sig === sig)) return;
+    } else {
+      state.selKey = key;
+      state.echoes = [];
+    }
+    state.config = incoming;
+    state.past = [];
+    state.future = [];
+    state.txn = null;
+    state.anchor = -1;
+    state.lastCommit = { key: "", time: 0 };
+  }
+  function onSelection(raw) {
+    const sel = normalizeSelection(raw);
+    state.sel = sel;
+    const sized = sel.valid > 0 && sel.width > 0 && sel.height > 0;
+    state.width = sized ? sel.width : PREVIEW_FALLBACK.width;
+    state.height = sized ? sel.height : PREVIEW_FALLBACK.height;
+    if (sel.config && !state.drag) adoptSelection(sel.config, sel.key);
+    showSelectionStatus();
+    render();
+  }
+  function handleSandboxMessage(msg) {
+    switch (msg.type) {
+      case "init":
+        state.live = !(msg.prefs && msg.prefs.live === false);
+        state.profiles = normalizeProfiles(msg.profiles);
+        render();
+        break;
+      case "selection":
+        if (msg.state) onSelection(msg.state);
+        break;
+      case "profiles":
+        state.profiles = normalizeProfiles(msg.profiles);
+        render();
+        break;
+      case "status":
+        if (typeof msg.text === "string") {
+          const level = msg.level === "error" || msg.level === "success" ? msg.level : "info";
+          showStatus(msg.text, level, level === "error" ? 6e3 : 3e3);
+        }
+        break;
+    }
+  }
+
+  // plugins/corner-profiles/src/ui/frame.ts
+  function nextFrame(fn) {
+    let done = false;
+    const run = () => {
+      if (!done) {
+        done = true;
+        fn();
+      }
+    };
+    requestAnimationFrame(run);
+    setTimeout(run, 50);
+  }
+
+  // plugins/corner-profiles/src/ui/apply.ts
+  var applyScheduled = false;
+  function requestApply() {
+    if (!(state.sel.valid > 0) || applyScheduled) return;
+    applyScheduled = true;
+    nextFrame(() => {
+      if (applyScheduled) sendApply();
+    });
+  }
+  function sendApply() {
+    applyScheduled = false;
+    if (!(state.sel.valid > 0)) return;
+    const now = Date.now();
+    state.echoes = state.echoes.filter((e) => now - e.time < ECHO_MS).slice(-9);
+    state.echoes.push({ sig: shapeSig(state.config), time: now });
+    post({ type: "apply", config: cloneShape(state.config) });
+  }
+
+  // plugins/corner-profiles/src/ui/history.ts
+  function beginEdit() {
+    if (!state.txn) state.txn = cloneShape(state.config);
+  }
+  function commit(mergeKey) {
+    const snap = state.txn;
+    state.txn = null;
+    if (!snap || JSON.stringify(snap) === JSON.stringify(state.config)) {
+      render();
+      return;
+    }
+    const now = Date.now();
+    const merge = !!mergeKey && state.lastCommit.key === mergeKey && now - state.lastCommit.time < MERGE_MS;
+    if (!merge) {
+      state.past.push(snap);
+      if (state.past.length > HISTORY_MAX) state.past.shift();
+    }
+    state.future = [];
+    state.lastCommit = { key: mergeKey || "", time: now };
+    render();
+    if (state.live) requestApply();
+  }
+  function finishEdit(final, key) {
+    if (final) commit(key);
+    else render();
+  }
+  function undo() {
+    if (state.drag) return;
+    if (state.txn) commit();
+    const snap = state.past.pop();
+    if (!snap) return;
+    const pathLength = primary().path.length;
+    state.future.push(cloneShape(state.config));
+    state.config = snap;
+    afterHistory(pathLength);
+  }
+  function redo() {
+    if (state.drag) return;
+    if (state.txn) commit();
+    const snap = state.future.pop();
+    if (!snap) return;
+    const pathLength = primary().path.length;
+    state.past.push(cloneShape(state.config));
+    state.config = snap;
+    afterHistory(pathLength);
+  }
+  function afterHistory(previousPathLength) {
+    state.lastCommit = { key: "", time: 0 };
+    if (primary().path.length !== previousPathLength) state.anchor = -1;
+    render();
+    if (state.live) requestApply();
+  }
+
+  // plugins/corner-profiles/src/ui/edits.ts
+  function editProfile(mutatePrimary, final, key) {
+    beginEdit();
+    const p = primary();
+    mutatePrimary(p);
+    for (const id of editedIds()) {
+      const c = state.config[id];
+      if (c !== p) {
+        c.kind = p.kind;
+        c.path = clonePath(p.path);
+        c.steps = p.steps;
+        c.flip = p.flip;
+      }
+      if (c.kind !== "none" && Math.min(c.sx, c.sy) < MIN_CORNER_SIZE) {
+        const s = defaultSize();
+        c.sx = s;
+        c.sy = s;
+      }
+    }
+    finishEdit(final, key);
+  }
+  function writeDisplayPath(disp, final, key) {
+    const current = displayPath(primary());
+    if (primary().kind === "custom" && pathSig(disp) === pathSig(current) && modeSig(disp) === modeSig(current)) {
+      if (final) commit(key);
+      return;
+    }
+    editProfile(
+      (p) => {
+        p.kind = "custom";
+        p.path = p.flip ? flipPath(disp) : disp;
+      },
+      final,
+      key
+    );
+  }
+  function setSizes(field, value, final) {
+    const v = Math.max(0, toNumber(value, 0));
+    beginEdit();
+    for (const id of editedIds()) {
+      const c = state.config[id];
+      if (field !== "sy") c.sx = v;
+      if (field !== "sx") c.sy = v;
+      if (field !== "both") c.asym = true;
+    }
+    finishEdit(final, "size-" + field);
+  }
+  function setAsym(on) {
+    beginEdit();
+    for (const id of editedIds()) {
+      const c = state.config[id];
+      c.asym = on;
+      if (!on) c.sy = c.sx;
+    }
+    commit();
+  }
+  function setSteps(value, final) {
+    const n = clampSteps(value);
+    state.anchor = -1;
+    editProfile(
+      (p) => {
+        p.kind = "steps";
+        p.steps = n;
+        p.path = presetPath("steps", n);
+      },
+      final,
+      "steps"
+    );
+  }
+  function setFlip(on) {
+    const len = primary().path.length;
+    if (state.anchor >= 0 && primary().flip !== on)
+      state.anchor = len - 1 - state.anchor;
+    editProfile((p) => {
+      p.flip = on;
+    }, true);
+  }
+  function onPreset(kind) {
+    state.anchor = -1;
+    editProfile((p) => {
+      if (kind === "custom") p.kind = "custom";
+      else if (kind === "none") {
+        p.kind = "none";
+        p.path = presetPath("chamfer");
+      } else {
+        p.kind = kind;
+        p.path = presetPath(kind, p.steps);
+      }
+    }, true);
+  }
+  function applySaved(profile) {
+    state.anchor = -1;
+    editProfile((p) => {
+      p.kind = "custom";
+      p.path = clonePath(profile.path);
+      p.flip = false;
+    }, true);
+  }
+
+  // plugins/corner-profiles/src/ui/interact/controls.ts
+  function installControls() {
+    onSliderEdit(el.size, (v, final) => setSizes("both", v, final));
+    onSliderEdit(el.sx, (v, final) => setSizes("sx", v, final));
+    onSliderEdit(el.sy, (v, final) => setSizes("sy", v, final));
+    onSliderEdit(el.steps, (v, final) => setSteps(v, final));
+    for (const s of sliders)
+      s.input.addEventListener("focusout", () => renderControls());
+    window.addEventListener("blur", () => {
+      const field = sliders.find((s) => s.input === document.activeElement);
+      if (field) {
+        field.input.blur();
+        renderControls();
+      }
+    });
+    el.asym.addEventListener("change", () => setAsym(el.asym.checked));
+    el.flip.addEventListener("change", () => setFlip(el.flip.checked));
+    el.live.addEventListener("change", () => {
+      state.live = el.live.checked;
+      post({ type: "set-prefs", prefs: { live: state.live } });
+      renderFooter();
+    });
+    el.apply.addEventListener("click", () => {
+      if (state.txn) commit();
+      sendApply();
+    });
+    el.reset.addEventListener("click", () => post({ type: "reset" }));
+  }
+
+  // plugins/corner-profiles/src/ui/interact/editor.ts
+  function editorPoint(e) {
+    const r = el.editor.getBoundingClientRect();
+    const px = (e.clientX - r.left) * E_SIZE / (r.width || E_SIZE);
+    const py = (e.clientY - r.top) * E_SIZE / (r.height || E_SIZE);
+    return { px, py, u: (px - E_PAD) / E_S, v: (py - E_PAD) / E_S };
+  }
+  function hitTest(pt, p) {
+    let best = null;
+    const consider = (hit, radius) => {
+      const d = Math.hypot(ex(hit.x) - pt.px, ey(hit.y) - pt.py);
+      if (d <= radius && (!best || d < best.d)) best = { ...hit, d };
+    };
+    const a = state.anchor;
+    if (a >= 0 && a < p.length) {
+      const n = p[a];
+      for (const side of visibleHandles(p, a)) {
+        const x = side === "in" ? n.ix : n.ox;
+        const y = side === "in" ? n.iy : n.oy;
+        consider({ type: "handle", index: a, side, x, y }, 7);
+      }
+    }
+    p.forEach(
+      (n, i) => consider({ type: "anchor", index: i, side: void 0, x: n.x, y: n.y }, 8)
+    );
+    return best;
+  }
+  function onPointerDown(e) {
+    if (e.button !== 0 || state.drag) return;
+    e.preventDefault();
+    el.editorWrap.focus({ preventScroll: true });
+    const pt = editorPoint(e);
+    const disp = displayPath(primary());
+    const hit = hitTest(pt, disp);
+    if (!hit) {
+      if (state.anchor !== -1) {
+        state.anchor = -1;
+        renderEditor();
+      }
+      return;
+    }
+    if (hit.type === "anchor") state.anchor = hit.index;
+    state.drag = {
+      type: hit.type,
+      index: hit.index,
+      side: hit.side,
+      start: disp,
+      offU: hit.x - pt.u,
+      offV: hit.y - pt.v,
+      pointerId: e.pointerId,
+      moved: false
+    };
+    try {
+      el.editor.setPointerCapture(e.pointerId);
+    } catch {
+    }
+    renderEditor();
+  }
+  function onPointerMove(e) {
+    const drag = state.drag;
+    const pt = editorPoint(e);
+    if (!drag) {
+      updateCursor(pt);
+      return;
+    }
+    if (e.pointerId !== drag.pointerId) return;
+    let u = pt.u + drag.offU;
+    let v = pt.v + drag.offV;
+    if (e.shiftKey) {
+      u = Math.round(u / SNAP) * SNAP;
+      v = Math.round(v / SNAP) * SNAP;
+    }
+    u = clamp01(u);
+    v = clamp01(v);
+    const disp = clonePath(drag.start);
+    if (drag.type === "anchor") {
+      if (!moveAnchor(disp, drag.index, u, v)) return;
+    } else if (drag.side) moveHandle(disp, drag.index, drag.side, u, v, e.altKey);
+    drag.moved = true;
+    writeDisplayPath(disp, false);
+  }
+  function endDrag(e) {
+    const drag = state.drag;
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    state.drag = null;
+    try {
+      el.editor.releasePointerCapture(drag.pointerId);
+    } catch {
+    }
+    if (drag.moved) commit();
+    else renderEditor();
+  }
+  function updateCursor(pt) {
+    const disp = displayPath(primary());
+    let cursor = "default";
+    if (hitTest(pt, disp)) cursor = "move";
+    else if (nearestOnPath(disp, pt.u, pt.v).d * E_S <= 8) cursor = "crosshair";
+    if (el.editor.style.cursor !== cursor) el.editor.style.cursor = cursor;
+  }
+  function onDoubleClick(e) {
+    const pt = editorPoint(e);
+    const disp = displayPath(primary());
+    if (hitTest(pt, disp)) return;
+    const hit = nearestOnPath(disp, pt.u, pt.v);
+    if (hit.seg < 0 || hit.d * E_S > 8) return;
+    if (disp.length >= MAX_PATH_NODES) {
+      showStatus(
+        `A profile can have at most ${MAX_PATH_NODES} points`,
+        "error",
+        4e3
+      );
+      return;
+    }
+    state.anchor = splitSegment(disp, hit.seg, hit.t);
+    writeDisplayPath(disp, true);
+  }
+  function installEditor() {
+    el.editor.addEventListener("pointerdown", onPointerDown);
+    el.editor.addEventListener("pointermove", onPointerMove);
+    el.editor.addEventListener("pointerup", endDrag);
+    el.editor.addEventListener("pointercancel", endDrag);
+    el.editor.addEventListener("lostpointercapture", endDrag);
+    el.editor.addEventListener("dblclick", onDoubleClick);
+  }
+
+  // plugins/corner-profiles/src/ui/interact/picker.ts
+  function cornerAt(target) {
+    const hot = target instanceof Element ? target.closest("[data-corner]") : null;
+    const id = hot?.getAttribute("data-corner");
+    return CORNER_IDS.find((c) => c === id);
+  }
+  function toggleCorner(id, additive) {
+    const before = primaryId();
+    if (additive) {
+      if (!state.edit.has(id)) state.edit.add(id);
+      else if (state.edit.size > 1) state.edit.delete(id);
+    } else {
+      state.edit = /* @__PURE__ */ new Set([id]);
+    }
+    if (primaryId() !== before) state.anchor = -1;
+    render();
+  }
+  function installPicker() {
+    el.shape.addEventListener("click", (e) => {
+      const id = cornerAt(e.target);
+      if (id) toggleCorner(id, e.shiftKey);
+    });
+    el.shape.addEventListener("keydown", (e) => {
+      const id = cornerAt(e.target);
+      if (id && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault();
+        toggleCorner(id, e.shiftKey);
+      }
+    });
+    el.allCorners.addEventListener("click", () => {
+      const before = primaryId();
+      state.edit = new Set(CORNER_IDS);
+      if (primaryId() !== before) state.anchor = -1;
+      render();
+    });
+  }
+
+  // plugins/corner-profiles/src/ui/interact/points.ts
+  function deleteAnchor() {
+    const disp = displayPath(primary());
+    const i = state.anchor;
+    if (i <= 0 || i >= disp.length - 1) return;
+    disp.splice(i, 1);
+    refreshAuto(disp);
+    state.anchor = -1;
+    writeDisplayPath(disp, true);
+  }
+  function setAnchorMode(mode) {
+    const disp = displayPath(primary());
+    const n = disp[state.anchor];
+    if (!n) return;
+    const before = pathSig(disp) + n.mode;
+    n.mode = mode;
+    if (mode === "sharp") {
+      n.ix = n.ox = n.x;
+      n.iy = n.oy = n.y;
+    }
+    refreshAuto(disp);
+    if (pathSig(disp) + n.mode === before) return;
+    writeDisplayPath(disp, true);
+  }
+  function installPoints() {
+    el.ptSharp.addEventListener("click", () => setAnchorMode("sharp"));
+    el.ptSmooth.addEventListener("click", () => setAnchorMode("auto"));
+    el.ptDelete.addEventListener("click", deleteAnchor);
+    el.editorWrap.addEventListener("keydown", (e) => {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        deleteAnchor();
+      } else if (e.key === "Escape" && state.anchor !== -1) {
+        state.anchor = -1;
+        renderEditor();
+      }
+    });
+  }
+
+  // plugins/corner-profiles/src/ui/interact/profiles.ts
+  function closestData(target, name) {
+    const node = target instanceof Element ? target.closest(`[data-${name}]`) : null;
+    return node ? node.getAttribute(`data-${name}`) : null;
+  }
+  function profileAt(e, name) {
+    const index = closestData(e.target, name);
+    return index === null ? void 0 : state.profiles[Number(index)];
+  }
+  function onPresetClick(e) {
+    const kind = CORNER_KINDS.find((k) => k === closestData(e.target, "kind"));
+    if (kind) onPreset(kind);
+  }
+  function onSavedClick(e) {
+    const doomed = profileAt(e, "delete");
+    if (doomed) post({ type: "delete-profile", id: doomed.id });
+    else {
+      const picked = profileAt(e, "use");
+      if (picked) applySaved(picked);
+    }
+  }
+  function focusSaveName() {
+    el.saveName.focus();
+    el.saveName.select();
+  }
+  function openSave() {
+    state.saving = true;
+    el.saveName.value = `Profile ${state.profiles.length + 1}`;
+    renderSaved();
+    nextFrame(focusSaveName);
+  }
+  function closeSave() {
+    state.saving = false;
+    renderSaved();
+  }
+  function confirmSave() {
+    const name = el.saveName.value.trim().slice(0, MAX_PROFILE_NAME);
+    if (!name) {
+      showStatus("Enter a name for the profile", "error", 4e3);
+      return;
+    }
+    if (state.profiles.length >= MAX_PROFILES) {
+      showStatus(`You can save up to ${MAX_PROFILES} profiles`, "error", 4e3);
+      return;
+    }
+    post({ type: "save-profile", name, path: displayPath(primary()) });
+    closeSave();
+  }
+  function installProfiles() {
+    el.presets.addEventListener("click", onPresetClick);
+    el.saved.addEventListener("click", onSavedClick);
+    el.saveOpen.addEventListener("click", openSave);
+    el.saveCancel.addEventListener("click", closeSave);
+    el.saveConfirm.addEventListener("click", confirmSave);
+    el.saveName.addEventListener("keydown", (e) => {
+      if (e.isComposing || e.keyCode === 229) return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        confirmSave();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        closeSave();
+      }
+    });
+  }
+
+  // plugins/corner-profiles/src/ui/interact/shortcuts.ts
+  function installShortcuts() {
+    document.addEventListener("keydown", (e) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey || isTextEntry(e.target)) return;
+      const key = e.key.toLowerCase();
+      if (key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+      } else if (key === "y" && e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        redo();
+      }
+    });
+  }
+
+  // plugins/corner-profiles/src/ui/main.ts
+  function reportHeight() {
+    let lastHeight = 0;
+    new ResizeObserver(() => {
+      const height = Math.ceil(el.root.getBoundingClientRect().height);
+      if (height !== lastHeight) {
+        lastHeight = height;
+        post({ type: "resize", height });
+      }
+    }).observe(el.root);
+  }
+  onSandboxMessage(handleSandboxMessage);
+  installPicker();
+  installControls();
+  installProfiles();
+  installEditor();
+  installPoints();
+  installShortcuts();
+  reportHeight();
+  buildPresets();
+  render();
+  post({ type: "ready" });
+})();
+
+    </script>
+  </body>
+</html>

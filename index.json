@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "plugins": [
+    {
+      "dir": "corner-profiles",
+      "name": "EZG Figma Tools",
+      "id": "1686297320484012289"
+    }
+  ]
+}

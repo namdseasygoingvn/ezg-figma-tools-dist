@@ -1,0 +1,22 @@
+{
+  "name": "EZG Figma Tools",
+  "id": "1686297320484012289",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": [
+    "figma"
+  ],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "https://raw.githubusercontent.com"
+    ]
+  },
+  "relaunchButtons": [
+    {
+      "command": "edit",
+      "name": "Edit corner profiles"
+    }
+  ]
+}
