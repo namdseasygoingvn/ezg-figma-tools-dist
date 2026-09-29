@@ -729,10 +729,6 @@ input[type=range]:focus-visible::-moz-range-thumb {
             />
             <input type="number" id="steps" step="1" />
           </div>
-          <div class="cp-field" id="flip-field" hidden>
-            <label for="flip">Lật</label>
-            <input type="checkbox" role="switch" class="cp-switch" id="flip" />
-          </div>
           <div class="cp-block">
             <div class="cp-row cp-saved-head">
               <span class="cp-caption">Profile đã lưu</span>
@@ -833,6 +829,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
                   spellcheck="false"
                 />
               </label>
+              <button
+                class="cp-icon-btn"
+                id="pt-flip"
+                aria-pressed="false"
+              ></button>
               <button class="cp-icon-btn" id="pt-delete"></button>
             </div>
           </div>
@@ -1004,8 +1005,6 @@ input[type=range]:focus-visible::-moz-range-thumb {
     presets: block("presets"),
     stepsField: block("steps-field"),
     steps: sliderFor("steps"),
-    flipField: block("flip-field"),
-    flip: input("flip"),
     saveOpen: button("save-open"),
     saveRow: block("save-row"),
     saveName: input("save-name"),
@@ -1025,6 +1024,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     ptModes: modeButtons(),
     ptX: input("pt-x"),
     ptY: input("pt-y"),
+    ptFlip: button("pt-flip"),
     ptDelete: button("pt-delete"),
     status: block("status"),
     live: input("live"),
@@ -1066,12 +1066,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
     );
     return `<svg ${ATTRS}><mask id="${id}"><rect width="16" height="16" fill="#fff" />${holes.join("")}</mask><g mask="url(#${id})">${icon.lines}</g>${nodes.join("")}</svg>`;
   }
+  var FLIP = `<svg ${ATTRS}><path d="M8 2v12" stroke-dasharray="1.5 1.5" /><path d="M6 4 2 12h4ZM10 4l4 8h-4Z" /></svg>`;
   var DELETE = `<svg ${ATTRS}><path d="m4 4 8 8M12 4l-8 8" stroke-width="1.5" /></svg>`;
   function installIcons() {
     for (const b of el.ptModes) {
       const mode = b.dataset.mode ?? "";
       if (ICONS[mode]) b.innerHTML = iconSvg(mode, ICONS[mode]);
     }
+    el.ptFlip.innerHTML = FLIP;
     el.ptDelete.innerHTML = DELETE;
   }
 
@@ -1449,6 +1451,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     nCorners: (n) => `${n} g\xF3c`,
     mixed: "H\u1ED7n h\u1EE3p",
     snapTip: "Gi\u1EEF Shift \u0111\u1EC3 snap",
+    flip: "L\u1EADt",
     deleteNode: "Xo\xE1 node",
     maxNodes: (n) => `M\u1ED9t profile c\xF3 t\u1ED1i \u0111a ${n} node`,
     defaultProfileName: (n) => `Profile ${n}`,
@@ -1628,13 +1631,12 @@ input[type=range]:focus-visible::-moz-range-thumb {
     setSliderValue(el.sx, p.sx);
     setSliderValue(el.sy, p.sy);
     el.asym.checked = p.asym;
-    if (!state.drag) {
-      el.stepsField.hidden = p.kind !== "steps";
-      el.flipField.hidden = p.kind === "none" || isSymmetric(p.path);
-    }
+    if (!state.drag) el.stepsField.hidden = p.kind !== "steps";
     setSliderBounds(el.steps, MIN_STEPS, MAX_STEPS);
     setSliderValue(el.steps, p.steps);
-    el.flip.checked = p.flip;
+    el.ptFlip.disabled = p.kind === "none" || isSymmetric(p.path);
+    setAttr(el.ptFlip, "aria-pressed", String(p.flip));
+    setAttr(el.ptFlip, "title", UI_TEXT.flip);
   }
 
   // plugins/corner-profiles/src/ui/curve/handles.ts
@@ -1865,8 +1867,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
       `<rect class="e-bg" x="${E_PAD}" y="${E_PAD}" width="${E_S}" height="${E_S}"/>`,
       `<path class="e-grid" d="${gridPath()}"/>`,
       `<mask id="e-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="${E_SIZE}" height="${E_SIZE}"><rect width="${E_SIZE}" height="${E_SIZE}" fill="#fff"/>${none ? "" : `<path d="${cut}" fill="#000"/>`}</mask>`,
-      `<path class="e-material" d="M${ex(0)} ${E_SIZE}V${ey(0)}H${E_SIZE}V${E_SIZE}Z" mask="url(#e-cut)"/>`,
-      `<path class="e-edge" d="M${ex(0)} ${E_SIZE}V${ey(0)}H${E_SIZE}"/>`,
+      `<path class="e-material" d="M${ex(0)} ${ey(1)}V${ey(0)}H${ex(1)}V${ey(1)}Z" mask="url(#e-cut)"/>`,
+      `<path class="e-edge" d="M${ex(0)} ${ey(1)}V${ey(0)}H${ex(1)}"/>`,
       `<path class="e-curve${none ? " is-none" : ""}" d="${start2}${segs}"/>`
     ];
     if (a >= 0) {
@@ -2587,7 +2589,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       }
     });
     el.asym.addEventListener("change", () => setAsym(el.asym.checked));
-    el.flip.addEventListener("change", () => setFlip(el.flip.checked));
+    el.ptFlip.addEventListener("click", () => setFlip(!primary().flip));
     el.live.addEventListener("change", () => {
       state.live = el.live.checked;
       post({ type: "set-prefs", prefs: { live: state.live } });
