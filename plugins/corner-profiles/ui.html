@@ -342,6 +342,68 @@ input[type=range]:focus-visible::-moz-range-thumb {
   box-shadow: inset 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
 }
 
+/* plugins/corner-profiles/src/ui/styles/radius.css */
+.cp-radius-row,
+.cp-radius-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 24px;
+  column-gap: 8px;
+  row-gap: 8px;
+  padding: 0 16px;
+  align-items: center;
+}
+.cp-radius-row {
+  min-height: 32px;
+}
+.cp-radius-grid {
+  margin-top: 8px;
+}
+.cp-radius-grid[hidden],
+#asym-panel[hidden] {
+  display: none;
+}
+#radius-more {
+  grid-row: 2;
+  grid-column: 3;
+}
+#asym-panel {
+  margin-top: 8px;
+}
+.cp-num {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: var(--figma-color-bg-secondary, #f5f5f5);
+  min-width: 0;
+}
+.cp-num:hover {
+  border-color: var(--figma-color-border);
+}
+.cp-num:focus-within {
+  border-color: var(--figma-color-border-selected);
+}
+.cp-num-icon {
+  display: flex;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0 4px;
+  color: var(--figma-color-icon-secondary, #666);
+  cursor: ew-resize;
+  user-select: none;
+}
+.cp-num input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 4px 0 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
 /* plugins/corner-profiles/src/ui/styles/switch.css */
 .cp-switch {
   appearance: none;
@@ -752,25 +814,37 @@ input[type=range]:focus-visible::-moz-range-thumb {
         </section>
 
         <section class="cp-group" aria-labelledby="size-title">
-          <h2 class="cp-group-title" id="size-title">Kích thước</h2>
-          <div class="cp-field" id="size-field">
-            <label id="size-label" for="size">Kích thước</label>
-            <input type="range" id="size-range" aria-labelledby="size-label" />
-            <input type="number" id="size" min="0" step="1" />
-          </div>
-          <div class="cp-field">
-            <label for="asym">Bất đối xứng</label>
-            <input type="checkbox" role="switch" class="cp-switch" id="asym" />
-          </div>
-          <div class="cp-field" id="sx-field" hidden>
-            <label id="sx-label" for="sx">Ngang</label>
-            <input type="range" id="sx-range" aria-labelledby="sx-label" />
-            <input type="number" id="sx" min="0" step="1" />
-          </div>
-          <div class="cp-field" id="sy-field" hidden>
-            <label id="sy-label" for="sy">Dọc</label>
-            <input type="range" id="sy-range" aria-labelledby="sy-label" />
-            <input type="number" id="sy" min="0" step="1" />
+          <h2 class="cp-group-title" id="size-title">Bán kính góc</h2>
+          <!-- prettier-ignore -->
+          <div class="cp-radius" id="radius">
+            <div class="cp-radius-row">
+              <label class="cp-num" id="size-box"><span class="cp-num-icon" data-icon="all" data-handle="all"></span><input type="number" id="size" min="0" step="1" aria-label="Bán kính góc" /></label>
+              <input type="range" id="size-range" aria-label="Bán kính góc" />
+              <button class="cp-icon-btn" id="radius-split" aria-pressed="false" data-icon="split" title="Góc độc lập"></button>
+            </div>
+            <div class="cp-radius-grid" id="radius-grid" hidden>
+              <label class="cp-num"><span class="cp-num-icon" data-icon="tl" data-handle="tl"></span><input type="number" id="radius-tl" min="0" step="1" aria-label="Bán kính Trên trái" /></label>
+              <label class="cp-num"><span class="cp-num-icon" data-icon="tr" data-handle="tr"></span><input type="number" id="radius-tr" min="0" step="1" aria-label="Bán kính Trên phải" /></label>
+              <label class="cp-num"><span class="cp-num-icon" data-icon="bl" data-handle="bl"></span><input type="number" id="radius-bl" min="0" step="1" aria-label="Bán kính Dưới trái" /></label>
+              <label class="cp-num"><span class="cp-num-icon" data-icon="br" data-handle="br"></span><input type="number" id="radius-br" min="0" step="1" aria-label="Bán kính Dưới phải" /></label>
+              <button class="cp-icon-btn" id="radius-more" aria-pressed="false" data-icon="tune" title="Bất đối xứng"></button>
+            </div>
+            <div id="asym-panel" hidden>
+              <div class="cp-field">
+                <label for="asym">Bất đối xứng</label>
+                <input type="checkbox" role="switch" class="cp-switch" id="asym" />
+              </div>
+              <div class="cp-field" id="sx-field" hidden>
+                <label id="sx-label" for="sx">Ngang</label>
+                <input type="range" id="sx-range" aria-labelledby="sx-label" />
+                <input type="number" id="sx" min="0" step="1" />
+              </div>
+              <div class="cp-field" id="sy-field" hidden>
+                <label id="sy-label" for="sy">Dọc</label>
+                <input type="range" id="sy-range" aria-labelledby="sy-label" />
+                <input type="number" id="sy" min="0" step="1" />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -896,6 +970,35 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
+  // plugins/corner-profiles/src/shared/constants.ts
+  var CORNER_IDS = ["tl", "tr", "br", "bl"];
+  var CORNER_KINDS = [
+    "none",
+    "round",
+    "chamfer",
+    "concave",
+    "notch",
+    "steps",
+    "custom"
+  ];
+  var NODE_MODES = [
+    "sharp",
+    "auto",
+    "aligned",
+    "free"
+  ];
+  var KAPPA = 0.5522847498307936;
+  var EPS = 1e-6;
+  var MIN_CORNER_SIZE = 0.01;
+  var CUTTER_BLEED = 1;
+  var MAX_PATH_NODES = 64;
+  var MAX_PROFILES = 32;
+  var MAX_PROFILE_NAME = 40;
+  var MIN_STEPS = 2;
+  var MAX_STEPS = 12;
+  var DEFAULT_STEPS = 3;
+  var PREVIEW_FALLBACK = { width: 160, height: 100 };
+
   // plugins/corner-profiles/src/ui/dom/props.ts
   var TEXT_ENTRY = 'input:not([type=range]):not([type=checkbox]):not([type=radio]), textarea, [contenteditable]:not([contenteditable="false"])';
   function isTextEntry(node) {
@@ -997,6 +1100,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
     if (found.length === 0) throw new Error("ui.html is missing mode buttons");
     return found;
   }
+  var radiusFields = Object.fromEntries(
+    CORNER_IDS.map((id) => [id, input(`radius-${id}`)])
+  );
   var el = {
     root: block("plugin-root"),
     cornerLabel: block("corner-label"),
@@ -1012,8 +1118,12 @@ input[type=range]:focus-visible::-moz-range-thumb {
     saveCancel: button("save-cancel"),
     saved: block("saved"),
     savedEmpty: block("saved-empty"),
-    sizeField: block("size-field"),
     size: sliderFor("size"),
+    radiusGrid: block("radius-grid"),
+    radiusSplit: button("radius-split"),
+    radiusMore: button("radius-more"),
+    asymPanel: block("asym-panel"),
+    radiusFields,
     asym: input("asym"),
     sxField: block("sx-field"),
     sx: sliderFor("sx"),
@@ -1077,34 +1187,33 @@ input[type=range]:focus-visible::-moz-range-thumb {
     el.ptDelete.innerHTML = DELETE;
   }
 
-  // plugins/corner-profiles/src/shared/constants.ts
-  var CORNER_IDS = ["tl", "tr", "br", "bl"];
-  var CORNER_KINDS = [
-    "none",
-    "round",
-    "chamfer",
-    "concave",
-    "notch",
-    "steps",
-    "custom"
+  // plugins/corner-profiles/src/ui/dom/radius-icons.ts
+  var FLIPS = [
+    "",
+    ' transform="matrix(-1 0 0 1 16 0)"',
+    ' transform="matrix(1 0 0 -1 0 16)"',
+    ' transform="matrix(-1 0 0 -1 16 16)"'
   ];
-  var NODE_MODES = [
-    "sharp",
-    "auto",
-    "aligned",
-    "free"
-  ];
-  var KAPPA = 0.5522847498307936;
-  var EPS = 1e-6;
-  var MIN_CORNER_SIZE = 0.01;
-  var CUTTER_BLEED = 1;
-  var MAX_PATH_NODES = 64;
-  var MAX_PROFILES = 32;
-  var MAX_PROFILE_NAME = 40;
-  var MIN_STEPS = 2;
-  var MAX_STEPS = 12;
-  var DEFAULT_STEPS = 3;
-  var PREVIEW_FALLBACK = { width: 160, height: 100 };
+  var corners = (d) => FLIPS.map((t) => `<path d="${d}"${t} />`).join("");
+  var svg2 = (body) => `<svg ${ATTRS}>${body}</svg>`;
+  var single = (flip) => svg2(`<path d="M4 12V8a4 4 0 0 1 4-4h4"${flip} />`);
+  var ICONS2 = {
+    all: svg2(corners("M2.5 6.5V6a3.5 3.5 0 0 1 3.5-3.5h.5")),
+    split: svg2(corners("M2.5 6V2.5H6")),
+    tl: single(FLIPS[0]),
+    tr: single(FLIPS[1]),
+    bl: single(FLIPS[2]),
+    br: single(FLIPS[3]),
+    tune: svg2(
+      '<path d="M5 2v3M5 9v5M11 2v5M11 11v3" /><circle cx="5" cy="7" r="2" /><circle cx="11" cy="9" r="2" />'
+    )
+  };
+  function installRadiusIcons() {
+    for (const node of document.querySelectorAll("[data-icon]")) {
+      const icon = ICONS2[node.dataset.icon ?? ""];
+      if (icon) node.innerHTML = icon;
+    }
+  }
 
   // plugins/corner-profiles/src/shared/path.ts
   function reversePath(path) {
@@ -1596,7 +1705,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
     statusHoldUntil: 0,
     anchor: -1,
     drag: null,
-    saving: false
+    saving: false,
+    split: false,
+    asymOpen: false
   };
   var editedIds = () => CORNER_IDS.filter((id) => state.edit.has(id));
   var primaryId = () => state.edit.values().next().value ?? "tl";
@@ -1621,13 +1732,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var sliderMax = (value) => String(Math.max(1, Math.ceil(value)));
   function renderControls() {
     const p = primary();
-    setSliderMax(el.size, sliderMax(Math.min(state.width, state.height)));
     setSliderMax(el.sx, sliderMax(state.width));
     setSliderMax(el.sy, sliderMax(state.height));
-    el.sizeField.hidden = p.asym;
     el.sxField.hidden = !p.asym;
     el.syField.hidden = !p.asym;
-    setSliderValue(el.size, p.sx);
     setSliderValue(el.sx, p.sx);
     setSliderValue(el.sy, p.sy);
     el.asym.checked = p.asym;
@@ -1637,6 +1745,37 @@ input[type=range]:focus-visible::-moz-range-thumb {
     el.ptFlip.disabled = p.kind === "none" || isSymmetric(p.path);
     setAttr(el.ptFlip, "aria-pressed", String(p.flip));
     setAttr(el.ptFlip, "title", UI_TEXT.flip);
+  }
+
+  // plugins/corner-profiles/src/ui/render/radius.ts
+  var maxSize = () => Math.max(1, Math.ceil(Math.min(state.width, state.height)));
+  var round = (v) => Math.round(v * 100) / 100;
+  function renderSize(force) {
+    const cs = CORNER_IDS.map((id) => state.config[id]);
+    const first = cs[0];
+    const uniform = cs.every((c) => c.sx === c.sy && c.sx === first.sx);
+    setSliderValue(el.size, first.sx);
+    if (!force && document.activeElement === el.size.input) return;
+    el.size.input.value = uniform ? String(round(first.sx)) : "";
+    el.size.input.placeholder = uniform ? "" : UI_TEXT.mixed;
+  }
+  function renderRadius(force = false) {
+    const max = String(maxSize());
+    setSliderMax(el.size, max);
+    renderSize(force);
+    for (const id of CORNER_IDS) {
+      const c = state.config[id];
+      const input2 = el.radiusFields[id];
+      setAttr(input2, "max", max);
+      if (!force && document.activeElement === input2) continue;
+      const same = c.sx === c.sy;
+      input2.value = same ? String(round(c.sx)) : "";
+      input2.placeholder = same ? "" : `${round(c.sx)}\xD7${round(c.sy)}`;
+    }
+    el.radiusGrid.hidden = !state.split;
+    setAttr(el.radiusSplit, "aria-pressed", String(state.split));
+    setAttr(el.radiusMore, "aria-pressed", String(state.asymOpen));
+    el.asymPanel.hidden = !(state.split && state.asymOpen);
   }
 
   // plugins/corner-profiles/src/ui/curve/handles.ts
@@ -1755,7 +1894,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   function scrub(input2, o) {
     const s = { input: input2, value: clamp(0, o.min, o.max) };
     decimals.set(s, o.decimals);
-    const round = (v) => Number(clamp(v, o.min, o.max).toFixed(o.decimals));
+    const round2 = (v) => Number(clamp(v, o.min, o.max).toFixed(o.decimals));
     const emit = (v, final) => editors.get(s)?.(v, final);
     const show = () => {
       input2.value = s.value.toFixed(o.decimals);
@@ -1763,7 +1902,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const commitTyped = () => {
       const typed = Number(input2.value.trim().replace(",", "."));
       if (input2.value.trim() === "" || !Number.isFinite(typed)) return show();
-      const v = round(typed);
+      const v = round2(typed);
       if (v !== s.value) emit(v, true);
       input2.value = v.toFixed(o.decimals);
     };
@@ -1803,7 +1942,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
         dragging = true;
         input2.classList.add("scrubbing");
       }
-      latest = round(startValue + dx * o.perPx);
+      latest = round2(startValue + dx * o.perPx);
       input2.value = latest.toFixed(o.decimals);
       emit(latest, false);
     });
@@ -2306,6 +2445,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     renderPresets();
     renderSaved();
     renderControls();
+    renderRadius();
     renderEditor();
     renderFooter();
   }
@@ -2517,10 +2657,23 @@ input[type=range]:focus-visible::-moz-range-thumb {
       const c = state.config[id];
       if (field !== "sy") c.sx = v;
       if (field !== "sx") c.sy = v;
-      if (field !== "both") c.asym = true;
+      c.asym = true;
     }
     finishEdit(final, "size-" + field);
   }
+  function setUniform(ids, value, final, key) {
+    const v = Math.max(0, toNumber(value, 0));
+    beginEdit();
+    for (const id of ids) {
+      const c = state.config[id];
+      c.sx = v;
+      c.sy = v;
+      c.asym = false;
+    }
+    finishEdit(final, key);
+  }
+  var setAllSizes = (v, final) => setUniform(CORNER_IDS, v, final, "size-all");
+  var setCornerSize = (id, v, final) => setUniform([id], v, final, "size-" + id);
   function setAsym(on) {
     beginEdit();
     for (const id of editedIds()) {
@@ -2574,18 +2727,24 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/corner-profiles/src/ui/interact/controls.ts
+  var parkable = () => [
+    ...sliders.map((s) => s.input),
+    ...Object.values(el.radiusFields)
+  ];
   function installControls() {
-    onSliderEdit(el.size, (v, final) => setSizes("both", v, final));
     onSliderEdit(el.sx, (v, final) => setSizes("sx", v, final));
     onSliderEdit(el.sy, (v, final) => setSizes("sy", v, final));
     onSliderEdit(el.steps, (v, final) => setSteps(v, final));
-    for (const s of sliders)
-      s.input.addEventListener("focusout", () => renderControls());
+    const catchUp = () => {
+      renderControls();
+      renderRadius();
+    };
+    for (const input2 of parkable()) input2.addEventListener("focusout", catchUp);
     window.addEventListener("blur", () => {
-      const field = sliders.find((s) => s.input === document.activeElement);
+      const field = parkable().find((i) => i === document.activeElement);
       if (field) {
-        field.input.blur();
-        renderControls();
+        field.blur();
+        catchUp();
       }
     });
     el.asym.addEventListener("change", () => setAsym(el.asym.checked));
@@ -2818,6 +2977,98 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
+  // plugins/corner-profiles/src/ui/dom/drag-handle.ts
+  var THRESHOLD = 3;
+  function onHandleDrag(handle, start2, edit, max) {
+    let origin = null;
+    let dragged = false;
+    let last = 0;
+    let startValue = 0;
+    const valueAt = (e) => clamp(Math.round(origin.v + e.clientX - origin.x), 0, max());
+    const finish = () => {
+      if (!origin) return;
+      const wasDragged = dragged;
+      origin = null;
+      dragged = false;
+      if (wasDragged && last !== startValue) edit(last, true);
+    };
+    handle.addEventListener("pointerdown", (e) => {
+      const ev = e;
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      startValue = start2();
+      origin = { x: ev.clientX, v: startValue, id: ev.pointerId };
+      dragged = false;
+      handle.setPointerCapture(ev.pointerId);
+    });
+    handle.addEventListener("pointermove", (e) => {
+      const ev = e;
+      if (!origin || ev.pointerId !== origin.id) return;
+      if (!dragged && Math.abs(ev.clientX - origin.x) < THRESHOLD) return;
+      dragged = true;
+      last = valueAt(ev);
+      edit(last, false);
+    });
+    handle.addEventListener("pointerup", finish);
+    handle.addEventListener("lostpointercapture", finish);
+  }
+
+  // plugins/corner-profiles/src/ui/interact/radius.ts
+  function installField(id) {
+    const input2 = el.radiusFields[id];
+    const commit2 = () => {
+      const typed = input2.valueAsNumber;
+      const c = state.config[id];
+      if (Number.isFinite(typed)) {
+        const v = clamp(typed, 0, maxSize());
+        if (!(c.sx === c.sy && v === c.sx)) setCornerSize(id, v, true);
+      }
+      renderRadius(true);
+    };
+    input2.addEventListener("change", commit2);
+    input2.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      commit2();
+      input2.select();
+    });
+  }
+  function installHandles() {
+    for (const h of document.querySelectorAll('[data-handle="all"]'))
+      onHandleDrag(
+        h,
+        () => state.config.tl.sx,
+        (v, final) => setAllSizes(v, final),
+        maxSize
+      );
+    for (const id of CORNER_IDS)
+      for (const h of document.querySelectorAll(`[data-handle="${id}"]`))
+        onHandleDrag(
+          h,
+          () => state.config[id].sx,
+          (v, final) => setCornerSize(id, v, final),
+          maxSize
+        );
+  }
+  function installRadius() {
+    onSliderEdit(el.size, (v, final) => setAllSizes(v, final));
+    const resync = () => renderRadius(true);
+    el.size.input.addEventListener("change", resync);
+    el.size.input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") resync();
+    });
+    for (const id of CORNER_IDS) installField(id);
+    installHandles();
+    el.radiusSplit.addEventListener("click", () => {
+      state.split = !state.split;
+      renderRadius();
+    });
+    el.radiusMore.addEventListener("click", () => {
+      state.asymOpen = !state.asymOpen;
+      renderRadius();
+    });
+  }
+
   // plugins/corner-profiles/src/ui/interact/profiles.ts
   function closestData(target, name) {
     const node = target instanceof Element ? target.closest(`[data-${name}]`) : null;
@@ -2920,6 +3171,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
   installEditor();
   installPoints();
   installIcons();
+  installRadiusIcons();
+  installRadius();
   installCoords();
   installShortcuts();
   reportHeight();
