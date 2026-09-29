@@ -21,6 +21,7 @@ html,
 body {
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 body {
   background: var(--figma-color-bg, #fff);
@@ -153,9 +154,20 @@ input {
 .cp-tab:focus-visible {
   box-shadow: inset 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
 }
+.cp-rail {
+  overflow: hidden;
+}
 .cp-tool {
   min-width: 0;
+  max-height: 100vh;
+  overflow-y: auto;
   border-left: 1px solid var(--figma-color-border, #e6e6e6);
+}
+.cp-tool-title {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--figma-color-bg, #fff);
 }
 
 /* plugins/ezg-tools/src/ui/styles/buttons.css */
@@ -1249,7 +1261,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var sliders = [el.size, el.sx, el.sy, el.steps];
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.13" : "dev";
+  var BUILD_VERSION = true ? "0.1.14" : "dev";
 
   // plugins/ezg-tools/src/ui/labels.ts
   var CORNER_NAMES = {
@@ -2709,6 +2721,30 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
+  // plugins/ezg-tools/src/ui/panel-height.ts
+  function contentHeight(panels) {
+    let height = el.rail.scrollHeight;
+    for (const panel of panels)
+      if (!panel.hidden) height = Math.max(height, panel.scrollHeight);
+    return Math.ceil(height);
+  }
+  function reportHeight() {
+    const panels = Array.from(el.root.querySelectorAll(".cp-tool"));
+    let lastHeight = 0;
+    const observer = new ResizeObserver(() => {
+      const height = contentHeight(panels);
+      if (height !== lastHeight) {
+        lastHeight = height;
+        post({ type: "resize", height });
+      }
+    });
+    observer.observe(el.rail);
+    for (const panel of panels) {
+      observer.observe(panel);
+      for (const child of Array.from(panel.children)) observer.observe(child);
+    }
+  }
+
   // plugins/ezg-tools/src/ui/frame.ts
   function nextFrame(fn) {
     let done = false;
@@ -3366,16 +3402,6 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/ui/main.ts
-  function reportHeight() {
-    let lastHeight = 0;
-    new ResizeObserver(() => {
-      const height = Math.ceil(el.root.getBoundingClientRect().height);
-      if (height !== lastHeight) {
-        lastHeight = height;
-        post({ type: "resize", height });
-      }
-    }).observe(el.root);
-  }
   onSandboxMessage(handleSandboxMessage);
   installPicker();
   installControls();
@@ -3387,7 +3413,6 @@ input[type=range]:focus-visible::-moz-range-thumb {
   installRadius();
   installCoords();
   installShortcuts();
-  reportHeight();
   buildRail(el.rail);
   buildTitles();
   buildAbout();
@@ -3395,6 +3420,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   buildPresets();
   render();
   renderRail();
+  reportHeight();
   post({ type: "ready" });
 })();
 
