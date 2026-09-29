@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 
 // installer/src/install.ts
-import { copyFile, readFile, writeFile as writeFile2 } from "node:fs/promises";
+import { copyFile, readFile, rm as rm2, writeFile as writeFile2 } from "node:fs/promises";
 import { homedir as homedir2 } from "node:os";
-
-// installer/src/fetch-plugins.ts
-import { mkdir, rename, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join as join3 } from "node:path";
 
 // plugins/_loader/src/shared/version.ts
 function parseVersion(v) {
@@ -67,6 +64,8 @@ function parseIndex(raw) {
 }
 
 // installer/src/fetch-plugins.ts
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 async function download(path) {
   const url = distUrl(path);
   const res = await fetch(url);
@@ -191,6 +190,19 @@ function openFigma() {
 }
 
 // installer/src/figma-settings.ts
+import { dirname as dirname2 } from "node:path";
+
+// installer/src/stale-dirs.ts
+import { dirname, relative, sep } from "node:path";
+function isPluginDirIn(dir, root) {
+  const rel = relative(root, dir);
+  return rel !== "" && !rel.startsWith("..") && !rel.includes(sep);
+}
+function staleDirs(manifestPaths, root) {
+  return manifestPaths.map(dirname).filter((dir) => isPluginDirIn(dir, root));
+}
+
+// installer/src/figma-settings.ts
 var SettingsFormatError = class extends Error {
 };
 function isRecord(value) {
@@ -249,15 +261,46 @@ function entriesFor(plugin, firstId) {
     }
   ];
 }
-function registerPlugins(settings, plugins) {
-  const { root, entries } = readEntries(settings);
+function movedManifests(entries, plugins, installRoot) {
+  const paths = new Set(plugins.map((plugin) => plugin.manifestPath));
+  const ids = new Set(plugins.map((plugin) => plugin.id));
+  return entries.filter(
+    (entry) => isManifestEntry(entry) && ids.has(String(entry.lastKnownPluginId)) && !paths.has(entry.manifestPath) && isPluginDirIn(dirname2(entry.manifestPath), installRoot)
+  );
+}
+function movedManifestPaths(settings, plugins, installRoot) {
+  const { entries } = readEntries(settings);
+  return movedManifests(entries, plugins, installRoot).map(
+    (entry) => entry.manifestPath
+  );
+}
+function isPartOf(entry, manifest) {
+  const meta = isRecord(manifest.fileMetadata) ? manifest.fileMetadata : {};
+  const uiIds = Array.isArray(meta.uiFileIds) ? meta.uiFileIds : [];
+  return entry.id === manifest.id || entry.id === meta.codeFileId || uiIds.includes(entry.id) || isRecord(entry.fileMetadata) && entry.fileMetadata.manifestFileId === manifest.id;
+}
+function registerPlugins(settings, plugins, installRoot) {
+  const { root, entries: all } = readEntries(settings);
+  const moved = movedManifests(all, plugins, installRoot);
+  const entries = all.filter((entry) => !moved.some((m) => isPartOf(entry, m)));
   const added = [];
-  let nextId = Math.max(0, ...entries.map((entry) => entry.id)) + 1;
+  let nextId = Math.max(0, ...all.map((entry) => entry.id)) + 1;
   for (const plugin of missingPlugins(settings, plugins)) {
     added.push(...entriesFor(plugin, nextId));
     nextId += 3;
   }
   return { ...root, localFileExtensions: [...entries, ...added] };
+}
+
+// installer/src/install-plan.ts
+function planInstall(settings, plugins, installRoot) {
+  const missing = missingPlugins(settings, plugins);
+  const moved = movedManifestPaths(settings, plugins, installRoot);
+  return {
+    missing,
+    stale: staleDirs(moved, installRoot),
+    rewrite: missing.length > 0 || moved.length > 0
+  };
 }
 
 // installer/src/install.ts
@@ -285,19 +328,27 @@ async function main() {
   for (const plugin of plugins) console.log(`  ok ${plugin.name}`);
   console.log("> Registering in Figma\u2026");
   const path = settingsPath();
-  const missing = missingPlugins((await readSettings(path)).json, plugins);
-  if (missing.length === 0) {
+  const installRoot = join3(homedir2(), ...INSTALL_DIR_PARTS);
+  const plan = planInstall(
+    (await readSettings(path)).json,
+    plugins,
+    installRoot
+  );
+  if (!plan.rewrite) {
+    for (const dir of plan.stale)
+      await rm2(dir, { recursive: true, force: true });
     console.log(`  ok already registered (v${version})`);
     console.log("Done. Open Figma \u2192 Plugins \u2192 Development.");
     return;
   }
   if (isFigmaRunning()) await quitFigma();
   const { raw, json } = await readSettings(path);
-  const next = registerPlugins(json, plugins);
+  const next = registerPlugins(json, plugins, installRoot);
   await copyFile(path, `${path}.ezg-bak`);
   await writeFile2(path, JSON.stringify(next, null, indentOf(raw)));
+  for (const dir of plan.stale) await rm2(dir, { recursive: true, force: true });
   openFigma();
-  console.log(`  ok ${missing.length} plugin added (Figma restarted)`);
+  console.log(`  ok ${plan.missing.length} plugin added (Figma restarted)`);
   console.log("Done. Open Figma \u2192 Plugins \u2192 Development.");
 }
 main().catch((error) => {

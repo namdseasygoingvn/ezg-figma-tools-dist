@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>Corner Profiles</title>
     <style>
-      /* plugins/corner-profiles/src/ui/styles/base.css */
+      /* plugins/ezg-tools/src/ui/styles/base.css */
 :root {
   color-scheme: light;
   --cp-focus: var(--figma-color-border-selected, #0d99ff);
@@ -48,30 +48,32 @@ input {
   display: none !important;
 }
 
-/* plugins/corner-profiles/src/ui/styles/layout.css */
+/* plugins/ezg-tools/src/ui/styles/layout.css */
 #plugin-root {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
   width: 100%;
-  display: flex;
-  flex-direction: column;
 }
 .cp-group {
-  padding: 8px 0;
-}
-.cp-group + .cp-group {
-  border-top: 1px solid var(--figma-color-border, #e6e6e6);
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--figma-color-border, #e6e6e6);
 }
 .cp-group-title {
   display: flex;
   align-items: center;
-  height: 32px;
+  height: 40px;
   margin: 0;
-  padding: 0 16px;
+  padding: 0 12px;
   font-size: inherit;
-  font-weight: 600;
+  font-weight: 550;
   color: var(--figma-color-text, #1e1e1e);
 }
 .cp-block {
-  padding: 0 16px;
+  padding: 0 12px;
+}
+.cp-title-row {
+  height: 40px;
+  font-weight: 550;
 }
 .cp-row {
   display: flex;
@@ -86,7 +88,7 @@ input {
   align-items: center;
   column-gap: 8px;
   min-height: 32px;
-  padding: 0 16px;
+  padding: 0 12px;
 }
 .cp-field > label {
   color: var(--figma-color-text-secondary, #666);
@@ -109,7 +111,47 @@ input {
   color: var(--figma-color-text-tertiary, #999);
 }
 
-/* plugins/corner-profiles/src/ui/styles/buttons.css */
+/* plugins/ezg-tools/src/ui/styles/rail.css */
+.cp-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0 0 4px;
+}
+.cp-tab {
+  appearance: none;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  height: var(--tab-height);
+  padding: 0;
+  margin-right: -1px;
+  border: 1px solid transparent;
+  border-right: 0;
+  border-radius: 5px 0 0 5px;
+  background: transparent;
+  color: var(--figma-color-icon-secondary, #666);
+  outline: none;
+  cursor: default;
+}
+.cp-tab:hover {
+  color: var(--figma-color-icon, #2c2c2c);
+}
+.cp-tab[aria-selected=true] {
+  border-color: var(--figma-color-border, #e6e6e6);
+  background: var(--figma-color-bg, #fff);
+  color: var(--figma-color-icon, #2c2c2c);
+}
+.cp-tab:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
+}
+.cp-tool {
+  min-width: 0;
+  border-left: 1px solid var(--figma-color-border, #e6e6e6);
+}
+
+/* plugins/ezg-tools/src/ui/styles/buttons.css */
 .cp-btn {
   appearance: none;
   display: inline-flex;
@@ -208,7 +250,7 @@ input {
   opacity: 0.4;
 }
 
-/* plugins/corner-profiles/src/ui/styles/inputs.css */
+/* plugins/ezg-tools/src/ui/styles/inputs.css */
 input[type=text],
 input[type=number] {
   appearance: none;
@@ -243,7 +285,7 @@ input:disabled {
   color: var(--figma-color-text-disabled, #b3b3b3);
 }
 
-/* plugins/corner-profiles/src/ui/styles/slider.css */
+/* plugins/ezg-tools/src/ui/styles/slider.css */
 input[type=range] {
   --track: var(--figma-color-bg-tertiary, #e6e6e6);
   --active: var(--figma-color-bg-brand, #0d99ff);
@@ -299,7 +341,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   box-shadow: 0 0 0 2px var(--cp-focus);
 }
 
-/* plugins/corner-profiles/src/ui/styles/scrub.css */
+/* plugins/ezg-tools/src/ui/styles/scrub.css */
 .cp-scrub {
   display: flex;
   align-items: center;
@@ -342,14 +384,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
   box-shadow: inset 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
 }
 
-/* plugins/corner-profiles/src/ui/styles/radius.css */
+/* plugins/ezg-tools/src/ui/styles/radius.css */
 .cp-radius-row,
 .cp-radius-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 24px;
   column-gap: 8px;
   row-gap: 8px;
-  padding: 0 16px;
+  padding: 0 12px;
   align-items: center;
 }
 .cp-radius-row {
@@ -410,7 +452,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   box-shadow: none;
 }
 
-/* plugins/corner-profiles/src/ui/styles/switch.css */
+/* plugins/ezg-tools/src/ui/styles/switch.css */
 .cp-switch {
   appearance: none;
   -webkit-appearance: none;
@@ -450,7 +492,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   opacity: 0.4;
 }
 
-/* plugins/corner-profiles/src/ui/styles/shape.css */
+/* plugins/ezg-tools/src/ui/styles/shape.css */
 .cp-shape {
   display: block;
   margin-top: 4px;
@@ -506,7 +548,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   stroke-linecap: round;
 }
 
-/* plugins/corner-profiles/src/ui/styles/thumbs.css */
+/* plugins/ezg-tools/src/ui/styles/thumbs.css */
 .cp-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -560,7 +602,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   stroke-linejoin: round;
 }
 
-/* plugins/corner-profiles/src/ui/styles/saved.css */
+/* plugins/ezg-tools/src/ui/styles/saved.css */
 .cp-saved-head {
   margin-top: 8px;
 }
@@ -622,7 +664,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   flex: 0 0 auto;
 }
 
-/* plugins/corner-profiles/src/ui/styles/editor.css */
+/* plugins/ezg-tools/src/ui/styles/editor.css */
 .cp-editor-wrap {
   width: fit-content;
   margin: 0 auto;
@@ -713,15 +755,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
   min-width: 0;
 }
 
-/* plugins/corner-profiles/src/ui/styles/footer.css */
+/* plugins/ezg-tools/src/ui/styles/footer.css */
 .cp-footer {
   position: sticky;
   bottom: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--figma-color-border, #e6e6e6);
+  padding: 12px;
   background: var(--figma-color-bg, #fff);
 }
 .cp-footer-row {
@@ -756,73 +797,87 @@ input[type=range]:focus-visible::-moz-range-thumb {
   cursor: default;
 }
 
-/* plugins/corner-profiles/src/ui/styles/index.css */
+/* plugins/ezg-tools/src/ui/styles/index.css */
 
     </style>
   </head>
   <body>
     <div id="plugin-root">
-      <main class="cp-content">
-        <section class="cp-group" aria-label="Góc">
-          <div class="cp-block">
-            <div class="cp-row">
-              <span class="cp-caption" id="corner-label">Tất cả góc</span>
-              <button class="cp-btn ghost" id="all-corners">Tất cả góc</button>
+      <nav
+        class="cp-rail"
+        id="rail"
+        role="tablist"
+        aria-orientation="vertical"
+      ></nav>
+      <div
+        class="cp-tool"
+        id="tool-corner-profiles"
+        role="tabpanel"
+        aria-labelledby="tab-corner-profiles"
+      >
+        <main class="cp-content">
+          <section class="cp-group" aria-label="Góc">
+            <div class="cp-block">
+              <div class="cp-row cp-title-row">
+                <span class="cp-caption" id="corner-label">Tất cả góc</span>
+                <button class="cp-btn ghost" id="all-corners">
+                  Tất cả góc
+                </button>
+              </div>
+              <svg
+                id="shape-svg"
+                class="cp-shape"
+                role="group"
+                aria-label="Xem trước hình dạng. Bấm vào một góc để sửa, Shift-click để thêm hoặc bỏ góc."
+              ></svg>
             </div>
-            <svg
-              id="shape-svg"
-              class="cp-shape"
-              role="group"
-              aria-label="Xem trước hình dạng. Bấm vào một góc để sửa, Shift-click để thêm hoặc bỏ góc."
-            ></svg>
-          </div>
-        </section>
+          </section>
 
-        <section class="cp-group" aria-labelledby="profile-title">
-          <h2 class="cp-group-title" id="profile-title">Profile</h2>
-          <div class="cp-block">
-            <div
-              class="cp-grid"
-              id="presets"
-              role="group"
-              aria-label="Preset profile"
-            ></div>
-          </div>
-          <div class="cp-field" id="steps-field" hidden>
-            <label id="steps-label" for="steps">Số bậc</label>
-            <input
-              type="range"
-              id="steps-range"
-              aria-labelledby="steps-label"
-            />
-            <input type="number" id="steps" step="1" />
-          </div>
-          <div class="cp-block">
-            <div class="cp-row cp-saved-head">
-              <span class="cp-caption">Profile đã lưu</span>
-              <button class="cp-btn ghost" id="save-open">Lưu profile</button>
+          <section class="cp-group" aria-labelledby="profile-title">
+            <h2 class="cp-group-title" id="profile-title">Profile</h2>
+            <div class="cp-block">
+              <div
+                class="cp-grid"
+                id="presets"
+                role="group"
+                aria-label="Preset profile"
+              ></div>
             </div>
-            <div class="cp-save-row" id="save-row" hidden>
+            <div class="cp-field" id="steps-field" hidden>
+              <label id="steps-label" for="steps">Số bậc</label>
               <input
-                type="text"
-                id="save-name"
-                placeholder="Tên profile"
-                aria-label="Tên profile"
-                autocomplete="off"
-                spellcheck="false"
+                type="range"
+                id="steps-range"
+                aria-labelledby="steps-label"
               />
-              <button class="cp-btn" id="save-confirm">Lưu</button>
-              <button class="cp-btn ghost" id="save-cancel">Huỷ</button>
+              <input type="number" id="steps" step="1" />
             </div>
-            <p class="cp-empty" id="saved-empty">Chưa có profile nào</p>
-            <div class="cp-grid cp-saved" id="saved"></div>
-          </div>
-        </section>
+            <div class="cp-block">
+              <div class="cp-row cp-saved-head">
+                <span class="cp-caption">Profile đã lưu</span>
+                <button class="cp-btn ghost" id="save-open">Lưu profile</button>
+              </div>
+              <div class="cp-save-row" id="save-row" hidden>
+                <input
+                  type="text"
+                  id="save-name"
+                  placeholder="Tên profile"
+                  aria-label="Tên profile"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button class="cp-btn" id="save-confirm">Lưu</button>
+                <button class="cp-btn ghost" id="save-cancel">Huỷ</button>
+              </div>
+              <p class="cp-empty" id="saved-empty">Chưa có profile nào</p>
+              <div class="cp-grid cp-saved" id="saved"></div>
+            </div>
+          </section>
 
-        <section class="cp-group" aria-labelledby="size-title">
-          <h2 class="cp-group-title" id="size-title">Bán kính góc</h2>
-          <!-- prettier-ignore -->
-          <div class="cp-radius" id="radius">
+          <section class="cp-group" aria-labelledby="size-title">
+            <h2 class="cp-group-title" id="size-title">Bán kính góc</h2>
+            <!-- prettier-ignore -->
+            <div class="cp-radius" id="radius">
             <div class="cp-radius-row">
               <label class="cp-num" id="size-box"><span class="cp-num-icon" data-icon="all" data-handle="all"></span><input type="number" id="size" min="0" step="1" aria-label="Bán kính góc" /></label>
               <input type="range" id="size-range" aria-label="Bán kính góc" />
@@ -852,97 +907,103 @@ input[type=range]:focus-visible::-moz-range-thumb {
               </div>
             </div>
           </div>
-        </section>
+          </section>
 
-        <section class="cp-group" aria-labelledby="curve-title">
-          <h2 class="cp-group-title" id="curve-title">Đường cong</h2>
-          <div class="cp-block">
-            <div
-              class="cp-editor-wrap"
-              id="editor-wrap"
-              tabindex="0"
-              role="application"
-              aria-label="Trình sửa đường cong profile"
-            >
-              <svg id="editor"></svg>
-            </div>
-            <div class="cp-toolbar">
-              <div class="cp-seg" role="group" aria-label="Handle">
-                <button
-                  class="cp-icon-btn"
-                  data-mode="auto"
-                  aria-pressed="false"
-                ></button>
-                <button
-                  class="cp-icon-btn"
-                  data-mode="sharp"
-                  aria-pressed="false"
-                ></button>
-                <button
-                  class="cp-icon-btn"
-                  data-mode="free"
-                  aria-pressed="false"
-                ></button>
-                <button
-                  class="cp-icon-btn"
-                  data-mode="aligned"
-                  aria-pressed="false"
-                ></button>
+          <section class="cp-group" aria-labelledby="curve-title">
+            <h2 class="cp-group-title" id="curve-title">Đường cong</h2>
+            <div class="cp-block">
+              <div
+                class="cp-editor-wrap"
+                id="editor-wrap"
+                tabindex="0"
+                role="application"
+                aria-label="Trình sửa đường cong profile"
+              >
+                <svg id="editor"></svg>
               </div>
-              <label class="cp-scrub">
-                <span>X</span>
-                <input
-                  type="text"
-                  inputmode="decimal"
-                  id="pt-x"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-              </label>
-              <label class="cp-scrub">
-                <span>Y</span>
-                <input
-                  type="text"
-                  inputmode="decimal"
-                  id="pt-y"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-              </label>
-              <button
-                class="cp-icon-btn"
-                id="pt-flip"
-                aria-pressed="false"
-              ></button>
-              <button class="cp-icon-btn" id="pt-delete"></button>
+              <div class="cp-toolbar">
+                <div class="cp-seg" role="group" aria-label="Handle">
+                  <button
+                    class="cp-icon-btn"
+                    data-mode="auto"
+                    aria-pressed="false"
+                  ></button>
+                  <button
+                    class="cp-icon-btn"
+                    data-mode="sharp"
+                    aria-pressed="false"
+                  ></button>
+                  <button
+                    class="cp-icon-btn"
+                    data-mode="free"
+                    aria-pressed="false"
+                  ></button>
+                  <button
+                    class="cp-icon-btn"
+                    data-mode="aligned"
+                    aria-pressed="false"
+                  ></button>
+                </div>
+                <label class="cp-scrub">
+                  <span>X</span>
+                  <input
+                    type="text"
+                    inputmode="decimal"
+                    id="pt-x"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                </label>
+                <label class="cp-scrub">
+                  <span>Y</span>
+                  <input
+                    type="text"
+                    inputmode="decimal"
+                    id="pt-y"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                </label>
+                <button
+                  class="cp-icon-btn"
+                  id="pt-flip"
+                  aria-pressed="false"
+                ></button>
+                <button class="cp-icon-btn" id="pt-delete"></button>
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
 
-      <footer class="cp-footer">
-        <div class="cp-footer-row">
-          <span class="cp-status" id="status" role="status" aria-live="polite"
-            >Chọn một hình chữ nhật</span
-          >
-          <label class="cp-live">
-            <span>Cập nhật trực tiếp</span>
-            <input type="checkbox" role="switch" class="cp-switch" id="live" />
-          </label>
-        </div>
-        <div class="cp-footer-row">
-          <button class="cp-btn secondary" id="reset" disabled>
-            Đặt lại về hình chữ nhật
-          </button>
-          <button class="cp-btn" id="apply" disabled>Áp dụng</button>
-        </div>
-      </footer>
+        <footer class="cp-footer">
+          <div class="cp-footer-row">
+            <span class="cp-status" id="status" role="status" aria-live="polite"
+              >Chọn một hình chữ nhật</span
+            >
+            <label class="cp-live">
+              <span>Cập nhật trực tiếp</span>
+              <input
+                type="checkbox"
+                role="switch"
+                class="cp-switch"
+                id="live"
+              />
+            </label>
+          </div>
+          <div class="cp-footer-row">
+            <button class="cp-btn secondary" id="reset" disabled>
+              Đặt lại về hình chữ nhật
+            </button>
+            <button class="cp-btn" id="apply" disabled>Áp dụng</button>
+          </div>
+        </footer>
+      </div>
     </div>
 
     <script>
       "use strict";
 (() => {
-  // plugins/corner-profiles/src/shared/values.ts
+  // plugins/ezg-tools/src/shared/values.ts
   function isRecord(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
   }
@@ -963,7 +1024,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return clamp(value, 0, 1);
   }
 
-  // plugins/corner-profiles/src/ui/bridge.ts
+  // plugins/ezg-tools/src/ui/bridge.ts
   function post(message) {
     parent.postMessage({ pluginMessage: message }, "*");
   }
@@ -976,7 +1037,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
-  // plugins/corner-profiles/src/shared/constants.ts
+  // plugins/ezg-tools/src/shared/constants.ts
   var CORNER_IDS = ["tl", "tr", "br", "bl"];
   var CORNER_KINDS = [
     "none",
@@ -1005,7 +1066,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var DEFAULT_STEPS = 3;
   var PREVIEW_FALLBACK = { width: 160, height: 100 };
 
-  // plugins/corner-profiles/src/ui/dom/props.ts
+  // plugins/ezg-tools/src/ui/dom/props.ts
   var TEXT_ENTRY = 'input:not([type=range]):not([type=checkbox]):not([type=radio]), textarea, [contenteditable]:not([contenteditable="false"])';
   function isTextEntry(node) {
     return node instanceof Element && node.matches(TEXT_ENTRY);
@@ -1029,7 +1090,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return true;
   }
 
-  // plugins/corner-profiles/src/ui/dom/slider.ts
+  // plugins/ezg-tools/src/ui/dom/slider.ts
   var bound = (attr, fallback) => attr === "" ? fallback : toNumber(attr, fallback);
   function slider(range, input2) {
     range.min = input2.min;
@@ -1088,7 +1149,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
-  // plugins/corner-profiles/src/ui/dom/elements.ts
+  // plugins/ezg-tools/src/ui/dom/elements.ts
   function byId(id, type) {
     const node = document.getElementById(id);
     if (!(node instanceof type)) throw new Error(`ui.html is missing #${id}`);
@@ -1111,6 +1172,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   );
   var el = {
     root: block("plugin-root"),
+    rail: block("rail"),
     cornerLabel: block("corner-label"),
     allCorners: button("all-corners"),
     shape: svg("shape-svg"),
@@ -1149,7 +1211,63 @@ input[type=range]:focus-visible::-moz-range-thumb {
   };
   var sliders = [el.size, el.sx, el.sy, el.steps];
 
-  // plugins/corner-profiles/src/ui/dom/icons.ts
+  // plugins/ezg-tools/src/shared/tools.ts
+  var TOOLS = [
+    { id: "corner-profiles", label: "Corner Profiles" }
+  ];
+  var DEFAULT_TOOL = TOOLS[0].id;
+  var RAIL_WIDTH = 32;
+  var TAB_HEIGHT = 32;
+
+  // plugins/ezg-tools/src/ui/labels.ts
+  var CORNER_NAMES = {
+    tl: "Tr\xEAn tr\xE1i",
+    tr: "Tr\xEAn ph\u1EA3i",
+    br: "D\u01B0\u1EDBi ph\u1EA3i",
+    bl: "D\u01B0\u1EDBi tr\xE1i"
+  };
+  var KIND_LABELS = {
+    none: "Kh\xF4ng",
+    round: "Bo tr\xF2n",
+    chamfer: "V\xE1t",
+    concave: "L\xF5m",
+    notch: "Kh\xEDa",
+    steps: "B\u1EADc thang",
+    custom: "T\xF9y ch\u1EC9nh"
+  };
+  var MODE_CAPTIONS = {
+    sharp: "Handle Vector",
+    auto: "Handle Auto",
+    aligned: "Handle Aligned",
+    free: "Handle Free"
+  };
+  var RESET_LABELS = {
+    none: "\u0110\u1EB7t l\u1EA1i v\u1EC1 h\xECnh ch\u1EEF nh\u1EADt",
+    rectangle: "\u0110\u1EB7t l\u1EA1i v\u1EC1 h\xECnh ch\u1EEF nh\u1EADt",
+    main: "\u0110\u1EB7t l\u1EA1i theo main component",
+    mixed: "\u0110\u1EB7t l\u1EA1i"
+  };
+  var UI_TEXT = {
+    tools: "C\xF4ng c\u1EE5",
+    allCorners: "T\u1EA5t c\u1EA3 g\xF3c",
+    nCorners: (n) => `${n} g\xF3c`,
+    mixed: "H\u1ED7n h\u1EE3p",
+    snapTip: "Gi\u1EEF Shift \u0111\u1EC3 snap",
+    flip: "L\u1EADt",
+    deleteNode: "Xo\xE1 node",
+    maxNodes: (n) => `M\u1ED9t profile c\xF3 t\u1ED1i \u0111a ${n} node`,
+    defaultProfileName: (n) => `Profile ${n}`,
+    untitled: "Ch\u01B0a \u0111\u1EB7t t\xEAn",
+    useSaved: (name) => `D\xF9ng profile \u0111\xE3 l\u01B0u ${name}`,
+    deleteSaved: (name) => `Xo\xE1 profile \u0111\xE3 l\u01B0u ${name}`,
+    deleteProfile: "Xo\xE1 profile",
+    presetAria: (kind) => `Profile ${KIND_LABELS[kind]}`,
+    selectedSummary: (parts, skipped) => `\u0110\xE3 ch\u1ECDn ${parts.join(" v\xE0 ")}` + (skipped > 0 ? `, b\u1ECF qua ${skipped}` : ""),
+    rectCount: (n) => `${n} h\xECnh ch\u1EEF nh\u1EADt`,
+    profileLayerCount: (n) => `${n} layer profile`
+  };
+
+  // plugins/ezg-tools/src/ui/dom/icons.ts
   var ATTRS = 'viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
   var ARC = `<path d="M2.5 15C2.5 8 4.5 4.5 8 4.5S13.5 8 13.5 15" />`;
   var line = (x1, y1, x2, y2) => `<path d="M${x1} ${y1}L${x2} ${y2}" stroke-width="1" />`;
@@ -1193,7 +1311,35 @@ input[type=range]:focus-visible::-moz-range-thumb {
     el.ptDelete.innerHTML = DELETE;
   }
 
-  // plugins/corner-profiles/src/ui/dom/radius-icons.ts
+  // plugins/ezg-tools/src/ui/dom/rail-icons.ts
+  var TOOL_ICONS = {
+    "corner-profiles": `<svg ${ATTRS}><path d="M3 13V8.5C3 5.5 5.5 3 8.5 3H13" /></svg>`
+  };
+
+  // plugins/ezg-tools/src/ui/dom/rail.ts
+  var railTab = (id) => document.getElementById(`tab-${id}`);
+  var toolPanel = (id) => document.getElementById(`tool-${id}`);
+  function buildRail(rail) {
+    const root = document.documentElement.style;
+    root.setProperty("--rail-width", `${RAIL_WIDTH}px`);
+    root.setProperty("--tab-height", `${TAB_HEIGHT}px`);
+    rail.setAttribute("aria-label", UI_TEXT.tools);
+    for (const tool of TOOLS) {
+      const tab = document.createElement("button");
+      tab.type = "button";
+      tab.id = `tab-${tool.id}`;
+      tab.className = "cp-tab";
+      tab.dataset.tool = tool.id;
+      tab.setAttribute("role", "tab");
+      tab.setAttribute("aria-controls", `tool-${tool.id}`);
+      tab.setAttribute("aria-label", tool.label);
+      tab.title = tool.label;
+      tab.innerHTML = TOOL_ICONS[tool.id];
+      rail.append(tab);
+    }
+  }
+
+  // plugins/ezg-tools/src/ui/dom/radius-icons.ts
   var FLIPS = [
     "",
     ' transform="matrix(-1 0 0 1 16 0)"',
@@ -1221,7 +1367,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
-  // plugins/corner-profiles/src/shared/path.ts
+  // plugins/ezg-tools/src/shared/path.ts
   function reversePath(path) {
     return path.slice().reverse().map((n) => ({
       x: n.x,
@@ -1258,7 +1404,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }));
   }
 
-  // plugins/corner-profiles/src/shared/corners.ts
+  // plugins/ezg-tools/src/shared/corners.ts
   function mapCorners(fn) {
     return { tl: fn("tl"), tr: fn("tr"), br: fn("br"), bl: fn("bl") };
   }
@@ -1277,7 +1423,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return mapCorners((id) => cloneCorner(shape[id]));
   }
 
-  // plugins/corner-profiles/src/shared/presets.ts
+  // plugins/ezg-tools/src/shared/presets.ts
   function profileNode(x, y, mode = "sharp") {
     return { x, y, ix: x, iy: y, ox: x, oy: y, mode };
   }
@@ -1313,7 +1459,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
-  // plugins/corner-profiles/src/shared/sanitize.ts
+  // plugins/ezg-tools/src/shared/sanitize.ts
   function isCornerKind(value) {
     return CORNER_KINDS.some((kind) => kind === value);
   }
@@ -1393,10 +1539,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return mapCorners((id) => sanitizeCorner(src[id]));
   }
 
-  // plugins/corner-profiles/src/ui/format.ts
+  // plugins/ezg-tools/src/ui/format.ts
   var fmt = (n) => String(Math.round(n * 1e3) / 1e3);
 
-  // plugins/corner-profiles/src/ui/curve/bezier.ts
+  // plugins/ezg-tools/src/ui/curve/bezier.ts
   var near = (ax, ay, bx, by, eps = EPS) => Math.abs(ax - bx) <= eps && Math.abs(ay - by) <= eps;
   function segPoints(a, b) {
     return [a.x, a.y, a.ox, a.oy, b.ix, b.iy, b.x, b.y];
@@ -1499,7 +1645,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return seg + 1;
   }
 
-  // plugins/corner-profiles/src/ui/curve/modes.ts
+  // plugins/ezg-tools/src/ui/curve/modes.ts
   function isSymmetric(p) {
     const f = flipPath(p);
     for (let i = 0; i < p.length; i++) {
@@ -1533,54 +1679,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return path;
   }
 
-  // plugins/corner-profiles/src/ui/labels.ts
-  var CORNER_NAMES = {
-    tl: "Tr\xEAn tr\xE1i",
-    tr: "Tr\xEAn ph\u1EA3i",
-    br: "D\u01B0\u1EDBi ph\u1EA3i",
-    bl: "D\u01B0\u1EDBi tr\xE1i"
-  };
-  var KIND_LABELS = {
-    none: "Kh\xF4ng",
-    round: "Bo tr\xF2n",
-    chamfer: "V\xE1t",
-    concave: "L\xF5m",
-    notch: "Kh\xEDa",
-    steps: "B\u1EADc thang",
-    custom: "T\xF9y ch\u1EC9nh"
-  };
-  var MODE_CAPTIONS = {
-    sharp: "Handle Vector",
-    auto: "Handle Auto",
-    aligned: "Handle Aligned",
-    free: "Handle Free"
-  };
-  var RESET_LABELS = {
-    none: "\u0110\u1EB7t l\u1EA1i v\u1EC1 h\xECnh ch\u1EEF nh\u1EADt",
-    rectangle: "\u0110\u1EB7t l\u1EA1i v\u1EC1 h\xECnh ch\u1EEF nh\u1EADt",
-    main: "\u0110\u1EB7t l\u1EA1i theo main component",
-    mixed: "\u0110\u1EB7t l\u1EA1i"
-  };
-  var UI_TEXT = {
-    allCorners: "T\u1EA5t c\u1EA3 g\xF3c",
-    nCorners: (n) => `${n} g\xF3c`,
-    mixed: "H\u1ED7n h\u1EE3p",
-    snapTip: "Gi\u1EEF Shift \u0111\u1EC3 snap",
-    flip: "L\u1EADt",
-    deleteNode: "Xo\xE1 node",
-    maxNodes: (n) => `M\u1ED9t profile c\xF3 t\u1ED1i \u0111a ${n} node`,
-    defaultProfileName: (n) => `Profile ${n}`,
-    untitled: "Ch\u01B0a \u0111\u1EB7t t\xEAn",
-    useSaved: (name) => `D\xF9ng profile \u0111\xE3 l\u01B0u ${name}`,
-    deleteSaved: (name) => `Xo\xE1 profile \u0111\xE3 l\u01B0u ${name}`,
-    deleteProfile: "Xo\xE1 profile",
-    presetAria: (kind) => `Profile ${KIND_LABELS[kind]}`,
-    selectedSummary: (parts, skipped) => `\u0110\xE3 ch\u1ECDn ${parts.join(" v\xE0 ")}` + (skipped > 0 ? `, b\u1ECF qua ${skipped}` : ""),
-    rectCount: (n) => `${n} h\xECnh ch\u1EEF nh\u1EADt`,
-    profileLayerCount: (n) => `${n} layer profile`
-  };
-
-  // plugins/corner-profiles/src/ui/config/normalize.ts
+  // plugins/ezg-tools/src/ui/config/normalize.ts
   function normalizeCorner(raw) {
     const c = isRecord(raw) ? raw : {};
     const kind = CORNER_KINDS.find((k) => k === c.kind) ?? "none";
@@ -1643,7 +1742,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     };
   }
 
-  // plugins/corner-profiles/src/ui/config/signature.ts
+  // plugins/ezg-tools/src/ui/config/signature.ts
   var r4 = (v) => Math.round(v * 1e4);
   function pathSig(p) {
     return p.map((n) => [n.x, n.y, n.ix, n.iy, n.ox, n.oy].map(r4).join(",")).join(";");
@@ -1662,7 +1761,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return CORNER_IDS.map((id) => cornerSig(s[id])).join("/");
   }
 
-  // plugins/corner-profiles/src/ui/constants.ts
+  // plugins/ezg-tools/src/ui/constants.ts
   var HISTORY_MAX = 50;
   var SNAP = 0.05;
   var MERGE_MS = 600;
@@ -1676,13 +1775,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var ex = (u) => E_PAD + u * E_S;
   var ey = (v) => E_PAD + v * E_S;
 
-  // plugins/corner-profiles/src/shared/copy.ts
+  // plugins/ezg-tools/src/shared/copy.ts
   var SELECT_RECT = "Ch\u1ECDn m\u1ED9t h\xECnh ch\u1EEF nh\u1EADt";
   var NAME_REQUIRED = "Nh\u1EADp t\xEAn cho profile";
   var profileLimit = (max) => `Ch\u1EC9 l\u01B0u t\u1ED1i \u0111a ${max} profile. H\xE3y xo\xE1 b\u1EDBt m\u1ED9t profile \u0111\u1EC3 l\u01B0u th\xEAm.`;
 
-  // plugins/corner-profiles/src/ui/state.ts
+  // plugins/ezg-tools/src/ui/state.ts
   var state = {
+    tool: DEFAULT_TOOL,
     live: true,
     profiles: [],
     sel: {
@@ -1727,7 +1827,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return ids.some((id) => cornerSig(state.config[id]) !== first);
   }
 
-  // plugins/corner-profiles/src/ui/render/controls.ts
+  // plugins/ezg-tools/src/ui/render/controls.ts
   function renderPickerLabel() {
     const ids = editedIds();
     let text = ids.length === 4 ? UI_TEXT.allCorners : ids.length === 3 ? UI_TEXT.nCorners(3) : ids.map((id) => CORNER_NAMES[id]).join(", ");
@@ -1753,7 +1853,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     setAttr(el.ptFlip, "title", UI_TEXT.flip);
   }
 
-  // plugins/corner-profiles/src/ui/render/radius.ts
+  // plugins/ezg-tools/src/ui/render/radius.ts
   var maxSize = () => Math.max(1, Math.ceil(Math.min(state.width, state.height)));
   var round = (v) => Math.round(v * 100) / 100;
   function renderSize(force) {
@@ -1784,7 +1884,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     el.asymPanel.hidden = !(state.split && state.asymOpen);
   }
 
-  // plugins/corner-profiles/src/ui/curve/handles.ts
+  // plugins/ezg-tools/src/ui/curve/handles.ts
   function rayLimit(ax, ay, dx, dy, len) {
     let t = len;
     if (dx > EPS) t = Math.min(t, (1 - ax) / dx);
@@ -1893,7 +1993,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     refreshAuto(p);
   }
 
-  // plugins/corner-profiles/src/ui/dom/scrub.ts
+  // plugins/ezg-tools/src/ui/dom/scrub.ts
   var DRAG_THRESHOLD = 3;
   var editors = /* @__PURE__ */ new WeakMap();
   var decimals = /* @__PURE__ */ new WeakMap();
@@ -1982,12 +2082,12 @@ input[type=range]:focus-visible::-moz-range-thumb {
     editors.set(s, edit);
   }
 
-  // plugins/corner-profiles/src/ui/dom/coords.ts
+  // plugins/ezg-tools/src/ui/dom/coords.ts
   var options = { min: 0, max: 1, step: 0.01, perPx: 5e-3, decimals: 2 };
   var coordX = scrub(el.ptX, options);
   var coordY = scrub(el.ptY, options);
 
-  // plugins/corner-profiles/src/ui/render/editor.ts
+  // plugins/ezg-tools/src/ui/render/editor.ts
   function gridPath() {
     const lo = E_PAD;
     const hi = E_PAD + E_S;
@@ -2056,14 +2156,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
     setAttr(el.editorWrap, "title", UI_TEXT.snapTip);
   }
 
-  // plugins/corner-profiles/src/shared/reset.ts
+  // plugins/ezg-tools/src/shared/reset.ts
   function resetMode(sel) {
     if (sel.profileLayers <= 0) return "none";
     if (sel.nestedLayers <= 0) return "rectangle";
     return sel.nestedLayers >= sel.profileLayers ? "main" : "mixed";
   }
 
-  // plugins/corner-profiles/src/ui/render/footer.ts
+  // plugins/ezg-tools/src/ui/render/footer.ts
   function renderFooter() {
     setText(el.status, state.status.text);
     el.status.setAttribute("data-level", state.status.level);
@@ -2075,7 +2175,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     el.reset.disabled = reset === "none";
   }
 
-  // plugins/corner-profiles/src/ui/render/thumb.ts
+  // plugins/ezg-tools/src/ui/render/thumb.ts
   function thumbSvg(path, kind) {
     const P = 0.14;
     const E = 1 + P;
@@ -2097,7 +2197,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return `<svg viewBox="${-P} ${-P} ${1 + 2 * P} ${1 + 2 * P}" aria-hidden="true"><path class="t-fill" d="${fill}"/><path class="t-line" d="${line2}"/></svg>`;
   }
 
-  // plugins/corner-profiles/src/ui/render/presets.ts
+  // plugins/ezg-tools/src/ui/render/presets.ts
   var CUSTOM_ICON = [
     { x: 0, y: 1, ix: 0, iy: 1, ox: 0.08, oy: 0.55, mode: "aligned" },
     { x: 0.5, y: 0.5, ix: 0.25, iy: 0.62, ox: 0.75, oy: 0.38, mode: "aligned" },
@@ -2137,7 +2237,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
-  // plugins/corner-profiles/src/ui/render/saved.ts
+  // plugins/ezg-tools/src/ui/render/saved.ts
   var DELETE_ICON = '<svg viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 1.5l5 5M6.5 1.5l-5 5"/></svg>';
   var savedKey = null;
   function renderSaved() {
@@ -2178,7 +2278,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     el.saveOpen.disabled = state.profiles.length >= MAX_PROFILES;
   }
 
-  // plugins/corner-profiles/src/shared/cubics.ts
+  // plugins/ezg-tools/src/shared/cubics.ts
   function effectiveSizes(shape, width, height) {
     const w = Math.max(0, finiteOr(width, 0));
     const h = Math.max(0, finiteOr(height, 0));
@@ -2264,7 +2364,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return { p0: a, c1: a, c2: b, p3: b };
   }
 
-  // plugins/corner-profiles/src/shared/network.ts
+  // plugins/ezg-tools/src/shared/network.ts
   function nearPoint(a, b) {
     return Math.abs(a.x - b.x) < EPS && Math.abs(a.y - b.y) < EPS;
   }
@@ -2302,7 +2402,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     };
   }
 
-  // plugins/corner-profiles/src/shared/cutters.ts
+  // plugins/ezg-tools/src/shared/cutters.ts
   function along(p, d, t) {
     return { x: p.x + t * d.x, y: p.y + t * d.y };
   }
@@ -2360,7 +2460,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return resolveCorners(shape, width, height).filter((corner) => corner.cubics.length > 0).map((corner) => specFromLoop(corner, cutterLoop(corner, bleed)));
   }
 
-  // plugins/corner-profiles/src/shared/svg.ts
+  // plugins/ezg-tools/src/shared/svg.ts
   function formatNumber(n) {
     const rounded = Math.round(n * 1e4) / 1e4;
     return String(rounded === 0 ? 0 : rounded);
@@ -2399,7 +2499,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     );
   }
 
-  // plugins/corner-profiles/src/ui/render/shape.ts
+  // plugins/ezg-tools/src/ui/render/shape.ts
   var FAR = `x="-1e5" y="-1e5" width="2e5" height="2e5"`;
   function renderShape() {
     setSvgSize(el.shape, P_W, P_H);
@@ -2444,7 +2544,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
-  // plugins/corner-profiles/src/ui/render/index.ts
+  // plugins/ezg-tools/src/ui/render/index.ts
   function render() {
     renderPickerLabel();
     renderShape();
@@ -2456,7 +2556,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     renderFooter();
   }
 
-  // plugins/corner-profiles/src/ui/status.ts
+  // plugins/ezg-tools/src/ui/status.ts
   function selectionSummary(sel) {
     if (!sel.valid) return sel.reason || SELECT_RECT;
     const parts = [];
@@ -2484,7 +2584,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     renderFooter();
   }
 
-  // plugins/corner-profiles/src/ui/incoming.ts
+  // plugins/ezg-tools/src/ui/incoming.ts
   function adoptSelection(incoming, key) {
     if (key === state.selKey) {
       const sig = shapeSig(incoming);
@@ -2536,7 +2636,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
-  // plugins/corner-profiles/src/ui/frame.ts
+  // plugins/ezg-tools/src/ui/frame.ts
   function nextFrame(fn) {
     let done = false;
     const run = () => {
@@ -2549,7 +2649,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     setTimeout(run, 50);
   }
 
-  // plugins/corner-profiles/src/ui/apply.ts
+  // plugins/ezg-tools/src/ui/apply.ts
   var applyScheduled = false;
   function requestApply() {
     if (!(state.sel.valid > 0) || applyScheduled) return;
@@ -2567,7 +2667,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     post({ type: "apply", config: cloneShape(state.config) });
   }
 
-  // plugins/corner-profiles/src/ui/history.ts
+  // plugins/ezg-tools/src/ui/history.ts
   function beginEdit() {
     if (!state.txn) state.txn = cloneShape(state.config);
   }
@@ -2620,7 +2720,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     if (state.live) requestApply();
   }
 
-  // plugins/corner-profiles/src/ui/edits.ts
+  // plugins/ezg-tools/src/ui/edits.ts
   function editProfile(mutatePrimary, final, key) {
     beginEdit();
     const p = primary();
@@ -2732,7 +2832,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }, true);
   }
 
-  // plugins/corner-profiles/src/ui/interact/controls.ts
+  // plugins/ezg-tools/src/ui/interact/controls.ts
   var parkable = () => [
     ...sliders.map((s) => s.input),
     ...Object.values(el.radiusFields)
@@ -2767,7 +2867,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     el.reset.addEventListener("click", () => post({ type: "reset" }));
   }
 
-  // plugins/corner-profiles/src/ui/interact/coords.ts
+  // plugins/ezg-tools/src/ui/interact/coords.ts
   var start = null;
   function editAxis(axis, value, final) {
     start ?? (start = clonePath(displayPath(primary())));
@@ -2785,7 +2885,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     onScrubEdit(coordY, (v, final) => editAxis("y", v, final));
   }
 
-  // plugins/corner-profiles/src/ui/interact/editor.ts
+  // plugins/ezg-tools/src/ui/interact/editor.ts
   function editorPoint(e) {
     const r = el.editor.getBoundingClientRect();
     const px = (e.clientX - r.left) * E_SIZE / (r.width || E_SIZE);
@@ -2908,7 +3008,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     el.editor.addEventListener("lostpointercapture", endDrag);
   }
 
-  // plugins/corner-profiles/src/ui/interact/picker.ts
+  // plugins/ezg-tools/src/ui/interact/picker.ts
   function cornerAt(target) {
     const hot = target instanceof Element ? target.closest("[data-corner]") : null;
     const id = hot?.getAttribute("data-corner");
@@ -2945,7 +3045,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
-  // plugins/corner-profiles/src/ui/interact/points.ts
+  // plugins/ezg-tools/src/ui/interact/points.ts
   function deleteAnchor() {
     const disp = displayPath(primary());
     const i = state.anchor;
@@ -2983,7 +3083,39 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
-  // plugins/corner-profiles/src/ui/dom/drag-handle.ts
+  // plugins/ezg-tools/src/ui/render/rail.ts
+  function renderRail() {
+    for (const { id } of TOOLS) {
+      const on = id === state.tool;
+      const tab = railTab(id);
+      tab?.setAttribute("aria-selected", String(on));
+      if (tab) tab.tabIndex = on ? 0 : -1;
+      const panel = toolPanel(id);
+      if (panel) panel.hidden = !on;
+    }
+  }
+
+  // plugins/ezg-tools/src/ui/interact/rail.ts
+  function select(id, focus) {
+    state.tool = id;
+    renderRail();
+    if (focus) railTab(id)?.focus();
+  }
+  function installRail() {
+    el.rail.addEventListener("click", (e) => {
+      const tab = e.target.closest("[data-tool]");
+      if (tab) select(tab.dataset.tool, false);
+    });
+    el.rail.addEventListener("keydown", (e) => {
+      const step = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
+      if (!step) return;
+      e.preventDefault();
+      const at = TOOLS.findIndex((t) => t.id === state.tool);
+      select(TOOLS[(at + step + TOOLS.length) % TOOLS.length].id, true);
+    });
+  }
+
+  // plugins/ezg-tools/src/ui/dom/drag-handle.ts
   var THRESHOLD = 3;
   function onHandleDrag(handle, start2, edit, max) {
     let origin = null;
@@ -3019,7 +3151,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     handle.addEventListener("lostpointercapture", finish);
   }
 
-  // plugins/corner-profiles/src/ui/interact/radius.ts
+  // plugins/ezg-tools/src/ui/interact/radius.ts
   function installField(id) {
     const input2 = el.radiusFields[id];
     const commit2 = () => {
@@ -3075,7 +3207,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
-  // plugins/corner-profiles/src/ui/interact/profiles.ts
+  // plugins/ezg-tools/src/ui/interact/profiles.ts
   function closestData(target, name) {
     const node = target instanceof Element ? target.closest(`[data-${name}]`) : null;
     return node ? node.getAttribute(`data-${name}`) : null;
@@ -3143,7 +3275,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
-  // plugins/corner-profiles/src/ui/interact/shortcuts.ts
+  // plugins/ezg-tools/src/ui/interact/shortcuts.ts
   function installShortcuts() {
     document.addEventListener("keydown", (e) => {
       if (!(e.metaKey || e.ctrlKey) || e.altKey || isTextEntry(e.target)) return;
@@ -3159,7 +3291,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
-  // plugins/corner-profiles/src/ui/main.ts
+  // plugins/ezg-tools/src/ui/main.ts
   function reportHeight() {
     let lastHeight = 0;
     new ResizeObserver(() => {
@@ -3182,8 +3314,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
   installCoords();
   installShortcuts();
   reportHeight();
+  buildRail(el.rail);
+  installRail();
   buildPresets();
   render();
+  renderRail();
   post({ type: "ready" });
 })();
 
