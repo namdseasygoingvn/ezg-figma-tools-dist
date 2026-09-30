@@ -26,7 +26,16 @@
   "networkAccess": {
     "allowedDomains": [
       "https://raw.githubusercontent.com",
-      "ws://localhost:39410"
+      "ws://localhost:39410",
+      "ws://localhost:39411",
+      "ws://localhost:39412",
+      "ws://localhost:39413",
+      "ws://localhost:39414",
+      "ws://localhost:39415",
+      "ws://localhost:39416",
+      "ws://localhost:39417",
+      "ws://localhost:39418",
+      "ws://localhost:39419"
     ],
     "reasoning": "Connects to the local EZG bridge server so Claude Code can work in the open file."
   },

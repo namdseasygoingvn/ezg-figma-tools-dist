@@ -1,6 +1,6 @@
 ---
 name: ezg-figma-bridge
-description: Use for live work in the Figma file the user has open through the ezg-figma-bridge MCP server, including the current selection and viewport, running Plugin API code, checkpoint and undo, export to disk, Dev Mode codegen snippets, text review glossary rules, and the pairing code shown in the Claude tab.
+description: Use for live work in the Figma file the user has open through the ezg-figma-bridge MCP server, including the current selection and viewport, running Plugin API code, checkpoint and undo, export to disk, Dev Mode codegen snippets, and text review glossary rules.
 ---
 
 # ezg-figma-bridge
@@ -27,11 +27,11 @@ Load the `figma-use` skill first for Plugin API rules; this file only covers wha
 ## Connect
 
 1. Call `files`. It lists every connected file.
-2. The first file on a machine with no token pairs by itself.
-3. If a file is unpaired, the Claude tab shows a 6-digit code (valid 10 minutes). Ask the user for it and call `pair` with it.
-4. The token is stored per machine, so pairing happens once.
+2. If it shows none, ask the user to press "Kết nối tới MCP server" in the Claude tab.
 
-`fileKey` in a tool call may be a `fileKey` or a `clientId`. With exactly one paired file it may be omitted. Up to 4 Claude sessions can be connected at once; each file connects to every session.
+`fileKey` in a tool call may be a `fileKey` or a `clientId`. With exactly one connected file it may be omitted. Any number of Claude sessions can use the same file at once.
+
+The port defaults to 39410. To use another port (39410–39419), set `EZG_FIGMA_BRIDGE_PORT` in the MCP server config and the same number in the Claude tab.
 
 ## eval
 
@@ -66,7 +66,7 @@ Prototype methods (`node.query(...)`) are best effort. When they are unavailable
 - One `eval` is one undo step. `undo` reverts to the last commit point, so it also undoes the user's own edit if they edited by hand after the `eval`.
 - Keep evals small.
 - Never write a synchronous infinite loop. A timeout only stops the wait; the plugin stays frozen.
-- With approval on, the user approves the code in the panel first, so write a clear `description`.
+- `eval` runs at once, so write a clear `description`.
 
 ## See and change the view
 

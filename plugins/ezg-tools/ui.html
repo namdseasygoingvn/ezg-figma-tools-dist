@@ -917,10 +917,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   padding: 12px;
 }
 .br-summary,
-.br-hint,
-.br-empty,
-.br-desc,
-.br-pair-line {
+.br-hint {
   margin: 0;
   color: var(--figma-color-text-secondary, #666);
 }
@@ -930,128 +927,20 @@ input[type=range]:focus-visible::-moz-range-thumb {
 .br-summary[data-status=blocked] {
   color: var(--figma-color-text-danger, #f24822);
 }
-.br-rows,
-.br-log {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.br-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  color: var(--figma-color-text, #1e1e1e);
-}
-.br-dot {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--figma-color-icon-tertiary, #b3b3b3);
-}
-.br-row[data-status=ready] .br-dot {
-  background: var(--figma-color-bg-success, #14ae5c);
-}
-.br-row[data-status=blocked] .br-dot {
-  background: var(--figma-color-bg-danger, #f24822);
-}
-.br-row[data-status=connecting] .br-dot,
-.br-row[data-status=pairing] .br-dot {
-  background: var(--figma-color-icon-tertiary, #b3b3b3);
-  opacity: 0.6;
-}
-.br-row-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.br-pair,
-.br-card {
-  display: grid;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--figma-color-border, #e6e6e6);
-  border-radius: 5px;
-  background: var(--figma-color-bg-secondary, #f5f5f5);
-}
-.br-pair[hidden],
-.br-card[hidden] {
-  display: none;
-}
-.br-digits {
-  color: var(--figma-color-text, #1e1e1e);
-  font-size: 28px;
-  letter-spacing: 0.2em;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-.br-approval {
+.br-port {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-}
-.br-code {
-  box-sizing: border-box;
-  max-height: 192px;
-  margin: 0;
-  padding: 8px;
-  overflow: auto;
-  border-radius: 5px;
-  background: var(--figma-color-bg, #fff);
-  color: var(--figma-color-text, #1e1e1e);
-  font:
-    11px/16px ui-monospace,
-    "SF Mono",
-    Menlo,
-    Consolas,
-    monospace;
-  white-space: pre;
-}
-.br-code:focus-visible {
-  outline: 1px solid var(--figma-color-border-selected, #0d99ff);
-}
-.br-actions {
-  justify-content: flex-end;
-  gap: 8px;
-}
-.br-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
   color: var(--figma-color-text, #1e1e1e);
 }
-.br-item[data-ok=false] {
-  color: var(--figma-color-text-danger, #f24822);
-}
-.br-item-text {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.br-item-ms {
+.br-port-input {
   flex: none;
-  color: var(--figma-color-text-secondary, #666);
+  width: 80px;
   font-variant-numeric: tabular-nums;
 }
-.br-link {
-  justify-self: start;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--figma-color-text-secondary, #666);
-  font: inherit;
-  text-decoration: underline;
-  cursor: pointer;
-}
-.br-link:hover {
-  color: var(--figma-color-text, #1e1e1e);
-}
-.br-link:focus-visible {
-  outline: 1px solid var(--figma-color-border-selected, #0d99ff);
+.br-connect {
+  width: 100%;
 }
 
 /* plugins/ezg-tools/src/ui/styles/index.css */
@@ -1500,7 +1389,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var sliders = [el.size, el.sx, el.sy, el.steps];
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.18" : "dev";
+  var BUILD_VERSION = true ? "0.1.19" : "dev";
 
   // plugins/ezg-tools/src/ui/labels.ts
   var CORNER_NAMES = {
@@ -1707,49 +1596,40 @@ input[type=range]:focus-visible::-moz-range-thumb {
   // plugins/ezg-tools/src/shared/bridge-copy.ts
   var BRIDGE_COPY = {
     panel: {
-      approvalLabel: "Duy\u1EC7t eval",
-      approvalHint: "Claude ph\u1EA3i \u0111\u01B0\u1EE3c b\u1EA1n duy\u1EC7t tr\u01B0\u1EDBc khi ch\u1EA1y code trong file n\xE0y",
-      activityTitle: "Ho\u1EA1t \u0111\u1ED9ng",
-      activityEmpty: "Ch\u01B0a c\xF3 ho\u1EA1t \u0111\u1ED9ng n\xE0o",
-      repair: "Gh\xE9p c\u1EB7p l\u1EA1i",
-      copyCode: "Sao ch\xE9p m\xE3",
-      copied: "\u0110\xE3 sao ch\xE9p",
-      approve: "Cho ph\xE9p",
-      reject: "T\u1EEB ch\u1ED1i",
-      approvalTitle: "Claude mu\u1ED1n ch\u1EA1y code"
+      portLabel: "Port",
+      connect: "K\u1EBFt n\u1ED1i t\u1EDBi MCP server",
+      disconnect: "Ng\u1EAFt k\u1EBFt n\u1ED1i",
+      hint: "K\u1EBFt n\u1ED1i \u0111\u1EC3 Claude Code l\xE0m vi\u1EC7c trong file n\xE0y"
     },
     status: {
       offline: "Kh\xF4ng t\xECm th\u1EA5y server. H\xE3y m\u1EDF Claude Code r\u1ED3i th\u1EED l\u1EA1i",
       connecting: "\u0110ang k\u1EBFt n\u1ED1i t\u1EDBi server...",
-      waitingPair: "\u0110ang ch\u1EDD gh\xE9p c\u1EB7p v\u1EDBi Claude",
       blocked: "Plugin n\xE0y ch\u01B0a \u0111\u01B0\u1EE3c ph\xE9p k\u1EBFt n\u1ED1i localhost. H\xE3y c\xE0i l\u1EA1i plugin b\u1EB1ng installer",
       unsupportedProtocol: "Phi\xEAn b\u1EA3n plugin v\xE0 server kh\xF4ng kh\u1EDBp. H\xE3y c\u1EADp nh\u1EADt b\u1EB1ng c\xE1ch c\xE0i l\u1EA1i plugin b\u1EB1ng installer",
-      portOffline: (port) => `C\u1ED5ng ${port}: ch\u01B0a c\xF3 server`,
-      portReady: (port) => `C\u1ED5ng ${port}: s\u1EB5n s\xE0ng`,
-      summaryReady: (sessions) => `\u0110\xE3 k\u1EBFt n\u1ED1i, ${countOf(sessions, "session")}`,
-      pairInstruction: (code) => `N\xF3i v\u1EDBi Claude: pair ${code}`
+      idle: "Ch\u01B0a k\u1EBFt n\u1ED1i",
+      summaryReady: (sessions) => `\u0110\xE3 k\u1EBFt n\u1ED1i, ${countOf(sessions, "session")}`
     },
     toast: {
       devModeUnsupported: "Trong Dev Mode, h\xE3y d\xF9ng tab Claude \u1EDF ch\u1EBF \u0111\u1ED9 Design"
     },
     codegen: {
       empty: (nodeId, nodeName) => `Ch\u01B0a c\xF3 snippet cho ${nodeName} (${nodeId}). H\xE3y nh\u1EDD Claude t\u1EA1o snippet b\u1EB1ng codegen`
-    },
-    activity: {
-      evalRow: (description, ms) => `${description} (${ms}ms)`,
-      evalFailedRow: (description) => `${description} th\u1EA5t b\u1EA1i`
     }
   };
 
   // plugins/ezg-tools/src/shared/bridge-wire.ts
-  var BRIDGE_PROTOCOL = 1;
-  var BRIDGE_PORTS = [39410];
+  var BRIDGE_PROTOCOL = 2;
+  var BRIDGE_DEFAULT_PORT = 39410;
+  var BRIDGE_PORT_COUNT = 10;
+  var BRIDGE_PORTS = Array.from(
+    { length: BRIDGE_PORT_COUNT },
+    (_, i) => BRIDGE_DEFAULT_PORT + i
+  );
   var BRIDGE_ORIGINS = BRIDGE_PORTS.map(
     (p) => `ws://localhost:${p}`
   );
+  var isBridgePort = (v) => typeof v === "number" && BRIDGE_PORTS.includes(v);
   var BRIDGE_MAX_FRAME_BYTES = 16 * 1024 * 1024;
-  var PAIR_CODE_TTL_MS = 10 * 60 * 1e3;
-  var APPROVAL_TIMEOUT_MS = 10 * 60 * 1e3;
   var PROGRESS_EXTEND_MAX_MS = 60 * 1e3;
   var BYE_REASONS = {
     protocol: "protocol-mismatch",
@@ -1786,10 +1666,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
       case "welcome":
         if (!isString(f.serverId) || !Number.isInteger(f.port)) return null;
         return { kind: "welcome", serverId: f.serverId, port: f.port };
-      case "pair":
-        return isString(f.code) ? { kind: "pair", code: f.code } : null;
-      case "paired":
-        return isString(f.token) && f.token !== "" ? { kind: "paired", token: f.token } : null;
+      case "sessions":
+        return Number.isInteger(f.count) && f.count >= 0 ? { kind: "sessions", count: f.count } : null;
       case "request":
         if (!isString(f.id) || !isString(f.op)) return null;
         return {
@@ -1819,273 +1697,22 @@ input[type=range]:focus-visible::-moz-range-thumb {
     node.textContent = label;
     return node;
   }
-  function buildRows(parent2) {
-    const list = make("ul", "br-rows", parent2);
-    list.setAttribute("role", "list");
-    const rows = {};
-    for (const port of BRIDGE_PORTS) {
-      const row = make("li", "br-row", list);
-      row.dataset.port = String(port);
-      row.dataset.status = "offline";
-      const dot = make("span", "br-dot", row);
-      const text = make("span", "br-row-text", row);
-      rows[port] = { row, dot, text };
-    }
-    return rows;
-  }
-  function buildPair(parent2) {
-    const box = make("div", "br-pair", parent2);
-    box.hidden = true;
-    const digits = make("div", "br-digits", box);
-    digits.setAttribute("aria-live", "polite");
-    const instruction = make("p", "br-pair-line", box);
-    const copyButton = button2("cp-btn secondary", copy.copyCode, box);
-    return { box, digits, instruction, copy: copyButton };
-  }
-  function buildApproval(parent2) {
-    const field = make("label", "cp-field br-approval", parent2);
-    make("span", "cp-caption", field).textContent = copy.approvalLabel;
-    const toggle = make("input", "cp-switch", field);
-    toggle.type = "checkbox";
-    toggle.setAttribute("role", "switch");
-    const hint = make("p", "br-hint", parent2);
-    hint.textContent = copy.approvalHint;
-    return { toggle, hint };
-  }
-  function buildPending(parent2) {
-    const card = make("div", "br-card", parent2);
-    card.hidden = true;
-    make("h3", "cp-caption", card).textContent = copy.approvalTitle;
-    const description = make("p", "br-desc", card);
-    const code = make("pre", "br-code", card);
-    code.tabIndex = 0;
-    const actions = make("div", "cp-row br-actions", card);
-    const reject = button2("cp-btn ghost", copy.reject, actions);
-    const approve = button2("cp-btn", copy.approve, actions);
-    return { card, description, code, approve, reject };
-  }
-  function buildActivity(parent2) {
-    make("h3", "cp-caption", parent2).textContent = copy.activityTitle;
-    const list = make("ol", "br-log", parent2);
-    list.setAttribute("role", "list");
-    const empty = make("p", "br-empty", parent2);
-    empty.textContent = copy.activityEmpty;
-    return { list, empty };
-  }
   function buildBridgePanel() {
     const root = document.getElementById("tool-bridge");
     if (!root) throw new Error("ui.html is missing #tool-bridge");
     const content = make("main", "cp-content br-content", root);
+    const field = make("label", "cp-field br-port", content);
+    make("span", "cp-caption", field).textContent = copy.portLabel;
+    const port = make("input", "cp-input br-port-input", field);
+    port.type = "number";
+    port.step = "1";
+    port.min = String(BRIDGE_PORTS[0]);
+    port.max = String(BRIDGE_PORTS[BRIDGE_PORTS.length - 1]);
+    const connect = button2("cp-btn br-connect", copy.connect, content);
     const summary = make("p", "br-summary", content);
-    const rows = buildRows(content);
-    const pair = buildPair(content);
-    const approval = buildApproval(content);
-    const pending = buildPending(content);
-    const activity = buildActivity(content);
-    const repair = button2("br-link", copy.repair, content);
-    return {
-      root,
-      summary,
-      rows,
-      pair,
-      approval,
-      pending,
-      activity,
-      repair
-    };
-  }
-
-  // plugins/ezg-tools/src/ui/bridge/state.ts
-  var LOG_CAP = 50;
-  var bridgeState = {
-    connections: {},
-    file: null,
-    token: null,
-    approval: false,
-    pending: null,
-    log: []
-  };
-  var listeners = /* @__PURE__ */ new Set();
-  function subscribe(fn) {
-    listeners.add(fn);
-    return () => {
-      listeners.delete(fn);
-    };
-  }
-  function update(patch) {
-    const keys = Object.keys(patch);
-    if (keys.every((k) => Object.is(patch[k], bridgeState[k]))) return;
-    Object.assign(bridgeState, patch);
-    for (const fn of [...listeners]) {
-      try {
-        fn(bridgeState);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }
-  function connectionOf(port) {
-    return bridgeState.connections[port] ?? { status: "offline" };
-  }
-  function setConnection(port, patch) {
-    update({
-      connections: {
-        ...bridgeState.connections,
-        [port]: { ...connectionOf(port), ...patch }
-      }
-    });
-  }
-  function pushLog(entry) {
-    update({ log: [...bridgeState.log, entry].slice(-LOG_CAP) });
-  }
-
-  // plugins/ezg-tools/src/ui/bridge/interact.ts
-  var COPIED_MS = 1500;
-  function decide(approve) {
-    const pending = bridgeState.pending;
-    if (!pending) return;
-    post({
-      type: "bridge-approval-decision",
-      requestId: pending.requestId,
-      approve
-    });
-    update({ pending: null });
-  }
-  function copyDigits(refs) {
-    const { copy: copy2, digits } = refs.pair;
-    try {
-      void navigator.clipboard.writeText(digits.textContent ?? "").catch(() => void 0);
-    } catch {
-    }
-    const label = copy2.textContent;
-    copy2.textContent = BRIDGE_COPY.panel.copied;
-    setTimeout(() => {
-      copy2.textContent = label;
-    }, COPIED_MS);
-  }
-  function installBridgeUi(refs) {
-    refs.approval.toggle.addEventListener("change", () => {
-      const on = refs.approval.toggle.checked;
-      post({ type: "bridge-set-approval", on });
-      update({ approval: on });
-    });
-    refs.pending.approve.addEventListener("click", () => decide(true));
-    refs.pending.reject.addEventListener("click", () => decide(false));
-    refs.repair.addEventListener("click", () => {
-      post({ type: "bridge-clear-token" });
-      update({ token: null });
-    });
-    refs.pair.copy.addEventListener("click", () => copyDigits(refs));
-  }
-
-  // plugins/ezg-tools/src/ui/bridge/render.ts
-  var APPROVAL_PREVIEW_LINES = 12;
-  var { status: STATUS, activity: ACTIVITY } = BRIDGE_COPY;
-  function connOf(state2, port) {
-    return state2.connections[port] ?? { status: "offline" };
-  }
-  function ports(state2) {
-    return BRIDGE_PORTS.map((port) => ({ port, ...connOf(state2, port) }));
-  }
-  function isProtocolMismatch(reason) {
-    return reason === BYE_REASONS.protocol;
-  }
-  function summaryKey(state2) {
-    const list = ports(state2);
-    if (list.some((c) => c.status === "ready")) return "ready";
-    if (list.some((c) => c.status === "pairing")) return "pairing";
-    if (list.every((c) => c.status === "blocked")) return "blocked";
-    if (list.some((c) => c.status === "connecting")) return "connecting";
-    return "offline";
-  }
-  function summarize(state2) {
-    const list = ports(state2);
-    const ready = list.filter((c) => c.status === "ready").length;
-    const key = summaryKey(state2);
-    if (key === "ready") return STATUS.summaryReady(ready);
-    if (key === "pairing") return STATUS.waitingPair;
-    if (key === "blocked") return STATUS.blocked;
-    if (list.some((c) => c.status === "offline" && isProtocolMismatch(c.reason)))
-      return STATUS.unsupportedProtocol;
-    if (key === "connecting") return STATUS.connecting;
-    return STATUS.offline;
-  }
-  function previewCode(code) {
-    const lines = code.split("\n");
-    if (lines.length <= APPROVAL_PREVIEW_LINES) return code;
-    const hidden = lines.length - APPROVAL_PREVIEW_LINES;
-    return [...lines.slice(0, APPROVAL_PREVIEW_LINES), `\u2026 (+${hidden})`].join(
-      "\n"
-    );
-  }
-  function portText(port, c) {
-    switch (c.status) {
-      case "ready":
-        return STATUS.portReady(port);
-      case "pairing":
-        return STATUS.waitingPair;
-      case "connecting":
-        return STATUS.connecting;
-      case "blocked":
-        return STATUS.blocked;
-      default:
-        return isProtocolMismatch(c.reason) ? STATUS.unsupportedProtocol : STATUS.portOffline(port);
-    }
-  }
-  function renderPorts(refs, state2) {
-    for (const port of BRIDGE_PORTS) {
-      const row = refs.rows[port];
-      if (!row) continue;
-      const c = connOf(state2, port);
-      row.row.dataset.status = c.status;
-      row.text.textContent = portText(port, c);
-    }
-  }
-  function renderPairing(refs, state2) {
-    const shown = ports(state2).find((c) => c.status === "pairing" && c.code);
-    const code = shown?.code;
-    refs.pair.box.hidden = !code;
-    refs.pair.digits.textContent = code ?? "";
-    refs.pair.instruction.textContent = code ? STATUS.pairInstruction(code) : "";
-  }
-  function renderApproval(refs, state2) {
-    const { pending } = state2;
-    refs.approval.toggle.checked = state2.approval;
-    refs.pending.card.hidden = pending === null;
-    if (!pending) return;
-    refs.pending.description.textContent = pending.description;
-    refs.pending.code.textContent = previewCode(pending.code);
-    refs.pending.approve.disabled = false;
-    refs.pending.reject.disabled = false;
-  }
-  function logItem(entry) {
-    const item = document.createElement("li");
-    item.className = "br-item";
-    item.dataset.ok = String(entry.ok);
-    const text = document.createElement("span");
-    text.className = "br-item-text";
-    text.textContent = entry.ok ? ACTIVITY.evalRow(entry.description, entry.ms) : [ACTIVITY.evalFailedRow(entry.description), entry.error].filter(Boolean).join(": ");
-    const ms = document.createElement("span");
-    ms.className = "br-item-ms";
-    ms.textContent = entry.ok ? "" : `${entry.ms}ms`;
-    item.append(text, ms);
-    return item;
-  }
-  function renderLog(refs, state2) {
-    refs.activity.list.replaceChildren(...[...state2.log].reverse().map(logItem));
-    refs.activity.empty.hidden = state2.log.length > 0;
-  }
-  function renderExtras(refs, state2) {
-    refs.repair.hidden = state2.token === null;
-  }
-  function renderBridge(refs, state2) {
-    refs.summary.textContent = summarize(state2);
-    refs.summary.dataset.status = summaryKey(state2);
-    renderPorts(refs, state2);
-    renderPairing(refs, state2);
-    renderApproval(refs, state2);
-    renderLog(refs, state2);
-    renderExtras(refs, state2);
+    const hint = make("p", "br-hint", content);
+    hint.textContent = copy.hint;
+    return { root, summary, port, button: connect, hint };
   }
 
   // plugins/ezg-tools/src/shared/codegen-data.ts
@@ -2142,50 +1769,47 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var BACKOFF_MIN_MS = 1e3;
   var BACKOFF_MAX_MS = 3e4;
   var JITTER = 0.2;
-  function createSocketPool(options2) {
-    const entries = /* @__PURE__ */ new Map();
+  function openSocket(options2) {
+    let ws = null;
+    let status = null;
+    let attempt = 0;
+    let timer = null;
     let closed = false;
-    let blockedAll = false;
-    function setStatus(entry, next) {
-      if (entry.status === next) return;
-      entry.status = next;
-      options2.onStatus(entry.port, next);
+    function setStatus(next) {
+      if (closed || status === next) return;
+      status = next;
+      options2.onStatus(next);
     }
-    function scheduleReconnect(entry) {
-      if (closed || blockedAll) return;
-      const base = Math.min(BACKOFF_MAX_MS, BACKOFF_MIN_MS * 2 ** entry.attempt);
+    function scheduleReconnect() {
+      if (closed) return;
+      const base = Math.min(BACKOFF_MAX_MS, BACKOFF_MIN_MS * 2 ** attempt);
       const delay = base * (1 + JITTER * (Math.random() * 2 - 1));
-      entry.attempt += 1;
-      entry.timer = setTimeout(() => connect(entry), delay);
+      attempt += 1;
+      timer = setTimeout(connect, delay);
     }
-    function connect(entry) {
-      if (closed || blockedAll) return;
-      entry.timer = null;
-      setStatus(entry, "connecting");
-      let ws;
+    function connect() {
+      if (closed) return;
+      timer = null;
+      setStatus("connecting");
+      let socket2;
       try {
-        ws = new WebSocket(`ws://localhost:${entry.port}`);
+        socket2 = new WebSocket(`ws://localhost:${options2.port}`);
       } catch {
-        blockedAll = true;
-        for (const other of entries.values()) {
-          if (other.timer) clearTimeout(other.timer);
-          other.timer = null;
-        }
-        setStatus(entry, "blocked");
+        setStatus("blocked");
         return;
       }
-      entry.ws = ws;
-      ws.onopen = () => {
-        if (entry.ws !== ws || closed) return;
-        setStatus(entry, "open");
+      ws = socket2;
+      socket2.onopen = () => {
+        if (ws !== socket2 || closed) return;
+        setStatus("open");
         try {
-          ws.send(JSON.stringify(options2.hello()));
+          socket2.send(JSON.stringify(options2.hello()));
         } catch {
-          ws.close();
+          socket2.close();
         }
       };
-      ws.onmessage = (event) => {
-        if (entry.ws !== ws || closed) return;
+      socket2.onmessage = (event) => {
+        if (ws !== socket2 || closed) return;
         if (typeof event.data !== "string") return;
         let raw;
         try {
@@ -2195,208 +1819,168 @@ input[type=range]:focus-visible::-moz-range-thumb {
         }
         const frame = parseServerFrame(raw);
         if (!frame) return;
-        entry.attempt = 0;
-        options2.onFrame(entry.port, frame);
+        attempt = 0;
+        options2.onFrame(frame);
       };
-      ws.onerror = () => {
+      socket2.onerror = () => {
       };
-      ws.onclose = () => {
-        if (entry.ws !== ws || closed) return;
-        entry.ws = null;
-        setStatus(entry, "offline");
-        scheduleReconnect(entry);
+      socket2.onclose = () => {
+        if (ws !== socket2 || closed) return;
+        ws = null;
+        setStatus("offline");
+        scheduleReconnect();
       };
     }
-    function trySend(entry, text) {
-      const ws = entry?.ws;
-      if (!ws || ws.readyState !== WebSocket.OPEN) return false;
-      try {
-        ws.send(text);
-        return true;
-      } catch {
-        return false;
-      }
-    }
-    function serialize(frame) {
-      const text = JSON.stringify(frame);
-      return text.length > BRIDGE_MAX_FRAME_BYTES ? null : text;
-    }
-    for (const port of options2.ports) {
-      entries.set(port, { port, ws: null, status: null, attempt: 0, timer: null });
-    }
-    for (const entry of entries.values()) connect(entry);
+    connect();
     return {
-      send(port, frame) {
-        const text = serialize(frame);
-        return text === null ? false : trySend(entries.get(port), text);
-      },
-      broadcast(frame) {
-        const text = serialize(frame);
-        if (text === null) return 0;
-        let sent = 0;
-        for (const entry of entries.values()) if (trySend(entry, text)) sent += 1;
-        return sent;
+      send(frame) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+        const text = JSON.stringify(frame);
+        if (text.length > BRIDGE_MAX_FRAME_BYTES) return false;
+        try {
+          ws.send(text);
+          return true;
+        } catch {
+          return false;
+        }
       },
       close() {
         closed = true;
-        for (const entry of entries.values()) {
-          if (entry.timer) clearTimeout(entry.timer);
-          entry.timer = null;
-          const ws = entry.ws;
-          entry.ws = null;
-          if (!ws) continue;
-          ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null;
-          try {
-            ws.close();
-          } catch {
-          }
+        if (timer) clearTimeout(timer);
+        timer = null;
+        const socket2 = ws;
+        ws = null;
+        if (!socket2) return;
+        socket2.onopen = socket2.onmessage = socket2.onerror = socket2.onclose = null;
+        try {
+          socket2.close();
+        } catch {
         }
       }
     };
   }
 
+  // plugins/ezg-tools/src/ui/bridge/state.ts
+  var bridgeState = {
+    file: null,
+    port: BRIDGE_DEFAULT_PORT,
+    connect: false,
+    status: "idle",
+    reason: void 0,
+    sessions: 0
+  };
+  var listeners = /* @__PURE__ */ new Set();
+  function subscribe(fn) {
+    listeners.add(fn);
+    return () => {
+      listeners.delete(fn);
+    };
+  }
+  function update(patch) {
+    const keys = Object.keys(patch);
+    if (keys.every((k) => Object.is(patch[k], bridgeState[k]))) return;
+    Object.assign(bridgeState, patch);
+    for (const fn of [...listeners]) {
+      try {
+        fn(bridgeState);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+
   // plugins/ezg-tools/src/ui/bridge/relay.ts
   var started = false;
-  var pool = null;
-  var inflight = /* @__PURE__ */ new Map();
+  var socket = null;
   function startRelay() {
-    if (started) return;
     started = true;
-    let lastToken = bridgeState.token;
-    subscribe((state2) => {
-      const cleared = typeof lastToken === "string" && state2.token === null;
-      lastToken = state2.token;
-      if (!cleared) return;
-      pool?.close();
-      inflight.clear();
-      update({ connections: {} });
-      pool = makePool();
-    });
   }
-  function makePool() {
-    return createSocketPool({
-      ports: BRIDGE_PORTS,
+  function closeSocket() {
+    socket?.close();
+    socket = null;
+  }
+  function openLink() {
+    closeSocket();
+    update({ status: "connecting", reason: void 0, sessions: 0 });
+    socket = openSocket({
+      port: bridgeState.port,
       hello: () => ({
         kind: "hello",
         protocol: BRIDGE_PROTOCOL,
-        token: bridgeState.token,
         file: bridgeState.file
       }),
       onFrame,
       onStatus
     });
   }
-  function splitId(id) {
-    const cut = id.indexOf(":");
-    if (cut < 0) return null;
-    const port = Number(id.slice(0, cut));
-    if (!BRIDGE_PORTS.includes(port)) return null;
-    return { port, frameId: id.slice(cut + 1) };
+  function saveLink() {
+    post({
+      type: "bridge-set-link",
+      port: bridgeState.port,
+      connect: bridgeState.connect
+    });
   }
-  function sendTo(port, frame) {
-    return pool?.send(port, frame) ?? false;
+  function connectBridge(port) {
+    update({ port, connect: true });
+    saveLink();
+    openLink();
   }
-  function failInflight(port) {
-    for (const [id, entry] of [...inflight]) {
-      if (entry.port !== port) continue;
-      inflight.delete(id);
-      if (entry.description === null) continue;
-      pushLog({
-        at: entry.at,
-        description: entry.description,
-        ok: false,
-        ms: Date.now() - entry.at,
-        error: "connection closed"
-      });
-    }
+  function disconnectBridge() {
+    closeSocket();
+    update({
+      connect: false,
+      status: "idle",
+      reason: void 0,
+      sessions: 0
+    });
+    saveLink();
   }
-  function onStatus(port, status) {
-    const base = { code: void 0, serverId: void 0 };
-    if (status === "blocked") {
-      setConnection(port, { ...base, status, reason: void 0 });
-    } else if (status === "open") {
-      setConnection(port, { ...base, status: "connecting" });
-    } else {
-      setConnection(port, { ...base, status });
-    }
-    if (status === "offline" || status === "blocked") failInflight(port);
-  }
-  function onFrame(port, frame) {
-    switch (frame.kind) {
-      case "welcome":
-        setConnection(port, {
-          serverId: frame.serverId,
-          reason: void 0,
-          status: connectionOf(port).status === "pairing" ? "pairing" : "ready"
-        });
-        return;
-      case "pair":
-        setConnection(port, {
-          status: "pairing",
-          code: frame.code,
-          reason: void 0
-        });
-        return;
-      case "paired":
-        update({ token: frame.token });
-        post({ type: "bridge-save-token", token: frame.token });
-        setConnection(port, {
-          status: "ready",
-          code: void 0,
-          reason: void 0
-        });
-        return;
-      case "request":
-        forwardRequest(port, frame);
-        return;
-      case "bye":
-        setConnection(port, {
-          status: "offline",
-          code: void 0,
-          serverId: void 0,
-          reason: frame.reason
-        });
-        failInflight(port);
-        return;
-    }
-  }
-  function forwardRequest(port, frame) {
-    const op = frame.op;
-    if (!isBridgeOp(op) || connectionOf(port).status !== "ready") {
-      const message = isBridgeOp(op) ? "plugin not ready" : `unknown op: ${op}`;
-      sendTo(port, { kind: "reply", id: frame.id, ok: false, error: { message } });
+  function onStatus(status) {
+    if (status === "open" || status === "connecting") {
+      update({ status: "connecting" });
       return;
     }
-    const payload2 = frame.payload;
-    const description = op === "eval" && typeof payload2?.description === "string" ? payload2.description : null;
-    const id = `${port}:${frame.id}`;
-    inflight.set(id, { port, description, at: Date.now() });
-    post({ type: "bridge-request", id, op, payload: frame.payload });
+    update({ status, sessions: 0 });
+  }
+  function onFrame(frame) {
+    switch (frame.kind) {
+      case "welcome":
+        update({ status: "ready", reason: void 0 });
+        return;
+      case "sessions":
+        update({ sessions: frame.count });
+        return;
+      case "request":
+        forwardRequest(frame);
+        return;
+      case "bye":
+        update({ status: "offline", reason: frame.reason, sessions: 0 });
+        return;
+    }
+  }
+  function forwardRequest(frame) {
+    const op = frame.op;
+    if (!isBridgeOp(op) || bridgeState.status !== "ready") {
+      const message = isBridgeOp(op) ? "plugin not ready" : `unknown op: ${op}`;
+      socket?.send({
+        kind: "reply",
+        id: frame.id,
+        ok: false,
+        error: { message }
+      });
+      return;
+    }
+    post({ type: "bridge-request", id: frame.id, op, payload: frame.payload });
   }
   function onReply(msg) {
-    const ids = splitId(msg.id);
-    const entry = inflight.get(msg.id);
-    if (!ids || !entry) return;
-    inflight.delete(msg.id);
-    const frame = msg.ok ? { kind: "reply", id: ids.frameId, ok: true, result: msg.result } : { kind: "reply", id: ids.frameId, ok: false, error: msg.error };
-    if (!sendTo(ids.port, frame)) {
-      sendTo(ids.port, {
-        kind: "reply",
-        id: ids.frameId,
-        ok: false,
-        error: { message: "reply too large or connection lost" }
-      });
-    }
-    if (entry.description !== null) {
-      pushLog({
-        at: entry.at,
-        description: entry.description,
-        ok: msg.ok,
-        ms: Date.now() - entry.at,
-        ...msg.ok ? {} : { error: msg.error.message }
-      });
-    }
-    if (bridgeState.pending?.requestId === msg.id) update({ pending: null });
+    const frame = msg.ok ? { kind: "reply", id: msg.id, ok: true, result: msg.result } : { kind: "reply", id: msg.id, ok: false, error: msg.error };
+    if (socket?.send(frame)) return;
+    socket?.send({
+      kind: "reply",
+      id: msg.id,
+      ok: false,
+      error: { message: "reply too large or connection lost" }
+    });
   }
   function patchPage(data) {
     const { pageId, pageName } = data;
@@ -2409,38 +1993,75 @@ input[type=range]:focus-visible::-moz-range-thumb {
     if (!started) return;
     switch (msg.type) {
       case "bridge-init":
-        update({ file: msg.file, token: msg.token, approval: msg.approval });
-        pool ?? (pool = makePool());
+        closeSocket();
+        update({ file: msg.file, port: msg.port, connect: msg.connect });
+        if (msg.connect) openLink();
         return;
       case "bridge-reply":
         onReply(msg);
         return;
-      case "bridge-progress": {
-        const ids = splitId(msg.id);
-        if (!ids || !inflight.has(msg.id)) return;
-        sendTo(ids.port, {
+      case "bridge-progress":
+        socket?.send({
           kind: "progress",
-          id: ids.frameId,
+          id: msg.id,
           extendMs: msg.extendMs,
           note: msg.note
         });
         return;
-      }
       case "bridge-event":
         if (msg.event.type === "page") patchPage(msg.event.data);
-        for (const port of BRIDGE_PORTS) {
-          if (connectionOf(port).status === "ready")
-            sendTo(port, { kind: "event", event: msg.event });
-        }
-        return;
-      case "bridge-approval-request":
-        update({ pending: msg.request });
-        return;
-      case "bridge-approval-mode":
-        update({ approval: msg.on });
+        if (bridgeState.status === "ready")
+          socket?.send({ kind: "event", event: msg.event });
         return;
       default:
         msg;
+    }
+  }
+
+  // plugins/ezg-tools/src/ui/bridge/interact.ts
+  function commitPort(refs) {
+    const port = Number(refs.port.value);
+    if (refs.port.value.trim() === "" || !isBridgePort(port)) {
+      refs.port.value = String(bridgeState.port);
+      return;
+    }
+    if (bridgeState.connect) {
+      connectBridge(port);
+      return;
+    }
+    update({ port });
+    post({ type: "bridge-set-link", port, connect: false });
+  }
+  function installBridgeUi(refs) {
+    refs.button.addEventListener("click", () => {
+      if (bridgeState.connect) disconnectBridge();
+      else connectBridge(bridgeState.port);
+    });
+    refs.port.addEventListener("change", () => commitPort(refs));
+  }
+
+  // plugins/ezg-tools/src/ui/bridge/render.ts
+  var { status: STATUS, panel: PANEL } = BRIDGE_COPY;
+  function summarize(state2) {
+    switch (state2.status) {
+      case "idle":
+        return STATUS.idle;
+      case "connecting":
+        return STATUS.connecting;
+      case "ready":
+        return STATUS.summaryReady(Math.max(1, state2.sessions));
+      case "blocked":
+        return STATUS.blocked;
+      default:
+        return state2.reason === BYE_REASONS.protocol ? STATUS.unsupportedProtocol : STATUS.offline;
+    }
+  }
+  function renderBridge(refs, state2) {
+    refs.summary.textContent = summarize(state2);
+    refs.summary.dataset.status = state2.status;
+    refs.button.textContent = state2.connect ? PANEL.disconnect : PANEL.connect;
+    if (document.activeElement !== refs.port) {
+      refs.port.value = String(state2.port);
     }
   }
 

@@ -9215,7 +9215,7 @@ var require_event_target = __commonJS({
             callListener(handler, this, event);
           };
         } else if (type === "close") {
-          wrapper = function onClose2(code, message) {
+          wrapper = function onClose(code, message) {
             const event = new CloseEvent("close", {
               code,
               reason: message.toString(),
@@ -9445,7 +9445,7 @@ var require_websocket = __commonJS({
     var http = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes2, createHash: createHash2 } = __require("crypto");
+    var { randomBytes, createHash } = __require("crypto");
     var { Duplex, Readable } = __require("stream");
     var { URL: URL2 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -9472,7 +9472,7 @@ var require_websocket = __commonJS({
     var protocolVersions = [8, 13];
     var readyStates = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"];
     var subprotocolRegex = /^[!#$%&'*+\-.0-9A-Z^_`|a-z~]+$/;
-    var WebSocket2 = class _WebSocket extends EventEmitter {
+    var WebSocket3 = class _WebSocket extends EventEmitter {
       /**
        * Create a new `WebSocket`.
        *
@@ -9860,35 +9860,35 @@ var require_websocket = __commonJS({
         }
       }
     };
-    Object.defineProperty(WebSocket2, "CONNECTING", {
+    Object.defineProperty(WebSocket3, "CONNECTING", {
       enumerable: true,
       value: readyStates.indexOf("CONNECTING")
     });
-    Object.defineProperty(WebSocket2.prototype, "CONNECTING", {
+    Object.defineProperty(WebSocket3.prototype, "CONNECTING", {
       enumerable: true,
       value: readyStates.indexOf("CONNECTING")
     });
-    Object.defineProperty(WebSocket2, "OPEN", {
+    Object.defineProperty(WebSocket3, "OPEN", {
       enumerable: true,
       value: readyStates.indexOf("OPEN")
     });
-    Object.defineProperty(WebSocket2.prototype, "OPEN", {
+    Object.defineProperty(WebSocket3.prototype, "OPEN", {
       enumerable: true,
       value: readyStates.indexOf("OPEN")
     });
-    Object.defineProperty(WebSocket2, "CLOSING", {
+    Object.defineProperty(WebSocket3, "CLOSING", {
       enumerable: true,
       value: readyStates.indexOf("CLOSING")
     });
-    Object.defineProperty(WebSocket2.prototype, "CLOSING", {
+    Object.defineProperty(WebSocket3.prototype, "CLOSING", {
       enumerable: true,
       value: readyStates.indexOf("CLOSING")
     });
-    Object.defineProperty(WebSocket2, "CLOSED", {
+    Object.defineProperty(WebSocket3, "CLOSED", {
       enumerable: true,
       value: readyStates.indexOf("CLOSED")
     });
-    Object.defineProperty(WebSocket2.prototype, "CLOSED", {
+    Object.defineProperty(WebSocket3.prototype, "CLOSED", {
       enumerable: true,
       value: readyStates.indexOf("CLOSED")
     });
@@ -9901,10 +9901,10 @@ var require_websocket = __commonJS({
       "readyState",
       "url"
     ].forEach((property) => {
-      Object.defineProperty(WebSocket2.prototype, property, { enumerable: true });
+      Object.defineProperty(WebSocket3.prototype, property, { enumerable: true });
     });
     ["open", "error", "close", "message"].forEach((method) => {
-      Object.defineProperty(WebSocket2.prototype, `on${method}`, {
+      Object.defineProperty(WebSocket3.prototype, `on${method}`, {
         enumerable: true,
         get() {
           for (const listener of this.listeners(method)) {
@@ -9926,9 +9926,9 @@ var require_websocket = __commonJS({
         }
       });
     });
-    WebSocket2.prototype.addEventListener = addEventListener;
-    WebSocket2.prototype.removeEventListener = removeEventListener;
-    module.exports = WebSocket2;
+    WebSocket3.prototype.addEventListener = addEventListener;
+    WebSocket3.prototype.removeEventListener = removeEventListener;
+    module.exports = WebSocket3;
     function initAsClient(websocket, address, protocols, options) {
       const opts = {
         allowSynchronousEvents: true,
@@ -9996,7 +9996,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key = randomBytes2(16).toString("base64");
+      const key = randomBytes(16).toString("base64");
       const request = isSecure ? https.request : http.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -10119,14 +10119,14 @@ var require_websocket = __commonJS({
       });
       req.on("upgrade", (res, socket, head) => {
         websocket.emit("upgrade", res);
-        if (websocket.readyState !== WebSocket2.CONNECTING) return;
+        if (websocket.readyState !== WebSocket3.CONNECTING) return;
         req = websocket._req = null;
         const upgrade = res.headers.upgrade;
         if (upgrade === void 0 || upgrade.toLowerCase() !== "websocket") {
           abortHandshake(websocket, socket, "Invalid Upgrade header");
           return;
         }
-        const digest = createHash2("sha1").update(key + GUID).digest("base64");
+        const digest = createHash("sha1").update(key + GUID).digest("base64");
         if (res.headers["sec-websocket-accept"] !== digest) {
           abortHandshake(websocket, socket, "Invalid Sec-WebSocket-Accept header");
           return;
@@ -10193,7 +10193,7 @@ var require_websocket = __commonJS({
       }
     }
     function emitErrorAndClose(websocket, err) {
-      websocket._readyState = WebSocket2.CLOSING;
+      websocket._readyState = WebSocket3.CLOSING;
       websocket._errorEmitted = true;
       websocket.emit("error", err);
       websocket.emitClose();
@@ -10210,7 +10210,7 @@ var require_websocket = __commonJS({
       return tls.connect(options);
     }
     function abortHandshake(websocket, stream, message) {
-      websocket._readyState = WebSocket2.CLOSING;
+      websocket._readyState = WebSocket3.CLOSING;
       const err = new Error(message);
       Error.captureStackTrace(err, abortHandshake);
       if (stream.setHeader) {
@@ -10285,9 +10285,9 @@ var require_websocket = __commonJS({
     }
     function senderOnError(err) {
       const websocket = this[kWebSocket];
-      if (websocket.readyState === WebSocket2.CLOSED) return;
-      if (websocket.readyState === WebSocket2.OPEN) {
-        websocket._readyState = WebSocket2.CLOSING;
+      if (websocket.readyState === WebSocket3.CLOSED) return;
+      if (websocket.readyState === WebSocket3.OPEN) {
+        websocket._readyState = WebSocket3.CLOSING;
         setCloseTimer(websocket);
       }
       this._socket.end();
@@ -10307,7 +10307,7 @@ var require_websocket = __commonJS({
       this.removeListener("close", socketOnClose);
       this.removeListener("data", socketOnData);
       this.removeListener("end", socketOnEnd);
-      websocket._readyState = WebSocket2.CLOSING;
+      websocket._readyState = WebSocket3.CLOSING;
       if (!this._readableState.endEmitted && !websocket._closeFrameReceived && !websocket._receiver._writableState.errorEmitted && this._readableState.length !== 0) {
         const chunk = this.read(this._readableState.length);
         websocket._receiver.write(chunk);
@@ -10329,7 +10329,7 @@ var require_websocket = __commonJS({
     }
     function socketOnEnd() {
       const websocket = this[kWebSocket];
-      websocket._readyState = WebSocket2.CLOSING;
+      websocket._readyState = WebSocket3.CLOSING;
       websocket._receiver.end();
       this.end();
     }
@@ -10338,7 +10338,7 @@ var require_websocket = __commonJS({
       this.removeListener("error", socketOnError);
       this.on("error", NOOP);
       if (websocket) {
-        websocket._readyState = WebSocket2.CLOSING;
+        websocket._readyState = WebSocket3.CLOSING;
         this.destroy();
       }
     }
@@ -10349,7 +10349,7 @@ var require_websocket = __commonJS({
 var require_stream = __commonJS({
   "node_modules/ws/lib/stream.js"(exports, module) {
     "use strict";
-    var WebSocket2 = require_websocket();
+    var WebSocket3 = require_websocket();
     var { Duplex } = __require("stream");
     function emitClose(stream) {
       stream.emit("close");
@@ -10495,11 +10495,11 @@ var require_websocket_server = __commonJS({
     var EventEmitter = __require("events");
     var http = __require("http");
     var { Duplex } = __require("stream");
-    var { createHash: createHash2 } = __require("crypto");
+    var { createHash } = __require("crypto");
     var extension2 = require_extension();
     var PerMessageDeflate2 = require_permessage_deflate();
     var subprotocol2 = require_subprotocol();
-    var WebSocket2 = require_websocket();
+    var WebSocket3 = require_websocket();
     var { CLOSE_TIMEOUT, GUID, kWebSocket } = require_constants();
     var keyRegex = /^[+/0-9A-Za-z]{22}==$/;
     var RUNNING = 0;
@@ -10565,7 +10565,7 @@ var require_websocket_server = __commonJS({
           host: null,
           path: null,
           port: null,
-          WebSocket: WebSocket2,
+          WebSocket: WebSocket3,
           ...options
         };
         if (options.port == null && !options.server && !options.noServer || options.port != null && (options.server || options.noServer) || options.server && options.noServer) {
@@ -10802,7 +10802,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
-        const digest = createHash2("sha1").update(key + GUID).digest("base64");
+        const digest = createHash("sha1").update(key + GUID).digest("base64");
         const headers = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
@@ -10888,9 +10888,6 @@ var require_websocket_server = __commonJS({
     }
   }
 });
-
-// bridge-server/src/main.ts
-import { homedir } from "node:os";
 
 // node_modules/zod/v3/helpers/util.js
 var util;
@@ -38060,9 +38057,9 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve2, reject) => {
+    return new Promise((resolve2, reject2) => {
       const earlyReject = (error62) => {
-        reject(error62);
+        reject2(error62);
       };
       if (!this._transport) {
         earlyReject(new Error("Not connected"));
@@ -38124,24 +38121,24 @@ var Protocol = class {
           }
         }, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error63) => this._onerror(new Error(`Failed to send cancellation: ${error63}`)));
         const error62 = reason instanceof McpError ? reason : new McpError(ErrorCode.RequestTimeout, String(reason));
-        reject(error62);
+        reject2(error62);
       };
       this._responseHandlers.set(messageId, (response) => {
         if (options?.signal?.aborted) {
           return;
         }
         if (response instanceof Error) {
-          return reject(response);
+          return reject2(response);
         }
         try {
           const parseResult = safeParse2(resultSchema, response.result);
           if (!parseResult.success) {
-            reject(parseResult.error);
+            reject2(parseResult.error);
           } else {
             resolve2(parseResult.data);
           }
         } catch (error62) {
-          reject(error62);
+          reject2(error62);
         }
       });
       options?.signal?.addEventListener("abort", () => {
@@ -38167,12 +38164,12 @@ var Protocol = class {
           timestamp: Date.now()
         }).catch((error62) => {
           this._cleanupTimeout(messageId);
-          reject(error62);
+          reject2(error62);
         });
       } else {
         this._transport.send(jsonrpcRequest, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error62) => {
           this._cleanupTimeout(messageId);
-          reject(error62);
+          reject2(error62);
         });
       }
     });
@@ -38399,15 +38396,15 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve2, reject) => {
+    return new Promise((resolve2, reject2) => {
       if (signal.aborted) {
-        reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
+        reject2(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
       const timeoutId = setTimeout(resolve2, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
-        reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
+        reject2(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
       }, { once: true });
     });
   }
@@ -40172,9 +40169,6 @@ var StdioServerTransport = class {
 
 // plugins/_loader/src/shared/dist.ts
 var CHECK_INTERVAL_MS = 10 * 60 * 1e3;
-var INSTALL_DIR_PARTS = [".ezg", "figma-tools"];
-var BRIDGE_DIR = "_bridge";
-var BRIDGE_TOKEN_FILE = "token";
 var BRIDGE_MCP_NAME = "ezg-figma-bridge";
 
 // plugins/ezg-tools/src/shared/values.ts
@@ -40186,15 +40180,20 @@ function isFiniteNumber(value) {
 }
 
 // plugins/ezg-tools/src/shared/bridge-wire.ts
-var BRIDGE_PROTOCOL = 1;
-var BRIDGE_PORTS = [39410];
+var BRIDGE_PROTOCOL = 2;
+var BRIDGE_DEFAULT_PORT = 39410;
+var BRIDGE_PORT_COUNT = 10;
+var BRIDGE_PORTS = Array.from(
+  { length: BRIDGE_PORT_COUNT },
+  (_, i) => BRIDGE_DEFAULT_PORT + i
+);
+var BRIDGE_PORT_ENV = "EZG_FIGMA_BRIDGE_PORT";
 var BRIDGE_ORIGINS = BRIDGE_PORTS.map(
   (p) => `ws://localhost:${p}`
 );
+var isBridgePort = (v) => typeof v === "number" && BRIDGE_PORTS.includes(v);
 var BRIDGE_MAX_FRAME_BYTES = 16 * 1024 * 1024;
 var HELLO_TIMEOUT_MS = 5e3;
-var PAIR_CODE_TTL_MS = 10 * 60 * 1e3;
-var APPROVAL_TIMEOUT_MS = 10 * 60 * 1e3;
 var PROGRESS_EXTEND_MAX_MS = 60 * 1e3;
 var EVENT_CAPACITY = 1e3;
 var BYE_REASONS = {
@@ -40283,13 +40282,7 @@ function parsePluginFrame(raw) {
     case "hello": {
       const file2 = toFileInfo(f.file);
       if (!Number.isInteger(f.protocol) || !file2) return null;
-      if (f.token !== null && !isString(f.token)) return null;
-      return {
-        kind: "hello",
-        protocol: f.protocol,
-        token: f.token,
-        file: file2
-      };
+      return { kind: "hello", protocol: f.protocol, file: file2 };
     }
     case "reply":
       return toReply(f);
@@ -40299,6 +40292,29 @@ function parsePluginFrame(raw) {
       const event = toBridgeEvent(f.event);
       return event ? { kind: "event", event } : null;
     }
+    default:
+      return null;
+  }
+}
+function parseServerFrame(raw) {
+  const f = decode3(raw);
+  if (!f) return null;
+  switch (f.kind) {
+    case "welcome":
+      if (!isString(f.serverId) || !Number.isInteger(f.port)) return null;
+      return { kind: "welcome", serverId: f.serverId, port: f.port };
+    case "sessions":
+      return Number.isInteger(f.count) && f.count >= 0 ? { kind: "sessions", count: f.count } : null;
+    case "request":
+      if (!isString(f.id) || !isString(f.op)) return null;
+      return {
+        kind: "request",
+        id: f.id,
+        op: f.op,
+        payload: f.payload ?? null
+      };
+    case "bye":
+      return isString(f.reason) ? { kind: "bye", reason: f.reason } : null;
     default:
       return null;
   }
@@ -40366,10 +40382,17 @@ var FILE_KEY_SHAPE = /^[0-9a-zA-Z]{22,128}$/;
 var clean = (text2) => text2.replace(/\s+/g, " ");
 function describeFiles(files2) {
   return files2.map(
-    (f) => `- "${clean(f.fileName)}" clientId=${f.clientId} fileKey=${f.fileKey ?? "unknown"} page="${clean(f.pageName)}" ${f.paired ? "paired" : "not paired"}`
+    (f) => `- "${clean(f.fileName)}" clientId=${f.clientId} fileKey=${f.fileKey ?? "unknown"} page="${clean(f.pageName)}"`
   ).join("\n");
 }
-function createFileRegistry() {
+function pagePatch(event) {
+  const { pageId, pageName } = event.data;
+  if (event.type === "page" && typeof pageId === "string" && typeof pageName === "string") {
+    return { pageId, pageName };
+  }
+  return null;
+}
+function createFileRegistry(linkError = () => null) {
   const entries = /* @__PURE__ */ new Map();
   const list = () => [...entries.values()].map((f) => ({ ...f })).sort((a, b) => a.connectedAt - b.connectedAt);
   const fail = (message) => ({
@@ -40379,39 +40402,27 @@ ${describeFiles(list())}`
   function resolve2(target) {
     const t = target?.trim() ?? "";
     const all = list();
-    const paired = all.filter((f) => f.paired);
     if (t) {
-      const byKey = paired.filter((f) => f.fileKey === t);
+      const byKey = all.filter((f) => f.fileKey === t);
       if (byKey.length > 1) {
         return fail(
           `fileKey "${t}" matches several connected files. Pass clientId instead.`
         );
       }
       if (byKey.length === 1) return { file: byKey[0] };
-      const byId = paired.find((f) => f.clientId === t);
+      const byId = all.find((f) => f.clientId === t);
       if (byId) return { file: byId };
     }
-    const matchesUnpaired = t !== "" && all.some((f) => f.fileKey === t || f.clientId === t);
-    if ((t === "" || FILE_KEY_SHAPE.test(t)) && !matchesUnpaired && paired.length === 1) {
-      return t === "" ? { file: paired[0] } : {
-        file: paired[0],
+    if ((t === "" || FILE_KEY_SHAPE.test(t)) && all.length === 1) {
+      return t === "" ? { file: all[0] } : {
+        file: all[0],
         note: `fileKey ${t} is not verified; using the only connected file`
       };
     }
     if (all.length === 0) {
-      return fail(
-        "No Figma file is connected. Open the Claude tab in EZG Tools in Figma."
-      );
-    }
-    if (paired.length === 0) {
-      return fail(
-        "Not paired. Ask the user for the 6-digit code in the Claude tab and call pair."
-      );
-    }
-    if (matchesUnpaired) {
-      return fail(
-        `The file "${t}" is connected but not paired. Ask the user for the 6-digit code in the Claude tab and call pair.`
-      );
+      return {
+        error: linkError() ?? "No Figma file is connected. In Figma, open the Claude tab in EZG Tools and press Connect."
+      };
     }
     if (t) {
       return fail(
@@ -40427,7 +40438,6 @@ ${describeFiles(list())}`
         ...file2,
         connectionId,
         port,
-        paired: false,
         connectedAt: Date.now()
       });
     },
@@ -40437,10 +40447,6 @@ ${describeFiles(list())}`
       const { clientId: _ignored, ...rest } = file2;
       entries.set(connectionId, { ...current, ...rest });
     },
-    setPaired(connectionId) {
-      const current = entries.get(connectionId);
-      if (current) current.paired = true;
-    },
     remove(connectionId) {
       entries.delete(connectionId);
     },
@@ -40449,9 +40455,8 @@ ${describeFiles(list())}`
   };
 }
 
-// bridge-server/src/hub.ts
-import { randomUUID } from "node:crypto";
-import { createServer } from "node:http";
+// bridge-server/src/instructions.ts
+var INSTRUCTIONS = 'Runs Plugin API code in the Figma file whose Claude tab in EZG Tools is connected, and reads or controls its selection, viewport, events, history and exports. If `files` shows none, ask the user to press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server" in the Claude tab. Any number of Claude sessions can use the same file at once. Load the ezg-figma-bridge skill first.';
 
 // node_modules/ws/wrapper.mjs
 var import_stream = __toESM(require_stream(), 1);
@@ -40463,119 +40468,160 @@ var import_subprotocol = __toESM(require_subprotocol(), 1);
 var import_websocket = __toESM(require_websocket(), 1);
 var import_websocket_server = __toESM(require_websocket_server(), 1);
 
-// bridge-server/src/hub.ts
-var HEARTBEAT_MS = 15e3;
-var HEARTBEAT_MAX_MISSED = 2;
-function listenOnFirstFree(server2, ports) {
-  return new Promise((resolve2, reject) => {
-    let index = 0;
-    const tryNext = () => {
-      if (index >= ports.length) {
-        reject(new Error(`No free bridge port in ${ports.join(", ")}`));
+// bridge-server/src/peer-wire.ts
+var AGENT_PATH = "/agent";
+var PEER_PROTOCOL = 1;
+var isString2 = (v) => typeof v === "string";
+function decode4(raw) {
+  let value = raw;
+  if (typeof raw === "string") {
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return null;
+  return value;
+}
+function parseAgentFrame(raw) {
+  const f = decode4(raw);
+  if (!f) return null;
+  switch (f.kind) {
+    case "agent-hello":
+      return Number.isInteger(f.protocol) ? { kind: "agent-hello", protocol: f.protocol } : null;
+    case "send": {
+      if (!isString2(f.connectionId)) return null;
+      const frame = parseServerFrame(f.frame);
+      return frame ? { kind: "send", connectionId: f.connectionId, frame } : null;
+    }
+    default:
+      return null;
+  }
+}
+function parseHubFrame(raw) {
+  const f = decode4(raw);
+  if (!f) return null;
+  switch (f.kind) {
+    case "agent-welcome":
+      return isString2(f.hubId) ? { kind: "agent-welcome", hubId: f.hubId } : null;
+    case "plugin": {
+      if (!isString2(f.connectionId) || !Number.isInteger(f.port)) return null;
+      const frame = parsePluginFrame(f.frame);
+      if (!frame) return null;
+      return {
+        kind: "plugin",
+        connectionId: f.connectionId,
+        port: f.port,
+        frame
+      };
+    }
+    case "closed":
+      return isString2(f.connectionId) ? { kind: "closed", connectionId: f.connectionId } : null;
+    case "bye":
+      return isString2(f.reason) ? { kind: "bye", reason: f.reason } : null;
+    default:
+      return null;
+  }
+}
+var scopedId = (agentId, id) => `${agentId}/${id}`;
+function splitScopedId(id) {
+  const i = id.indexOf("/");
+  if (i <= 0 || i === id.length - 1) return null;
+  return { agentId: id.slice(0, i), id: id.slice(i + 1) };
+}
+
+// bridge-server/src/agent-link.ts
+var DEFAULT_HANDSHAKE_MS = 2e3;
+function connectAgent(port, handlers2, options = {}) {
+  const handshakeMs = options.handshakeMs ?? DEFAULT_HANDSHAKE_MS;
+  return new Promise((resolve2) => {
+    const ws = new import_websocket.default(`ws://127.0.0.1:${port}${AGENT_PATH}`);
+    const known = /* @__PURE__ */ new Set();
+    let welcomed = false;
+    let ended = false;
+    let resolveClosed = () => {
+    };
+    const closed = new Promise((r) => resolveClosed = r);
+    const write = (frame) => {
+      if (ws.readyState === import_websocket.default.OPEN) ws.send(JSON.stringify(frame));
+    };
+    const link2 = {
+      send: (connectionId, frame) => write({ kind: "send", connectionId, frame }),
+      closed,
+      close: () => {
+        if (ws.readyState === import_websocket.default.OPEN || ws.readyState === import_websocket.default.CONNECTING)
+          ws.close();
+      }
+    };
+    const timer = setTimeout(() => end(), handshakeMs);
+    function end() {
+      if (ended) return;
+      ended = true;
+      clearTimeout(timer);
+      ws.removeAllListeners("message");
+      ws.on("error", () => {
+      });
+      if (ws.readyState !== import_websocket.default.CLOSED) ws.terminate();
+      if (!welcomed) {
+        resolve2(null);
         return;
       }
-      const port = ports[index++];
-      const onError = (err) => {
-        server2.off("error", onError);
-        server2.removeAllListeners("listening");
-        if (err.code === "EADDRINUSE") tryNext();
-        else reject(err);
-      };
-      server2.once("error", onError);
-      server2.once("listening", () => {
-        server2.off("error", onError);
-        resolve2(port);
-      });
-      server2.listen(port, "127.0.0.1");
-    };
-    tryNext();
+      for (const id of known) handlers2.onClose(id);
+      known.clear();
+      resolveClosed();
+    }
+    ws.on("open", () => write({ kind: "agent-hello", protocol: PEER_PROTOCOL }));
+    ws.on("error", end);
+    ws.on("close", end);
+    ws.on("message", (data) => {
+      const frame = parseHubFrame(data.toString());
+      if (!frame) return;
+      if (!welcomed) {
+        if (frame.kind === "agent-welcome") {
+          welcomed = true;
+          clearTimeout(timer);
+          resolve2(link2);
+        } else if (frame.kind === "bye") end();
+        return;
+      }
+      switch (frame.kind) {
+        case "plugin":
+          known.add(frame.connectionId);
+          handlers2.onFrame(frame.connectionId, frame.frame, {
+            port: frame.port
+          });
+          break;
+        case "closed":
+          if (known.delete(frame.connectionId))
+            handlers2.onClose(frame.connectionId);
+          break;
+        case "bye":
+          end();
+          break;
+      }
+    });
   });
 }
-async function startHub(options) {
-  const { pairing: pairing2, onFrame: onFrame2, onClose: onClose2 } = options;
+
+// bridge-server/src/hub.ts
+import { randomUUID as randomUUID3 } from "node:crypto";
+
+// bridge-server/src/agent-conns.ts
+import { randomUUID as randomUUID2 } from "node:crypto";
+
+// bridge-server/src/plugin-conns.ts
+import { randomUUID } from "node:crypto";
+var HEARTBEAT_MS = 15e3;
+var HEARTBEAT_MAX_MISSED = 2;
+var sendFrame = (ws, frame) => {
+  if (ws.readyState === import_websocket.default.OPEN) ws.send(JSON.stringify(frame));
+};
+function createPluginConns(options) {
+  const { port, serverId, onHello, onFrame, onClose } = options;
   const helloTimeoutMs = options.helloTimeoutMs ?? HELLO_TIMEOUT_MS;
-  const heartbeatMs = options.heartbeatMs ?? HEARTBEAT_MS;
-  const serverId = randomUUID();
   const conns = /* @__PURE__ */ new Map();
-  const server2 = createServer((_req, res) => {
-    res.writeHead(426).end();
-  });
-  const wss = new import_websocket_server.default({
-    noServer: true,
-    maxPayload: BRIDGE_MAX_FRAME_BYTES
-  });
-  const sendFrame = (ws, frame) => {
-    if (ws.readyState === import_websocket.default.OPEN) ws.send(JSON.stringify(frame));
-  };
-  server2.on("upgrade", (req, socket, head) => {
-    const origin = req.headers.origin;
-    if (origin !== void 0 && origin !== "null") {
-      socket.write("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
-      socket.destroy();
-      return;
-    }
-    wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws));
-  });
-  const port = await listenOnFirstFree(server2, options.ports);
-  wss.on("connection", (ws) => {
-    const connectionId = randomUUID();
-    const conn = { ws, paired: false, helloSeen: false, missed: 0 };
-    conns.set(connectionId, conn);
-    conn.helloTimer = setTimeout(() => {
-      sendFrame(ws, { kind: "bye", reason: BYE_REASONS.helloTimeout });
-      ws.close(1008);
-    }, helloTimeoutMs);
-    const handleHello = (frame) => {
-      clearTimeout(conn.helloTimer);
-      conn.helloSeen = true;
-      if (frame.protocol !== BRIDGE_PROTOCOL) {
-        sendFrame(ws, { kind: "bye", reason: BYE_REASONS.protocol });
-        ws.close(1008);
-        return;
-      }
-      const verified = pairing2.verifyToken(frame.token);
-      const firstUse = verified ? null : pairing2.claimFirstUse();
-      conn.paired = verified || firstUse !== null;
-      onFrame2(connectionId, frame, { port, paired: conn.paired });
-      if (firstUse) sendFrame(ws, { kind: "paired", token: firstUse });
-      sendFrame(
-        ws,
-        conn.paired ? { kind: "welcome", serverId, port } : { kind: "pair", code: pairing2.issueCode(connectionId) }
-      );
-    };
-    ws.on("message", (data, isBinary) => {
-      if (isBinary) {
-        ws.close(1003);
-        return;
-      }
-      let frame = null;
-      try {
-        frame = parsePluginFrame(JSON.parse(data.toString()));
-      } catch {
-        frame = null;
-      }
-      if (!frame) {
-        ws.close(1008);
-        return;
-      }
-      if (!conn.helloSeen) {
-        if (frame.kind !== "hello") ws.close(1008);
-        else handleHello(frame);
-        return;
-      }
-      if (frame.kind === "hello" || !conn.paired) return;
-      onFrame2(connectionId, frame, { port, paired: true });
-    });
-    ws.on("pong", () => {
-      conn.missed = 0;
-    });
-    ws.on("close", () => {
-      clearTimeout(conn.helloTimer);
-      if (conns.delete(connectionId)) onClose2(connectionId);
-    });
-    ws.on("error", () => {
-    });
-  });
   const heartbeat = setInterval(() => {
     for (const conn of conns.values()) {
       if (conn.missed >= HEARTBEAT_MAX_MISSED) {
@@ -40585,164 +40631,437 @@ async function startHub(options) {
       conn.missed++;
       conn.ws.ping();
     }
-  }, heartbeatMs);
+  }, options.heartbeatMs ?? HEARTBEAT_MS);
   heartbeat.unref();
-  const hub2 = {
-    port,
-    startError: null,
+  return {
+    accept(ws) {
+      const connectionId = randomUUID();
+      const conn = { ws, helloSeen: false, missed: 0 };
+      conns.set(connectionId, conn);
+      conn.helloTimer = setTimeout(() => {
+        sendFrame(ws, { kind: "bye", reason: BYE_REASONS.helloTimeout });
+        ws.close(1008);
+      }, helloTimeoutMs);
+      const handleHello = (frame) => {
+        clearTimeout(conn.helloTimer);
+        if (frame.protocol !== BRIDGE_PROTOCOL) {
+          sendFrame(ws, { kind: "bye", reason: BYE_REASONS.protocol });
+          ws.close(1008);
+          return;
+        }
+        conn.helloSeen = true;
+        sendFrame(ws, { kind: "welcome", serverId, port });
+        onHello(connectionId, frame);
+      };
+      ws.on("message", (data, isBinary) => {
+        if (isBinary) {
+          ws.close(1003);
+          return;
+        }
+        let frame = null;
+        try {
+          frame = parsePluginFrame(JSON.parse(data.toString()));
+        } catch {
+          frame = null;
+        }
+        if (!frame) {
+          ws.close(1008);
+          return;
+        }
+        if (!conn.helloSeen) {
+          if (frame.kind !== "hello") ws.close(1008);
+          else handleHello(frame);
+          return;
+        }
+        if (frame.kind === "hello") return;
+        onFrame(connectionId, frame);
+      });
+      ws.on("pong", () => {
+        conn.missed = 0;
+      });
+      ws.on("close", () => {
+        clearTimeout(conn.helloTimer);
+        if (conns.delete(connectionId) && conn.helloSeen) onClose(connectionId);
+      });
+      ws.on("error", () => {
+      });
+    },
     send(connectionId, frame) {
       const conn = conns.get(connectionId);
       if (conn) sendFrame(conn.ws, frame);
     },
-    completePairing(connectionId, token) {
-      const conn = conns.get(connectionId);
-      if (!conn || conn.ws.readyState !== import_websocket.default.OPEN) return;
-      conn.paired = true;
-      sendFrame(conn.ws, { kind: "paired", token });
-      sendFrame(conn.ws, { kind: "welcome", serverId, port });
+    broadcast(frame) {
+      for (const conn of conns.values()) {
+        if (conn.helloSeen) sendFrame(conn.ws, frame);
+      }
     },
     close() {
       clearInterval(heartbeat);
-      return new Promise((resolve2) => {
-        for (const conn of conns.values()) {
-          clearTimeout(conn.helloTimer);
-          sendFrame(conn.ws, { kind: "bye", reason: BYE_REASONS.shutdown });
-          conn.ws.terminate();
+      for (const conn of conns.values()) {
+        clearTimeout(conn.helloTimer);
+        sendFrame(conn.ws, { kind: "bye", reason: BYE_REASONS.shutdown });
+        conn.ws.terminate();
+      }
+    }
+  };
+}
+
+// bridge-server/src/agent-conns.ts
+var sendHub = (ws, frame) => {
+  if (ws.readyState === import_websocket.default.OPEN) ws.send(JSON.stringify(frame));
+};
+function createAgentConns(options) {
+  const { hubId, snapshot, onSend, onCountChange } = options;
+  const helloTimeoutMs = options.helloTimeoutMs ?? HELLO_TIMEOUT_MS;
+  const agents = /* @__PURE__ */ new Map();
+  const heartbeat = setInterval(() => {
+    for (const agent of agents.values()) {
+      if (agent.missed >= HEARTBEAT_MAX_MISSED) {
+        agent.ws.terminate();
+        continue;
+      }
+      agent.missed++;
+      agent.ws.ping();
+    }
+  }, options.heartbeatMs ?? HEARTBEAT_MS);
+  heartbeat.unref();
+  const broadcast = (frame) => {
+    for (const agent of agents.values()) {
+      if (agent.helloSeen) sendHub(agent.ws, frame);
+    }
+  };
+  return {
+    accept(ws) {
+      const agentId = randomUUID2();
+      const agent = { ws, helloSeen: false, missed: 0 };
+      agents.set(agentId, agent);
+      agent.helloTimer = setTimeout(() => {
+        sendHub(ws, { kind: "bye", reason: BYE_REASONS.helloTimeout });
+        ws.close(1008);
+      }, helloTimeoutMs);
+      const handleHello = (protocol) => {
+        clearTimeout(agent.helloTimer);
+        if (protocol !== PEER_PROTOCOL) {
+          sendHub(ws, { kind: "bye", reason: BYE_REASONS.protocol });
+          ws.close(1008);
+          return;
         }
-        wss.close();
+        agent.helloSeen = true;
+        sendHub(ws, { kind: "agent-welcome", hubId });
+        for (const entry of snapshot()) {
+          sendHub(ws, {
+            kind: "plugin",
+            connectionId: entry.connectionId,
+            port: entry.port,
+            frame: {
+              kind: "hello",
+              protocol: BRIDGE_PROTOCOL,
+              file: entry.file
+            }
+          });
+        }
+        onCountChange();
+      };
+      ws.on("message", (data, isBinary) => {
+        if (isBinary) {
+          ws.close(1003);
+          return;
+        }
+        const frame = parseAgentFrame(data.toString());
+        if (!frame) {
+          ws.close(1008);
+          return;
+        }
+        if (frame.kind === "agent-hello") {
+          if (!agent.helloSeen) handleHello(frame.protocol);
+          return;
+        }
+        if (!agent.helloSeen) {
+          ws.close(1008);
+          return;
+        }
+        const out = frame.frame;
+        onSend(
+          frame.connectionId,
+          out.kind === "request" ? { ...out, id: scopedId(agentId, out.id) } : out
+        );
+      });
+      ws.on("pong", () => {
+        agent.missed = 0;
+      });
+      ws.on("close", () => {
+        clearTimeout(agent.helloTimer);
+        if (agents.delete(agentId) && agent.helloSeen) onCountChange();
+      });
+      ws.on("error", () => {
+      });
+    },
+    toAll(connectionId, port, frame) {
+      broadcast({ kind: "plugin", connectionId, port, frame });
+    },
+    toAgent(agentId, connectionId, port, frame) {
+      const agent = agents.get(agentId);
+      if (agent?.helloSeen)
+        sendHub(agent.ws, { kind: "plugin", connectionId, port, frame });
+    },
+    closed(connectionId) {
+      broadcast({ kind: "closed", connectionId });
+    },
+    count() {
+      let n = 0;
+      for (const agent of agents.values()) if (agent.helloSeen) n++;
+      return n;
+    },
+    close() {
+      clearInterval(heartbeat);
+      for (const agent of agents.values()) {
+        clearTimeout(agent.helloTimer);
+        sendHub(agent.ws, { kind: "bye", reason: BYE_REASONS.shutdown });
+        agent.ws.terminate();
+      }
+    }
+  };
+}
+
+// bridge-server/src/listen.ts
+import { createServer } from "node:http";
+var reject = (socket, status) => {
+  socket.write(`HTTP/1.1 ${status}\r
+Connection: close\r
+\r
+`);
+  socket.destroy();
+};
+function listenOnce(server2, port) {
+  return new Promise((resolve2, fail) => {
+    server2.once("error", (err) => {
+      if (err.code === "EADDRINUSE") resolve2("in-use");
+      else fail(err);
+    });
+    server2.listen(port, "127.0.0.1", () => resolve2("ok"));
+  });
+}
+async function listenBridge(port, agentPath, onSocket) {
+  const server2 = createServer((_req, res) => {
+    res.writeHead(426).end();
+  });
+  const wss = new import_websocket_server.default({
+    noServer: true,
+    maxPayload: BRIDGE_MAX_FRAME_BYTES
+  });
+  server2.on("upgrade", (req, socket, head) => {
+    const origin = req.headers.origin;
+    if (origin !== void 0 && origin !== "null") {
+      reject(socket, "403 Forbidden");
+      return;
+    }
+    let pathname;
+    try {
+      pathname = new URL(req.url ?? "/", "http://x").pathname;
+    } catch {
+      reject(socket, "404 Not Found");
+      return;
+    }
+    const route = pathname === "/" ? "plugin" : pathname === agentPath ? "agent" : null;
+    if (!route) {
+      reject(socket, "404 Not Found");
+      return;
+    }
+    wss.handleUpgrade(req, socket, head, (ws) => onSocket(route, ws));
+  });
+  if (await listenOnce(server2, port) === "in-use") return "in-use";
+  let closing2;
+  return {
+    port: server2.address().port,
+    close() {
+      closing2 ??= new Promise((resolve2) => {
+        for (const ws of wss.clients) ws.terminate();
         server2.close(() => resolve2());
         server2.closeAllConnections();
       });
+      return closing2;
     }
   };
-  return hub2;
 }
 
-// bridge-server/src/instructions.ts
-var INSTRUCTIONS = "Runs Plugin API code in the Figma file open in the Claude tab of EZG Tools, and reads or controls its selection, viewport, events, history and exports. The first file on a machine pairs by itself. An unpaired file shows a 6-digit code in that tab: ask the user for it and call the pair tool. Load the ezg-figma-bridge skill first.";
-
-// bridge-server/src/pairing.ts
-import {
-  createHash,
-  randomBytes,
-  randomInt,
-  timingSafeEqual
-} from "node:crypto";
-import {
-  linkSync,
-  mkdirSync,
-  readFileSync,
-  renameSync,
-  unlinkSync,
-  writeFileSync
-} from "node:fs";
-import { dirname, join } from "node:path";
-var MAX_FAILED_REDEEMS = 5;
-var LOCKOUT_MS = 6e4;
-function tokenPath(home) {
-  return join(home, ...INSTALL_DIR_PARTS, BRIDGE_DIR, BRIDGE_TOKEN_FILE);
-}
-function readToken(path) {
-  try {
-    return readFileSync(path, "utf8").trim();
-  } catch {
-    return "";
-  }
-}
-function loadOrCreateToken(path) {
-  const existing = readToken(path);
-  if (existing) return { token: existing, created: false };
-  const dir = dirname(path);
-  mkdirSync(dir, { recursive: true, mode: 448 });
-  const fresh = randomBytes(32).toString("base64url");
-  const tmp = join(dir, `${BRIDGE_TOKEN_FILE}.${process.pid}.tmp`);
-  try {
-    writeFileSync(tmp, fresh, { mode: 384 });
-    try {
-      linkSync(tmp, path);
-      return { token: fresh, created: true };
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-      const winner = readToken(path);
-      if (winner) return { token: winner, created: false };
-      renameSync(tmp, path);
-      return { token: fresh, created: true };
-    }
-  } finally {
-    try {
-      unlinkSync(tmp);
-    } catch {
-    }
-  }
-}
-var sha256 = (s) => createHash("sha256").update(s).digest();
-function createPairing(opts) {
-  const now = opts.now ?? Date.now;
-  const path = tokenPath(opts.home);
-  let cached2 = null;
-  const codes = /* @__PURE__ */ new Map();
-  const byConnection = /* @__PURE__ */ new Map();
-  let failures = 0;
-  let lockedUntil = 0;
-  const token = () => cached2 ??= loadOrCreateToken(path).token;
-  const current = () => cached2 ??= readToken(path) || null;
-  const prune = () => {
-    const t = now();
-    for (const [code, e] of codes) {
-      if (e.expiresAt <= t) {
-        codes.delete(code);
-        if (byConnection.get(e.connectionId) === code)
-          byConnection.delete(e.connectionId);
+// bridge-server/src/hub.ts
+async function startHub(port, handlers2, options = {}) {
+  const serverId = randomUUID3();
+  const files2 = /* @__PURE__ */ new Map();
+  let plugins;
+  let agents;
+  const listener = await listenBridge(
+    port,
+    AGENT_PATH,
+    (route, ws) => route === "plugin" ? plugins.accept(ws) : agents.accept(ws)
+  );
+  if (listener === "in-use") return "in-use";
+  const boundPort = listener.port;
+  const sessions = () => ({
+    kind: "sessions",
+    count: 1 + agents.count()
+  });
+  agents = createAgentConns({
+    hubId: serverId,
+    snapshot: () => [...files2].map(([connectionId, { port: port2, file: file2 }]) => ({
+      connectionId,
+      port: port2,
+      file: file2
+    })),
+    onSend: (connectionId, frame) => plugins.send(connectionId, frame),
+    onCountChange: () => plugins.broadcast(sessions()),
+    helloTimeoutMs: options.helloTimeoutMs,
+    heartbeatMs: options.heartbeatMs
+  });
+  plugins = createPluginConns({
+    port: boundPort,
+    serverId,
+    onHello(connectionId, frame) {
+      files2.set(connectionId, { port: boundPort, file: frame.file });
+      handlers2.onFrame(connectionId, frame, { port: boundPort });
+      agents.toAll(connectionId, boundPort, frame);
+      plugins.send(connectionId, sessions());
+    },
+    onFrame(connectionId, frame) {
+      if (frame.kind === "event") {
+        const entry = files2.get(connectionId);
+        const patch = pagePatch(frame.event);
+        if (entry && patch) entry.file = { ...entry.file, ...patch };
+        handlers2.onFrame(connectionId, frame, { port: boundPort });
+        agents.toAll(connectionId, boundPort, frame);
+        return;
       }
-    }
-  };
-  const drop = (code) => {
-    const e = codes.get(code);
-    if (!e) return;
-    codes.delete(code);
-    if (byConnection.get(e.connectionId) === code)
-      byConnection.delete(e.connectionId);
-  };
+      const scoped = splitScopedId(frame.id);
+      if (scoped) {
+        agents.toAgent(scoped.agentId, connectionId, boundPort, {
+          ...frame,
+          id: scoped.id
+        });
+      } else {
+        handlers2.onFrame(connectionId, frame, { port: boundPort });
+      }
+    },
+    onClose(connectionId) {
+      files2.delete(connectionId);
+      handlers2.onClose(connectionId);
+      agents.closed(connectionId);
+    },
+    helloTimeoutMs: options.helloTimeoutMs,
+    heartbeatMs: options.heartbeatMs
+  });
+  let closing2;
+  let resolveClosed;
+  const closed = new Promise((resolve2) => resolveClosed = resolve2);
   return {
-    token,
-    verifyToken(candidate) {
-      const real = current();
-      if (!candidate || !real) return false;
-      return timingSafeEqual(sha256(candidate), sha256(real));
-    },
-    claimFirstUse() {
-      if (current()) return null;
-      const { token: t, created } = loadOrCreateToken(path);
-      cached2 = t;
-      return created ? t : null;
-    },
-    issueCode(connectionId) {
-      prune();
-      const old = byConnection.get(connectionId);
-      if (old !== void 0) drop(old);
-      let code;
-      do {
-        code = String(randomInt(0, 1e6)).padStart(6, "0");
-      } while (codes.has(code));
-      codes.set(code, { connectionId, expiresAt: now() + PAIR_CODE_TTL_MS });
-      byConnection.set(connectionId, code);
-      return code;
-    },
-    redeem(code) {
-      if (now() < lockedUntil) return null;
-      const entry = codes.get(code);
-      if (!entry || entry.expiresAt <= now()) {
-        if (entry) drop(code);
-        failures += 1;
-        if (failures >= MAX_FAILED_REDEEMS) {
-          lockedUntil = now() + LOCKOUT_MS;
-          failures = 0;
-        }
-        return null;
+    port: boundPort,
+    send: (connectionId, frame) => plugins.send(connectionId, frame),
+    closed,
+    close() {
+      closing2 ??= (async () => {
+        agents.close();
+        plugins.close();
+        const ids = [...files2.keys()];
+        files2.clear();
+        for (const id of ids) handlers2.onClose(id);
+        await listener.close();
+        resolveClosed();
+      })();
+      return closing2;
+    }
+  };
+}
+
+// bridge-server/src/port.ts
+function resolveBridgePort(env) {
+  const raw = (env[BRIDGE_PORT_ENV] ?? "").trim();
+  if (raw === "") return { port: BRIDGE_DEFAULT_PORT };
+  const port = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  if (isBridgePort(port)) return { port };
+  const low = BRIDGE_PORTS[0];
+  const high = BRIDGE_PORTS[BRIDGE_PORTS.length - 1];
+  return {
+    error: `${BRIDGE_PORT_ENV}="${raw}" is not a valid bridge port. Set it to a whole number from ${low}\u2013${high}, or unset it to use ${BRIDGE_DEFAULT_PORT}.`
+  };
+}
+
+// bridge-server/src/link.ts
+var DEFAULT_RETRY = { minMs: 250, maxMs: 2e3 };
+function startLink(options) {
+  const { handlers: handlers2 } = options;
+  const retry = options.retry ?? DEFAULT_RETRY;
+  const resolved = resolveBridgePort(options.env);
+  let role = "none";
+  let error62 = null;
+  let hub = null;
+  let agent = null;
+  let aborted2 = false;
+  let wake = null;
+  const sleep = (ms) => new Promise((resolve2) => {
+    const timer = setTimeout(done, ms);
+    timer.unref();
+    function done() {
+      clearTimeout(timer);
+      wake = null;
+      resolve2();
+    }
+    wake = done;
+  });
+  const jitter = (ms) => ms * (0.5 + Math.random() * 0.5);
+  async function loop(port) {
+    let failures = 0;
+    while (!aborted2) {
+      const started = await startHub(port, handlers2);
+      if (aborted2) {
+        if (started !== "in-use") await started.close();
+        return;
       }
-      drop(code);
-      failures = 0;
-      return { connectionId: entry.connectionId, token: token() };
+      if (started !== "in-use") {
+        failures = 0;
+        hub = started;
+        role = "hub";
+        error62 = null;
+        await started.closed;
+        hub = null;
+        role = "none";
+        continue;
+      }
+      const joined = await connectAgent(port, handlers2);
+      if (aborted2) {
+        joined?.close();
+        return;
+      }
+      if (joined) {
+        failures = 0;
+        agent = joined;
+        role = "agent";
+        error62 = null;
+        await joined.closed;
+        agent = null;
+        role = "none";
+        await sleep(jitter(retry.minMs));
+        continue;
+      }
+      error62 = `Port ${port} is busy but no EZG bridge answered; waiting for it to free up.`;
+      await sleep(jitter(Math.min(retry.maxMs, retry.minMs * 2 ** failures++)));
+    }
+  }
+  let running = Promise.resolve();
+  if ("error" in resolved) error62 = resolved.error;
+  else running = loop(resolved.port);
+  return {
+    port: "port" in resolved ? resolved.port : null,
+    role: () => role,
+    error: () => error62,
+    send(connectionId, frame) {
+      if (role === "hub") hub?.send(connectionId, frame);
+      else if (role === "agent") agent?.send(connectionId, frame);
+    },
+    async close() {
+      aborted2 = true;
+      wake?.();
+      await hub?.close();
+      agent?.close();
+      await running;
     }
   };
 }
@@ -40750,7 +41069,6 @@ function createPairing(opts) {
 // bridge-server/src/context.ts
 var TOOL_NAMES = {
   eval: "eval",
-  pair: "pair",
   files: "files",
   viewGet: "view_get",
   viewSet: "view_set",
@@ -40792,12 +41110,12 @@ function createRpc(send) {
   }
   return {
     call(connectionId, op, payload, timeoutMs) {
-      return new Promise((resolve2, reject) => {
+      return new Promise((resolve2, reject2) => {
         const id = String(++counter);
         const entry = {
           connectionId,
           resolve: resolve2,
-          reject,
+          reject: reject2,
           timer: void 0,
           deadline: Date.now() + timeoutMs
         };
@@ -40808,7 +41126,7 @@ function createRpc(send) {
         } catch (e) {
           clearTimeout(entry.timer);
           pending.delete(id);
-          reject(
+          reject2(
             new BridgeCallError(
               "closed",
               e instanceof Error ? e.message : "Figma file disconnected"
@@ -41068,8 +41386,7 @@ function truncateJson(text2, max = MAX_RESULT_CHARS) {
 // bridge-server/src/tool-result.ts
 var HINTS = {
   timeout: "The plugin may still be running the request. Check with view_get or events before you retry.",
-  closed: "The Figma file disconnected. Ask the user to reopen the Claude tab, then call files.",
-  unpaired: "Not paired. Call pair with the 6-digit code shown in the Claude tab."
+  closed: "The Figma file disconnected. Ask the user to press Connect in the Claude tab, then call files."
 };
 function cap(text2) {
   return truncateJson(text2);
@@ -41112,8 +41429,6 @@ function fromCallError(e) {
         return errorResult(e.message, HINTS.closed);
       case "remote":
         return fromBridgeError(e.remote ?? { message: e.message });
-      case "unpaired":
-        return errorResult(e.message, HINTS.unpaired);
     }
   }
   const message = e instanceof Error ? e.message : String(e);
@@ -41139,13 +41454,13 @@ var ruleShape = external_exports.object({
   caseSensitive: external_exports.boolean().optional(),
   wholeWord: external_exports.boolean().optional()
 });
-function pickFile(ctx2, target, anyPaired) {
+function pickFile(ctx2, target, anyFile) {
   const resolved = ctx2.files.resolve(target);
-  if (!("error" in resolved) || target || !anyPaired) return resolved;
-  const paired = ctx2.files.list().filter((f) => f.paired);
-  if (paired.length === 0) return resolved;
+  if (!("error" in resolved) || target || !anyFile) return resolved;
+  const files2 = ctx2.files.list();
+  if (files2.length === 0) return resolved;
   return {
-    file: paired.reduce((a, b) => b.connectedAt > a.connectedAt ? b : a)
+    file: files2.reduce((a, b) => b.connectedAt > a.connectedAt ? b : a)
   };
 }
 function callOp(ctx2, file2, op, payload) {
@@ -41245,7 +41560,7 @@ var EVAL_TIMEOUT_MAX_MS = 3e5;
 var EVAL_RPC_MARGIN_MS = 5e3;
 var EVAL_PARTIAL_HINT = "partial changes may remain; inspect before retry";
 var PROTOTYPES_NOTE = "node.query(), node.matches(), node.set() and node.screenshot() are not available in this file; call query(node, selector), matches(node, selector), set(node, props) and screenshot(node) instead";
-var DESCRIPTION = "Runs Plugin API code (async function body, top-level await and return) in the paired open Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot are passed as parameters. One call is one undo step. Not atomic: a failed run may leave partial changes. Load the ezg-figma-bridge skill first.";
+var DESCRIPTION = "Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot are passed as parameters. One call is one undo step. Not atomic: a failed run may leave partial changes. Load the ezg-figma-bridge skill first.";
 var evalInputSchema = {
   fileKey: external_exports.string().min(1),
   code: external_exports.string().max(5e4),
@@ -41276,7 +41591,7 @@ var registerEval = (server2, ctx2) => {
         return out;
       } catch (e) {
         const out = fromCallError(e);
-        if (e instanceof BridgeCallError && e.code !== "unpaired")
+        if (e instanceof BridgeCallError)
           return withNotes(out, [EVAL_PARTIAL_HINT]);
         return out;
       }
@@ -41390,7 +41705,7 @@ var registerEventTools = (server2, ctx2) => {
 
 // bridge-server/src/tools/export.ts
 import { mkdir, writeFile } from "node:fs/promises";
-import { isAbsolute, join as join2, relative, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 
 // plugins/ezg-tools/src/shared/bridge-ops.ts
 var OP_TABLE = {
@@ -41544,7 +41859,7 @@ function exportFileName(file2) {
 }
 function resolveInside(outDir, fileName) {
   const root = resolve(outDir);
-  const target = resolve(join2(root, fileName));
+  const target = resolve(join(root, fileName));
   const rel = relative(root, target);
   if (!rel || rel.startsWith("..") || isAbsolute(rel)) return null;
   return target;
@@ -41627,7 +41942,7 @@ var registerExport = (server2, ctx2) => {
           thrown = e;
           const text2 = errorText(e);
           failed.push({ nodeId: id, error: text2 });
-          if (e instanceof BridgeCallError && (e.code === "closed" || e.code === "unpaired")) {
+          if (e instanceof BridgeCallError && e.code === "closed") {
             for (const rest of ids.slice(i + 1))
               failed.push({ nodeId: rest, error: text2 });
             break;
@@ -41714,7 +42029,7 @@ var registerHistoryTools = (server2, ctx2) => {
 };
 
 // bridge-server/src/tools/session.ts
-var MS_PER_MINUTE = 60 * 1e3;
+var NO_FILES = "No files connected. In Figma, open the Claude tab in EZG Tools and press Connect.";
 function toRow(f) {
   return {
     name: f.fileName,
@@ -41723,62 +42038,21 @@ function toRow(f) {
     page: { id: f.pageId, name: f.pageName },
     editorType: f.editorType,
     user: f.user,
-    paired: f.paired,
     port: f.port
   };
 }
 var registerSession = (server2, ctx2) => {
   server2.registerTool(
-    TOOL_NAMES.pair,
-    {
-      description: "Pair a Figma file using the 6-digit code shown in the Claude tab; the user must give the code to Claude.",
-      inputSchema: { code: external_exports.string().regex(/^\d{6}$/) }
-    },
-    async ({ code }) => {
-      try {
-        const redeemed = ctx2.pairing.redeem(code);
-        if (!redeemed) {
-          return errorResult(
-            "Code not accepted.",
-            "Check the code in the Claude tab. Codes last " + PAIR_CODE_TTL_MS / MS_PER_MINUTE + " minutes and work once. After repeated wrong tries pairing locks for a while."
-          );
-        }
-        const file2 = ctx2.files.list().find((f) => f.connectionId === redeemed.connectionId);
-        if (!file2) {
-          return errorResult(
-            "The file disconnected before pairing finished.",
-            "Re-open the Claude tab and pair with the new code."
-          );
-        }
-        ctx2.hub.completePairing(redeemed.connectionId, redeemed.token);
-        ctx2.files.setPaired(redeemed.connectionId);
-        return textResult(
-          `Paired "${file2.fileName}" (clientId ${file2.clientId}, fileKey ${file2.fileKey ?? "unknown"}).`
-        );
-      } catch (e) {
-        return fromCallError(e);
-      }
-    }
-  );
-  server2.registerTool(
     TOOL_NAMES.files,
     {
-      description: "List every connected Figma file with its fileKey, clientId and whether it is paired.",
+      description: "List every connected Figma file with its fileKey and clientId.",
       inputSchema: {}
     },
     async () => {
       try {
         const rows = ctx2.files.list().map(toRow);
-        if (rows.length === 0) {
-          return textResult(
-            "No files connected. Open the Claude tab in EZG Tools in a Figma file."
-          );
-        }
-        const unpaired = rows.filter((r) => !r.paired).length;
-        return jsonResult(
-          rows,
-          unpaired ? `${unpaired} file(s) not paired. Ask the user for the 6-digit code in the Claude tab, then call pair.` : void 0
-        );
+        if (rows.length === 0) return textResult(ctx2.link.error() ?? NO_FILES);
+        return jsonResult(rows);
       } catch (e) {
         return fromCallError(e);
       }
@@ -41850,67 +42124,38 @@ var registerView = (server2, ctx2) => {
 // bridge-server/src/main.ts
 var SERVER_VERSION = "1.0.0";
 var EXIT_GRACE_MS = 2e3;
-var noHub = (message) => ({
-  port: null,
-  startError: message,
-  send() {
-  },
-  completePairing() {
-  },
-  close: async () => {
-  }
-});
-var withStartError = (files2, error62) => ({
-  ...files2,
-  resolve: () => ({ error: error62 })
-});
-var pairing = createPairing({ home: homedir() });
-var files = createFileRegistry();
-var events = createEventStore();
-var hub;
-var rpc = createRpc((id, frame) => hub.send(id, frame));
-function onFrame(connectionId, frame, info) {
-  switch (frame.kind) {
-    case "hello":
-      files.add(connectionId, frame.file, info.port);
-      if (info.paired) files.setPaired(connectionId);
-      break;
-    case "reply":
-      rpc.onReply(connectionId, frame);
-      break;
-    case "progress":
-      rpc.onProgress(connectionId, frame);
-      break;
-    case "event": {
-      const clientId = files.list().find((f) => f.connectionId === connectionId)?.clientId;
-      if (clientId === void 0) break;
-      events.push(clientId, frame.event);
-      const { pageId, pageName } = frame.event.data;
-      if (frame.event.type === "page" && typeof pageId === "string" && typeof pageName === "string") {
-        files.update(connectionId, { pageId, pageName });
+var handlers = {
+  onFrame(connectionId, frame, info) {
+    switch (frame.kind) {
+      case "hello":
+        files.add(connectionId, frame.file, info.port);
+        break;
+      case "reply":
+        rpc.onReply(connectionId, frame);
+        break;
+      case "progress":
+        rpc.onProgress(connectionId, frame);
+        break;
+      case "event": {
+        const clientId = files.list().find((f) => f.connectionId === connectionId)?.clientId;
+        if (clientId === void 0) break;
+        events.push(clientId, frame.event);
+        const patch = pagePatch(frame.event);
+        if (patch) files.update(connectionId, patch);
+        break;
       }
-      break;
     }
+  },
+  onClose(connectionId) {
+    rpc.onClosed(connectionId);
+    files.remove(connectionId);
   }
-}
-function onClose(connectionId) {
-  rpc.onClosed(connectionId);
-  files.remove(connectionId);
-}
-try {
-  hub = await startHub({ ports: BRIDGE_PORTS, pairing, onFrame, onClose });
-} catch (e) {
-  const message = e instanceof Error ? e.message : String(e);
-  console.error(`ezg-figma-bridge: ${message}`);
-  hub = noHub(message);
-}
-var ctx = {
-  pairing,
-  hub,
-  files: hub.startError ? withStartError(files, hub.startError) : files,
-  rpc,
-  events
 };
+var events = createEventStore();
+var rpc = createRpc((id, frame) => link.send(id, frame));
+var files = createFileRegistry(() => link.error());
+var link = startLink({ env: process.env, handlers });
+var ctx = { link, files, rpc, events };
 var server = new McpServer(
   { name: BRIDGE_MCP_NAME, version: SERVER_VERSION },
   { instructions: INSTRUCTIONS }
@@ -41932,7 +42177,7 @@ var shutdown = async () => {
   if (closing) return;
   closing = true;
   setTimeout(() => process.exit(0), EXIT_GRACE_MS).unref();
-  await hub.close().catch(() => {
+  await link.close().catch(() => {
   });
   process.exit(0);
 };
