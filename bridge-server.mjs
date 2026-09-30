@@ -108,7 +108,7 @@ var require_code = __commonJS({
     }
     exports._ = _;
     var plus = new _Code("+");
-    function str2(strs, ...args) {
+    function str3(strs, ...args) {
       const expr = [safeStringify(strs[0])];
       let i = 0;
       while (i < args.length) {
@@ -119,7 +119,7 @@ var require_code = __commonJS({
       optimize(expr);
       return new _Code(expr);
     }
-    exports.str = str2;
+    exports.str = str3;
     function addCodeArg(code, arg) {
       if (arg instanceof _Code)
         code.push(...arg._items);
@@ -162,7 +162,7 @@ var require_code = __commonJS({
       return;
     }
     function strConcat(c1, c2) {
-      return c2.emptyStr() ? c1 : c1.emptyStr() ? c2 : str2`${c1}${c2}`;
+      return c2.emptyStr() ? c1 : c1.emptyStr() ? c2 : str3`${c1}${c2}`;
     }
     exports.strConcat = strConcat;
     function interpolate(x) {
@@ -1124,22 +1124,22 @@ var require_util = __commonJS({
       return (0, codegen_1._)`${topSchemaRef}${schemaPath}${(0, codegen_1.getProperty)(keyword)}`;
     }
     exports.schemaRefOrVal = schemaRefOrVal;
-    function unescapeFragment(str2) {
-      return unescapeJsonPointer(decodeURIComponent(str2));
+    function unescapeFragment(str3) {
+      return unescapeJsonPointer(decodeURIComponent(str3));
     }
     exports.unescapeFragment = unescapeFragment;
-    function escapeFragment(str2) {
-      return encodeURIComponent(escapeJsonPointer(str2));
+    function escapeFragment(str3) {
+      return encodeURIComponent(escapeJsonPointer(str3));
     }
     exports.escapeFragment = escapeFragment;
-    function escapeJsonPointer(str2) {
-      if (typeof str2 == "number")
-        return `${str2}`;
-      return str2.replace(/~/g, "~0").replace(/\//g, "~1");
+    function escapeJsonPointer(str3) {
+      if (typeof str3 == "number")
+        return `${str3}`;
+      return str3.replace(/~/g, "~0").replace(/\//g, "~1");
     }
     exports.escapeJsonPointer = escapeJsonPointer;
-    function unescapeJsonPointer(str2) {
-      return str2.replace(/~1/g, "/").replace(/~0/g, "~");
+    function unescapeJsonPointer(str3) {
+      return str3.replace(/~1/g, "/").replace(/~0/g, "~");
     }
     exports.unescapeJsonPointer = unescapeJsonPointer;
     function eachItem(xs, f) {
@@ -2164,8 +2164,8 @@ var require_json_schema_traverse = __commonJS({
         post(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
       }
     }
-    function escapeJsonPtr(str2) {
-      return str2.replace(/~/g, "~0").replace(/\//g, "~1");
+    function escapeJsonPtr(str3) {
+      return str3.replace(/~/g, "~0").replace(/\//g, "~1");
     }
   }
 });
@@ -3262,10 +3262,10 @@ var require_utils = __commonJS({
         isIPV6: true
       };
     }
-    function findToken(str2, token) {
+    function findToken(str3, token) {
       let ind = 0;
-      for (let i = 0; i < str2.length; i++) {
-        if (str2[i] === token) ind++;
+      for (let i = 0; i < str3.length; i++) {
+        if (str3[i] === token) ind++;
       }
       return ind;
     }
@@ -4279,7 +4279,7 @@ var require_core = __commonJS({
     var util_1 = require_util();
     var $dataRefSchema = require_data();
     var uri_1 = require_uri();
-    var defaultRegExp = (str2, flags) => new RegExp(str2, flags);
+    var defaultRegExp = (str3, flags) => new RegExp(str3, flags);
     defaultRegExp.code = "new RegExp";
     var META_IGNORE_OPTIONS = ["removeAdditional", "useDefaults", "coerceTypes"];
     var EXT_SCOPE_NAMES = /* @__PURE__ */ new Set([
@@ -5074,16 +5074,16 @@ var require_ucs2length = __commonJS({
   "node_modules/ajv/dist/runtime/ucs2length.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    function ucs2length(str2) {
-      const len = str2.length;
+    function ucs2length(str3) {
+      const len = str3.length;
       let length = 0;
       let pos = 0;
       let value;
       while (pos < len) {
         length++;
-        value = str2.charCodeAt(pos++);
+        value = str3.charCodeAt(pos++);
         if (value >= 55296 && value <= 56319 && pos < len) {
-          value = str2.charCodeAt(pos);
+          value = str3.charCodeAt(pos);
           if ((value & 64512) === 56320)
             pos++;
         }
@@ -6966,8 +6966,8 @@ var require_formats = __commonJS({
     }
     var DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
     var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    function date5(str2) {
-      const matches2 = DATE.exec(str2);
+    function date5(str3) {
+      const matches2 = DATE.exec(str3);
       if (!matches2)
         return false;
       const year = +matches2[1];
@@ -6986,8 +6986,8 @@ var require_formats = __commonJS({
     }
     var TIME = /^(\d\d):(\d\d):(\d\d(?:\.\d+)?)(z|([+-])(\d\d)(?::?(\d\d))?)?$/i;
     function getTime(strictTimeZone) {
-      return function time3(str2) {
-        const matches2 = TIME.exec(str2);
+      return function time3(str3) {
+        const matches2 = TIME.exec(str3);
         if (!matches2)
           return false;
         const hr = +matches2[1];
@@ -7033,8 +7033,8 @@ var require_formats = __commonJS({
     var DATE_TIME_SEPARATOR = /t|\s/i;
     function getDateTime(strictTimeZone) {
       const time3 = getTime(strictTimeZone);
-      return function date_time(str2) {
-        const dateTime = str2.split(DATE_TIME_SEPARATOR);
+      return function date_time(str3) {
+        const dateTime = str3.split(DATE_TIME_SEPARATOR);
         return dateTime.length === 2 && date5(dateTime[0]) && time3(dateTime[1]);
       };
     }
@@ -7059,13 +7059,13 @@ var require_formats = __commonJS({
     }
     var NOT_URI_FRAGMENT = /\/|:/;
     var URI = /^(?:[a-z][a-z0-9+\-.]*:)(?:\/?\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9a-f]{1,4}:){6}|::(?:[0-9a-f]{1,4}:){5}|(?:[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){4}|(?:(?:[0-9a-f]{1,4}:){0,1}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){3}|(?:(?:[0-9a-f]{1,4}:){0,2}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){2}|(?:(?:[0-9a-f]{1,4}:){0,3}[0-9a-f]{1,4})?::[0-9a-f]{1,4}:|(?:(?:[0-9a-f]{1,4}:){0,4}[0-9a-f]{1,4})?::)(?:[0-9a-f]{1,4}:[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?:(?:[0-9a-f]{1,4}:){0,5}[0-9a-f]{1,4})?::[0-9a-f]{1,4}|(?:(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4})?::)|[Vv][0-9a-f]+\.[a-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-z0-9\-._~!$&'()*+,;=]|%[0-9a-f]{2})*)(?::\d*)?(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*|\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)?|(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)(?:\?(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?(?:#(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?$/i;
-    function uri(str2) {
-      return NOT_URI_FRAGMENT.test(str2) && URI.test(str2);
+    function uri(str3) {
+      return NOT_URI_FRAGMENT.test(str3) && URI.test(str3);
     }
     var BYTE = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/gm;
-    function byte(str2) {
+    function byte(str3) {
       BYTE.lastIndex = 0;
-      return BYTE.test(str2);
+      return BYTE.test(str3);
     }
     var MIN_INT32 = -(2 ** 31);
     var MAX_INT32 = 2 ** 31 - 1;
@@ -7079,11 +7079,11 @@ var require_formats = __commonJS({
       return true;
     }
     var Z_ANCHOR = /[^\\]\\Z/;
-    function regex(str2) {
-      if (Z_ANCHOR.test(str2))
+    function regex(str3) {
+      if (Z_ANCHOR.test(str3))
         return false;
       try {
-        new RegExp(str2);
+        new RegExp(str3);
         return true;
       } catch (e) {
         return false;
@@ -7547,26 +7547,26 @@ var require_permessage_deflate = __commonJS({
             value = value[0];
             if (key === "client_max_window_bits") {
               if (value !== true) {
-                const num = +value;
-                if (!Number.isInteger(num) || num < 8 || num > 15) {
+                const num3 = +value;
+                if (!Number.isInteger(num3) || num3 < 8 || num3 > 15) {
                   throw new TypeError(
                     `Invalid value for parameter "${key}": ${value}`
                   );
                 }
-                value = num;
+                value = num3;
               } else if (!this._isServer) {
                 throw new TypeError(
                   `Invalid value for parameter "${key}": ${value}`
                 );
               }
             } else if (key === "server_max_window_bits") {
-              const num = +value;
-              if (!Number.isInteger(num) || num < 8 || num > 15) {
+              const num3 = +value;
+              if (!Number.isInteger(num3) || num3 < 8 || num3 > 15) {
                 throw new TypeError(
                   `Invalid value for parameter "${key}": ${value}`
                 );
               }
-              value = num;
+              value = num3;
             } else if (key === "client_no_context_takeover" || key === "server_no_context_takeover") {
               if (value !== true) {
                 throw new TypeError(
@@ -8280,8 +8280,8 @@ var require_receiver = __commonJS({
           return;
         }
         const buf = this.consume(8);
-        const num = buf.readUInt32BE(0);
-        if (num > Math.pow(2, 53 - 32) - 1) {
+        const num3 = buf.readUInt32BE(0);
+        if (num3 > Math.pow(2, 53 - 32) - 1) {
           const error62 = this.createError(
             RangeError,
             "Unsupported WebSocket frame: payload length > 2^53 - 1",
@@ -8292,7 +8292,7 @@ var require_receiver = __commonJS({
           cb(error62);
           return;
         }
-        this._payloadLength = num * Math.pow(2, 32) + buf.readUInt32BE(4);
+        this._payloadLength = num3 * Math.pow(2, 32) + buf.readUInt32BE(4);
         this.haveLength(cb);
       }
       /**
@@ -10888,6 +10888,10 @@ var require_websocket_server = __commonJS({
     }
   }
 });
+
+// bridge-server/src/main.ts
+import { randomUUID as randomUUID4 } from "node:crypto";
+import { homedir } from "node:os";
 
 // node_modules/zod/v3/helpers/util.js
 var util;
@@ -14038,8 +14042,8 @@ var ZodSet = class _ZodSet extends ZodType {
       maxSize: { value: maxSize, message: errorUtil.toString(message) }
     });
   }
-  size(size, message) {
-    return this.min(size, message).max(size, message);
+  size(size2, message) {
+    return this.min(size2, message).max(size2, message);
   }
   nonempty(message) {
     return this.min(1, message);
@@ -15355,14 +15359,14 @@ function promiseAllObject(promisesObj) {
 }
 function randomString(length = 10) {
   const chars = "abcdefghijklmnopqrstuvwxyz";
-  let str2 = "";
+  let str3 = "";
   for (let i = 0; i < length; i++) {
-    str2 += chars[Math.floor(Math.random() * chars.length)];
+    str3 += chars[Math.floor(Math.random() * chars.length)];
   }
-  return str2;
+  return str3;
 }
-function esc(str2) {
-  return JSON.stringify(str2);
+function esc(str3) {
+  return JSON.stringify(str3);
 }
 function slugify(input2) {
   return input2.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
@@ -15476,8 +15480,8 @@ var primitiveTypes = /* @__PURE__ */ new Set([
   "symbol",
   "undefined"
 ]);
-function escapeRegex(str2) {
-  return str2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegex(str3) {
+  return str3.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function clone(inst, def, params) {
   const cl = new inst._zod.constr(def ?? inst._zod.def);
@@ -15731,13 +15735,13 @@ function getSizableOrigin(input2) {
   return "unknown";
 }
 var highSurrogate = /[\uD800-\uDBFF]/;
-function codePointLength(str2) {
-  const units = str2.length;
-  if (!highSurrogate.test(str2))
+function codePointLength(str3) {
+  const units = str3.length;
+  if (!highSurrogate.test(str3))
     return units;
   let count = units;
   for (let i = 0; i < units - 1; i++) {
-    if ((str2.charCodeAt(i) & 64512) === 55296 && (str2.charCodeAt(i + 1) & 64512) === 56320) {
+    if ((str3.charCodeAt(i) & 64512) === 55296 && (str3.charCodeAt(i + 1) & 64512) === 56320) {
       count--;
       i++;
     }
@@ -16773,8 +16777,8 @@ var $ZodCheckMaxSize = /* @__PURE__ */ $constructor("$ZodCheckMaxSize", (inst, d
   (_a3 = inst._zod.def).when ?? (_a3.when = _whenHasSize);
   inst._zod.check = (payload) => {
     const input2 = payload.value;
-    const size = input2.size;
-    if (size <= def.maximum)
+    const size2 = input2.size;
+    if (size2 <= def.maximum)
       return;
     payload.issues.push({
       origin: getSizableOrigin(input2),
@@ -16793,8 +16797,8 @@ var $ZodCheckMinSize = /* @__PURE__ */ $constructor("$ZodCheckMinSize", (inst, d
   (_a3 = inst._zod.def).when ?? (_a3.when = _whenHasSize);
   inst._zod.check = (payload) => {
     const input2 = payload.value;
-    const size = input2.size;
-    if (size >= def.minimum)
+    const size2 = input2.size;
+    if (size2 >= def.minimum)
       return;
     payload.issues.push({
       origin: getSizableOrigin(input2),
@@ -16813,10 +16817,10 @@ var $ZodCheckSizeEquals = /* @__PURE__ */ $constructor("$ZodCheckSizeEquals", (i
   (_a3 = inst._zod.def).when ?? (_a3.when = _whenHasSize);
   inst._zod.check = (payload) => {
     const input2 = payload.value;
-    const size = input2.size;
-    if (size === def.size)
+    const size2 = input2.size;
+    if (size2 === def.size)
       return;
-    const tooBig = size > def.size;
+    const tooBig = size2 > def.size;
     payload.issues.push({
       origin: getSizableOrigin(input2),
       ...tooBig ? { code: "too_big", maximum: def.size } : { code: "too_small", minimum: def.size },
@@ -29592,11 +29596,11 @@ function _minSize(minimum, params) {
   });
 }
 // @__NO_SIDE_EFFECTS__
-function _size(size, params) {
+function _size(size2, params) {
   return new $ZodCheckSizeEquals({
     check: "size_equals",
     ...normalizeParams(params),
-    size
+    size: size2
   });
 }
 // @__NO_SIDE_EFFECTS__
@@ -30362,22 +30366,22 @@ function foldObjects(members2) {
   return folded;
 }
 function foldIntersection(json2) {
-  const allOf = json2.allOf;
-  if (!Array.isArray(allOf) || allOf.length < 2)
+  const allOf2 = json2.allOf;
+  if (!Array.isArray(allOf2) || allOf2.length < 2)
     return;
   for (const key of FOLDABLE_KEYS)
     if (key in json2)
       return;
-  const unions = allOf.filter((m) => UNION_KEYS.some((k) => Array.isArray(m[k])));
+  const unions = allOf2.filter((m) => UNION_KEYS.some((k) => Array.isArray(m[k])));
   let folded = null;
   if (!unions.length) {
-    folded = foldObjects(allOf);
+    folded = foldObjects(allOf2);
   } else {
     const union2 = unions[0];
     const keyword = UNION_KEYS.find((k) => Array.isArray(union2[k]));
     if (Object.keys(union2).length !== 1)
       return;
-    const rest = allOf.filter((m) => m !== union2);
+    const rest = allOf2.filter((m) => m !== union2);
     const branches = union2[keyword].map((branch) => foldObjects([...rest, branch]));
     if (branches.some((b) => !b))
       return;
@@ -30469,18 +30473,18 @@ function finalize(ctx2, schema) {
       const carriers = /* @__PURE__ */ new Map();
       for (const seen of ctx2.seen.values()) {
         for (const json2 of [seen.schema, seen.def]) {
-          const allOf = json2?.allOf;
-          if (!Array.isArray(allOf))
+          const allOf2 = json2?.allOf;
+          if (!Array.isArray(allOf2))
             continue;
-          const existing = carriers.get(allOf);
+          const existing = carriers.get(allOf2);
           if (existing)
             existing.push(json2);
           else
-            carriers.set(allOf, [json2]);
+            carriers.set(allOf2, [json2]);
         }
       }
-      for (const allOf of ctx2.intersections) {
-        for (const json2 of carriers.get(allOf) ?? [])
+      for (const allOf2 of ctx2.intersections) {
+        for (const json2 of carriers.get(allOf2) ?? [])
           foldIntersection(json2);
       }
     }
@@ -31010,12 +31014,12 @@ var intersectionProcessor = (schema, ctx2, json2, params) => {
     path: [...params.path, "allOf", 1]
   });
   const isSimpleIntersection = (val) => "allOf" in val && Object.keys(val).length === 1;
-  const allOf = [
+  const allOf2 = [
     ...isSimpleIntersection(a) ? a.allOf : [a],
     ...isSimpleIntersection(b) ? b.allOf : [b]
   ];
-  json2.allOf = allOf;
-  ctx2.intersections.push(allOf);
+  json2.allOf = allOf2;
+  ctx2.intersections.push(allOf2);
 };
 var tupleProcessor = (schema, ctx2, _json, params) => {
   const json2 = _json;
@@ -33489,8 +33493,8 @@ var ZodFile = /* @__PURE__ */ $constructor("ZodFile", (inst, def) => {
   $ZodFile.init(inst, def);
   ZodType2.init(inst, def);
   inst._zod.processJSONSchema = (ctx2, json2, params) => fileProcessor(inst, ctx2, json2, params);
-  inst.min = (size, params) => inst.check(_minSize(size, params));
-  inst.max = (size, params) => inst.check(_maxSize(size, params));
+  inst.min = (size2, params) => inst.check(_minSize(size2, params));
+  inst.max = (size2, params) => inst.check(_maxSize(size2, params));
   inst.mime = (types, params) => inst.check(_mime(Array.isArray(types) ? types : [types], params));
 });
 function file(params) {
@@ -36485,7 +36489,7 @@ var isJsonSchema7AllOfType = (type) => {
   return "allOf" in type;
 };
 function parseIntersectionDef(def, refs) {
-  const allOf = [
+  const allOf2 = [
     parseDef(def.left._def, {
       ...refs,
       currentPath: [...refs.currentPath, "allOf", "0"]
@@ -36497,7 +36501,7 @@ function parseIntersectionDef(def, refs) {
   ].filter((x) => !!x);
   let unevaluatedProperties = refs.target === "jsonSchema2019-09" ? { unevaluatedProperties: false } : void 0;
   const mergedAllOf = [];
-  allOf.forEach((schema) => {
+  allOf2.forEach((schema) => {
     if (isJsonSchema7AllOfType(schema)) {
       mergedAllOf.push(...schema.allOf);
       if (schema.unevaluatedProperties === void 0) {
@@ -40169,6 +40173,8 @@ var StdioServerTransport = class {
 
 // plugins/_loader/src/shared/dist.ts
 var CHECK_INTERVAL_MS = 10 * 60 * 1e3;
+var INSTALL_DIR_PARTS = [".ezg", "figma-tools"];
+var BRIDGE_DIR = "_bridge";
 var BRIDGE_MCP_NAME = "ezg-figma-bridge";
 
 // plugins/ezg-tools/src/shared/values.ts
@@ -40240,7 +40246,10 @@ function toFileInfo(v) {
 function toBridgeError(v) {
   if (!isRecord(v) || !isString(v.message)) return null;
   if (v.stack !== void 0 && !isString(v.stack)) return null;
-  return v.stack === void 0 ? { message: v.message } : { message: v.message, stack: v.stack };
+  const error62 = { message: v.message };
+  if (v.stack !== void 0) error62.stack = v.stack;
+  if (isRecord(v.data)) error62.data = v.data;
+  return error62;
 }
 function toBridgeEvent(v) {
   if (!isRecord(v) || !isEventType(v.type)) return null;
@@ -40456,7 +40465,165 @@ ${describeFiles(list())}`
 }
 
 // bridge-server/src/instructions.ts
-var INSTRUCTIONS = 'Runs Plugin API code in the Figma file whose MCP tab in EZG Tools is connected, and reads or controls its selection, viewport, events, history and exports. If `files` shows none, ask the user to press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server" in the MCP tab. Any number of Claude sessions can use the same file at once. Load the ezg-figma-bridge skill first.';
+var INSTRUCTIONS = 'Runs Plugin API code in the Figma file whose MCP tab in EZG Tools is connected, and reads or controls its selection, viewport, events, history and exports. If `files` shows none, ask the user to press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server" in the MCP tab. Any number of Claude sessions can use the same file at once. Start with `inventory`, and prefer `build` and `kit` over hand-written node code. Load the ezg-figma-bridge skill first.';
+
+// bridge-server/src/journal.ts
+import {
+  appendFileSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  statSync
+} from "node:fs";
+import { dirname, join } from "node:path";
+var JOURNAL_ENV = "EZG_FIGMA_BRIDGE_JOURNAL";
+var JOURNAL_FILE = "journal.jsonl";
+var JOURNAL_MAX_BYTES = 5 * 1024 * 1024;
+var ERROR_MAX_CHARS = 200;
+var READ_LIMIT_DEFAULT = 200;
+function journalPath(env, home) {
+  const value = env[JOURNAL_ENV]?.trim();
+  if (value === "off") return null;
+  if (value) return value;
+  return join(home, ...INSTALL_DIR_PARTS, BRIDGE_DIR, JOURNAL_FILE);
+}
+function isEntry(v) {
+  if (typeof v !== "object" || v === null) return false;
+  const e = v;
+  return typeof e.ts === "number" && typeof e.session === "string" && typeof e.tool === "string";
+}
+function parseLine(line) {
+  try {
+    const v = JSON.parse(line);
+    return isEntry(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+function sizeOf(path) {
+  try {
+    return statSync(path).size;
+  } catch {
+    return 0;
+  }
+}
+function createJournal(env, home, maxBytes = JOURNAL_MAX_BYTES) {
+  const path = journalPath(env, home);
+  if (path === null) return { path, write() {
+  }, read: () => [] };
+  let dirReady = false;
+  return {
+    path,
+    write(e) {
+      try {
+        if (!dirReady) {
+          mkdirSync(dirname(path), { recursive: true });
+          dirReady = true;
+        }
+        const line = JSON.stringify({
+          ...e,
+          ...e.error === void 0 ? {} : { error: e.error.slice(0, ERROR_MAX_CHARS) }
+        }) + "\n";
+        if (sizeOf(path) + Buffer.byteLength(line) > maxBytes) {
+          renameSync(path, path + ".1");
+        }
+        appendFileSync(path, line);
+      } catch {
+      }
+    },
+    read(f) {
+      try {
+        const limit = f.limit ?? READ_LIMIT_DEFAULT;
+        const entries = readFileSync(path, "utf8").split("\n").map(parseLine).filter(
+          (e) => e !== null && (f.session === void 0 || e.session === f.session) && (f.since === void 0 || e.ts >= f.since) && (f.tool === void 0 || e.tool === f.tool)
+        );
+        return limit > 0 ? entries.slice(-limit) : [];
+      } catch {
+        return [];
+      }
+    }
+  };
+}
+
+// bridge-server/src/journal-tools.ts
+var LABEL_MAX_CHARS = 200;
+var str = (v) => typeof v === "string" ? v : void 0;
+function sizeOf2(args) {
+  try {
+    return JSON.stringify(args)?.length ?? 0;
+  } catch {
+    return 0;
+  }
+}
+function outSize(res) {
+  let n = 0;
+  for (const b of res?.content ?? []) n += (b.text ?? b.data ?? "").length;
+  return n;
+}
+function describe3(args) {
+  const a = args && typeof args === "object" ? args : {};
+  const label = str(a.description) ?? str(a.title);
+  return {
+    fileKey: str(a.fileKey),
+    label: label?.slice(0, LABEL_MAX_CHARS)
+  };
+}
+function withJournal(server2, journal2, session2) {
+  const record2 = (e) => {
+    try {
+      journal2.write(e);
+    } catch {
+    }
+  };
+  const wrap = (tool, hasArgs, handler) => async (...a) => {
+    const ts = Date.now();
+    const args = hasArgs ? a[0] : void 0;
+    const base = {
+      ts,
+      session: session2,
+      inBytes: sizeOf2(args),
+      tool,
+      ...describe3(args)
+    };
+    let res;
+    try {
+      res = await handler(...a);
+    } catch (e) {
+      const error63 = (e instanceof Error ? e.message : String(e)).slice(0, 200);
+      record2({ ...base, ms: Date.now() - ts, ok: false, error: error63, outBytes: 0 });
+      throw e;
+    }
+    const ok = !res?.isError;
+    const error62 = ok ? void 0 : (res?.content?.find((b) => b.type === "text")?.text ?? "").slice(
+      0,
+      200
+    );
+    record2({
+      ...base,
+      ms: Date.now() - ts,
+      ok,
+      ...error62 !== void 0 && { error: error62 },
+      outBytes: outSize(res),
+      ...res?._meta?.ezgStats !== void 0 && {
+        stats: res._meta.ezgStats
+      }
+    });
+    return res;
+  };
+  return new Proxy(server2, {
+    get(target, prop) {
+      if (prop === "registerTool")
+        return (name, config2, cb) => target.registerTool.call(
+          target,
+          name,
+          config2,
+          wrap(name, config2?.inputSchema !== void 0, cb)
+        );
+      const v = Reflect.get(target, prop, target);
+      return typeof v === "function" ? v.bind(target) : v;
+    }
+  });
+}
 
 // node_modules/ws/wrapper.mjs
 var import_stream = __toESM(require_stream(), 1);
@@ -41080,7 +41247,11 @@ var TOOL_NAMES = {
   watch: "watch",
   codegenSet: "codegen_set",
   glossaryGet: "glossary_get",
-  glossarySet: "glossary_set"
+  glossarySet: "glossary_set",
+  inventory: "inventory",
+  lint: "lint",
+  build: "build",
+  journal: "journal"
 };
 var BridgeCallError = class extends Error {
   code;
@@ -41207,10 +41378,10 @@ function normalizeSnippets(raw) {
     if (typeof language !== "string" || !LANGUAGE_SET.has(language)) continue;
     if (typeof code !== "string" || code === "") continue;
     const trimmed = title.trim();
-    const size = trimmed.length + code.length;
-    if (total + size > MAX_SNIPPET_CHARS) break;
+    const size2 = trimmed.length + code.length;
+    if (total + size2 > MAX_SNIPPET_CHARS) break;
     kept.push({ title: trimmed, language, code });
-    total += size;
+    total += size2;
     if (kept.length >= MAX_SNIPPETS) break;
   }
   return kept;
@@ -41553,46 +41724,464 @@ var registerAuthoring = (server2, ctx2) => {
   );
 };
 
+// plugins/ezg-tools/src/shared/lint-types.ts
+var LINT_RULE_IDS = [
+  "generic-name",
+  "unbound-color",
+  "text-no-style",
+  "missing-font",
+  "variant-conflict",
+  "name-pattern",
+  "clip",
+  "safe-zone",
+  "grid-style",
+  "unbound-number",
+  "overflow",
+  "reuse"
+];
+var LINT_LIMIT_MAX = 5e3;
+var isRec = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var isRuleId = (v) => typeof v === "string" && LINT_RULE_IDS.includes(v);
+function strings(v) {
+  if (!Array.isArray(v) || !v.every((s) => typeof s === "string")) return null;
+  return v;
+}
+function regexOk(src, flags) {
+  if (typeof src !== "string") return false;
+  try {
+    new RegExp(src, flags);
+    return true;
+  } catch {
+    return false;
+  }
+}
+var num = (v) => typeof v === "number" && Number.isFinite(v);
+var posInt = (v) => typeof v === "number" && Number.isInteger(v) && v > 0;
+function size(v) {
+  if (!isRec(v) || !num(v.width) || !num(v.height)) return null;
+  if (v.width <= 0 || v.height <= 0) return null;
+  return { width: v.width, height: v.height };
+}
+function pick2(raw, shape, required2 = []) {
+  const out = {};
+  for (const key of Object.keys(shape)) {
+    if (raw[key] === void 0) {
+      if (required2.includes(key)) return null;
+      continue;
+    }
+    const v = shape[key](raw[key]);
+    if (v === null) return null;
+    out[key] = v;
+  }
+  return out;
+}
+var asNum = (v) => num(v) ? v : null;
+var asStr = (v) => typeof v === "string" ? v : null;
+var asRegex = (v) => regexOk(v) ? v : null;
+var OPTION_SHAPES = {
+  "generic-name": null,
+  "unbound-color": null,
+  "text-no-style": null,
+  "missing-font": null,
+  "variant-conflict": null,
+  "name-pattern": {
+    pattern: asRegex,
+    flags: asStr,
+    types: strings
+  },
+  clip: { allow: asRegex },
+  "safe-zone": {
+    top: asNum,
+    bottom: asNum,
+    left: asNum,
+    right: asNum,
+    frame: size,
+    types: strings,
+    names: asRegex
+  },
+  "grid-style": { styleId: asStr, frame: size },
+  "unbound-number": { fields: strings },
+  overflow: { tolerance: (v) => num(v) && v >= 0 ? v : null },
+  reuse: { min: (v) => posInt(v) ? v : null }
+};
+function parseOptions(raw) {
+  if (!isRec(raw)) return null;
+  const out = {};
+  for (const key of Object.keys(raw)) {
+    if (!isRuleId(key) || !isRec(raw[key])) return null;
+    const shape = OPTION_SHAPES[key];
+    const parsed = shape ? pick2(raw[key], shape, key === "name-pattern" ? ["pattern"] : []) : {};
+    if (!parsed) return null;
+    if (key === "name-pattern" && !regexOk(parsed.pattern, parsed.flags))
+      return null;
+    out[key] = parsed;
+  }
+  return out;
+}
+function parseLintPayload(raw) {
+  if (!isRec(raw)) return null;
+  const out = {};
+  for (const key of ["nodeIds", "pageIds"]) {
+    if (raw[key] === void 0) continue;
+    const list = strings(raw[key]);
+    if (!list) return null;
+    out[key] = list;
+  }
+  if (raw.rules !== void 0) {
+    if (!Array.isArray(raw.rules) || !raw.rules.every(isRuleId)) return null;
+    out.rules = [...new Set(raw.rules)];
+  }
+  if (raw.options !== void 0) {
+    const options = parseOptions(raw.options);
+    if (!options) return null;
+    out.options = options;
+  }
+  if (raw.includeInstances !== void 0) {
+    if (typeof raw.includeInstances !== "boolean") return null;
+    out.includeInstances = raw.includeInstances;
+  }
+  if (raw.limit !== void 0) {
+    if (!posInt(raw.limit) || raw.limit > LINT_LIMIT_MAX) return null;
+    out.limit = raw.limit;
+  }
+  return out;
+}
+
+// plugins/ezg-tools/src/shared/bridge-build.ts
+var BUILD_TYPES = [
+  "FRAME",
+  "COMPONENT",
+  "COMPONENT_SET",
+  "SECTION",
+  "RECTANGLE",
+  "ELLIPSE",
+  "POLYGON",
+  "STAR",
+  "LINE",
+  "TEXT",
+  "INSTANCE"
+];
+var BUILD_NODE_CAP = 2e3;
+var BUILD_DEPTH_CAP = 32;
+var isRec2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var num2 = (v) => typeof v === "number" && Number.isFinite(v);
+var LEAF_TYPES = [
+  "RECTANGLE",
+  "ELLIPSE",
+  "POLYGON",
+  "STAR",
+  "LINE",
+  "TEXT",
+  "INSTANCE"
+];
+var LAYOUT_TYPES = ["FRAME", "COMPONENT", "COMPONENT_SET"];
+var LAYOUT_ENUMS = {
+  mode: ["HORIZONTAL", "VERTICAL"],
+  main: ["MIN", "CENTER", "MAX", "SPACE_BETWEEN"],
+  cross: ["MIN", "CENTER", "MAX", "BASELINE"],
+  width: ["FIXED", "HUG", "FILL"],
+  height: ["FIXED", "HUG", "FILL"]
+};
+var LAYOUT_KEYS = [
+  "mode",
+  "gap",
+  "padding",
+  "wrap",
+  ...Object.keys(LAYOUT_ENUMS)
+];
+function isJson(v, depth = 0) {
+  if (depth > 20) return false;
+  if (Array.isArray(v)) return v.every((x) => isJson(x, depth + 1));
+  if (isRec2(v)) return Object.values(v).every((x) => isJson(x, depth + 1));
+  return v === null || ["string", "boolean"].includes(typeof v) || num2(v);
+}
+var allOf = (v, ok) => isRec2(v) && Object.values(v).every(ok);
+var isStr = (x) => typeof x === "string";
+var isStrOrBool = (x) => isStr(x) || typeof x === "boolean";
+function layoutErrors(l, at) {
+  if (!isRec2(l)) return [`${at}: layout must be an object`];
+  const out = [];
+  const bad = (m) => out.push(`${at}: layout.${m}`);
+  for (const key of Object.keys(l))
+    if (!LAYOUT_KEYS.includes(key))
+      out.push(`${at}: unknown layout key "${key}"`);
+  for (const [key, allowed] of Object.entries(LAYOUT_ENUMS))
+    if (l[key] !== void 0 || key === "mode") {
+      if (!isStr(l[key]) || !allowed.includes(l[key]))
+        bad(`${key} must be one of ${allowed.join(", ")}`);
+    }
+  if (l.gap !== void 0 && !num2(l.gap)) bad("gap must be a number");
+  if (l.wrap !== void 0 && typeof l.wrap !== "boolean")
+    bad("wrap must be a boolean");
+  const p = l.padding;
+  const quad = Array.isArray(p) && p.length === 4 && p.every(num2);
+  if (p !== void 0 && !num2(p) && !quad)
+    bad("padding must be a number or 4 numbers");
+  return out;
+}
+function nodeErrors(n, at) {
+  const type = n.type;
+  if (!isStr(type) || !BUILD_TYPES.includes(type))
+    return [`${at}: unknown type ${JSON.stringify(type)}`];
+  const out = [];
+  const bad = (m) => out.push(`${at}: ${m}`);
+  const only = (key, on) => {
+    if (n[key] === void 0) return true;
+    if (type === on) return false;
+    bad(`${key} only allowed on ${on}`);
+    return true;
+  };
+  if (n.name !== void 0 && !isStr(n.name)) bad("name must be a string");
+  if (n.ref !== void 0 && (!isStr(n.ref) || n.ref === ""))
+    bad("ref must be a non-empty string");
+  else if (isStr(n.ref) && /^nodes\[\d+\]/.test(n.ref))
+    bad(`ref "${n.ref}" looks like a node path`);
+  if (n.props !== void 0 && !(isRec2(n.props) && isJson(n.props)))
+    bad("props must be a JSON object");
+  if (n.layout !== void 0) {
+    if (LAYOUT_TYPES.includes(type)) out.push(...layoutErrors(n.layout, at));
+    else bad(`layout not allowed on ${type}`);
+  }
+  if (n.bind !== void 0 && !allOf(n.bind, isStr))
+    bad("bind values must be strings");
+  if (!only("text", "TEXT")) {
+    const t = n.text;
+    if (!isRec2(t) || !isStr(t.chars)) bad("text.chars must be a string");
+    else if (t.style !== void 0 && !isStr(t.style))
+      bad("text.style must be a string");
+  }
+  if (type === "INSTANCE" && (!isStr(n.component) || n.component === ""))
+    bad("INSTANCE needs component");
+  if (type !== "INSTANCE") only("component", "INSTANCE");
+  if (!only("setProps", "INSTANCE") && !allOf(n.setProps, isStrOrBool))
+    bad("setProps values must be strings or booleans");
+  if (!only("variants", "COMPONENT_SET")) {
+    const v = n.variants;
+    const cols = isRec2(v) ? v.cols : void 0;
+    if (!isRec2(v)) bad("variants must be an object");
+    else {
+      if (cols !== void 0 && !(Number.isInteger(cols) && cols > 0))
+        bad("variants.cols must be a positive integer");
+      for (const k of ["gap", "padding"])
+        if (v[k] !== void 0 && !(num2(v[k]) && v[k] >= 0))
+          bad(`variants.${k} must be a number >= 0`);
+    }
+  }
+  return out;
+}
+function buildErrors(raw) {
+  if (!isRec2(raw)) return ["payload must be an object"];
+  const errors = [];
+  for (const k of ["parentId", "pageId"])
+    if (raw[k] !== void 0 && !isStr(raw[k]))
+      errors.push(`${k} must be a string`);
+  if (raw.atomic !== void 0 && typeof raw.atomic !== "boolean")
+    errors.push("atomic must be a boolean");
+  const l = raw.lint;
+  if (l !== void 0 && (!isRec2(l) || "nodeIds" in l || "pageIds" in l || !parseLintPayload(l)))
+    errors.push("lint must be valid lint options without nodeIds and pageIds");
+  if (!Array.isArray(raw.nodes) || raw.nodes.length === 0)
+    return [...errors, "nodes must be a non-empty array"];
+  const refs = /* @__PURE__ */ new Set();
+  let count = 0;
+  const walk2 = (n, at, depth) => {
+    const bad = (m) => void errors.push(`${at}: ${m}`);
+    if (count > BUILD_NODE_CAP) return;
+    if (++count > BUILD_NODE_CAP)
+      return bad(`more than ${BUILD_NODE_CAP} nodes`);
+    if (!isRec2(n)) return bad("node must be an object");
+    errors.push(...nodeErrors(n, at));
+    if (isStr(n.ref) && n.ref !== "") {
+      if (refs.has(n.ref)) bad(`duplicate ref "${n.ref}"`);
+      refs.add(n.ref);
+    }
+    const kids = n.children;
+    const set2 = n.type === "COMPONENT_SET";
+    if (kids === void 0)
+      return set2 ? bad("COMPONENT_SET needs children") : void 0;
+    if (isStr(n.type) && LEAF_TYPES.includes(n.type))
+      return bad(`children not allowed on ${n.type}`);
+    if (!Array.isArray(kids)) return bad("children must be an array");
+    if (set2 && kids.length === 0) bad("COMPONENT_SET needs children");
+    if (kids.length > 0 && depth >= BUILD_DEPTH_CAP)
+      return bad(`deeper than ${BUILD_DEPTH_CAP} levels`);
+    kids.forEach((c, i) => {
+      const cat = `${at}.children[${i}]`;
+      if (set2 && isRec2(c) && c.type !== "COMPONENT")
+        errors.push(`${cat}: COMPONENT_SET children must be COMPONENT`);
+      walk2(c, cat, depth + 1);
+    });
+  };
+  raw.nodes.forEach((n, i) => walk2(n, `nodes[${i}]`, 1));
+  return errors;
+}
+function parseBuildPayload(raw) {
+  if (buildErrors(raw).length > 0) return null;
+  const r = raw;
+  const out = {
+    nodes: r.nodes,
+    atomic: r.atomic !== false
+  };
+  if (typeof r.parentId === "string") out.parentId = r.parentId;
+  if (typeof r.pageId === "string") out.pageId = r.pageId;
+  if (r.lint !== void 0) out.lint = parseLintPayload(r.lint) ?? void 0;
+  return out;
+}
+
+// bridge-server/src/tools/build.ts
+var BUILD_TIMEOUT_DEFAULT_MS = 6e4;
+var BUILD_TIMEOUT_MIN_MS = 1e3;
+var BUILD_TIMEOUT_MAX_MS = 3e5;
+var BUILD_RPC_MARGIN_MS = 5e3;
+var BUILD_KEPT_LIMIT = 20;
+var BUILD_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use build";
+var BUILD_PARTIAL_NOTE = "atomic is false: nodes created before a failure stay in the file";
+var DESCRIPTION = "Creates a node tree from JSON in the connected Figma file in one call. Each node: type (FRAME, COMPONENT, COMPONENT_SET, SECTION, RECTANGLE, ELLIPSE, POLYGON, STAR, LINE, TEXT, INSTANCE), name, ref, props (Plugin API properties), layout (FRAME, COMPONENT, COMPONENT_SET: mode HORIZONTAL or VERTICAL, gap, padding, wrap, main, cross, width, height as FIXED, HUG or FILL), bind (property to variable name), text ({ chars, style }) on TEXT, component and setProps on INSTANCE, variants ({ cols, gap, padding }) on COMPONENT_SET, children. The spec is checked before any call; errors list the node path. atomic (default true) removes the nodes this call created when it fails; atomic false keeps partial nodes. The result maps each ref to its node id in ids, and roots lists the top-level ids. lint runs after the build on the roots and its report is part of the result. Load the ezg-figma-bridge skill first.";
+var buildInputSchema = {
+  fileKey: external_exports.string().min(1).optional(),
+  parentId: external_exports.string().optional(),
+  pageId: external_exports.string().optional(),
+  nodes: external_exports.array(external_exports.unknown()),
+  atomic: external_exports.boolean().default(true),
+  lint: external_exports.record(external_exports.string(), external_exports.unknown()).optional(),
+  timeoutMs: external_exports.number().int().min(BUILD_TIMEOUT_MIN_MS).max(BUILD_TIMEOUT_MAX_MS).default(BUILD_TIMEOUT_DEFAULT_MS)
+};
+function failureNotes(data) {
+  if (!data || data.kind !== "build-failure") return [BUILD_PARTIAL_NOTE];
+  if (data.rolledBack === true)
+    return [`rolled back ${Number(data.removed) || 0} created nodes`];
+  const kept = Array.isArray(data.kept) ? data.kept.map(String) : [];
+  const more = kept.length - BUILD_KEPT_LIMIT;
+  const list = kept.slice(0, BUILD_KEPT_LIMIT).join(", ");
+  return [
+    kept.length ? `kept: ${list}${more > 0 ? ` (+${more} more)` : ""}` : BUILD_PARTIAL_NOTE
+  ];
+}
+var registerBuild = (server2, ctx2) => {
+  server2.registerTool(
+    TOOL_NAMES.build,
+    { description: DESCRIPTION, inputSchema: buildInputSchema },
+    async ({ fileKey: fileKey4, parentId, pageId, nodes, atomic, lint, timeoutMs }) => {
+      const raw = { parentId, pageId, nodes, atomic, lint };
+      const errors = buildErrors(raw);
+      if (errors.length > 0) return errorResult(errors.join("\n"));
+      const payload = parseBuildPayload(raw);
+      if (!payload) return errorResult("invalid build payload");
+      const r = ctx2.files.resolve(fileKey4);
+      if ("error" in r) return errorResult(r.error);
+      try {
+        const res = await ctx2.rpc.call(
+          r.file.connectionId,
+          "build",
+          payload,
+          timeoutMs + BUILD_RPC_MARGIN_MS
+        );
+        const out = withNotes(jsonResult(res), [
+          r.note ?? "",
+          atomic ? "" : BUILD_PARTIAL_NOTE
+        ]);
+        out._meta = {
+          ezgStats: { elapsedMs: res.elapsedMs, createdCount: res.created }
+        };
+        return out;
+      } catch (e) {
+        const out = fromCallError(e);
+        if (!(e instanceof BridgeCallError) || e.code !== "remote") return out;
+        if (/unknown op/.test(e.remote?.message ?? e.message))
+          return errorResult(e.message, BUILD_OLD_PLUGIN_HINT);
+        return withNotes(out, failureNotes(e.remote?.data));
+      }
+    }
+  );
+};
+
+// plugins/ezg-tools/src/shared/bridge-eval.ts
+function isRecord3(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function parseEvalOptions(raw) {
+  const out = {};
+  if (raw.atomic !== void 0) {
+    if (typeof raw.atomic !== "boolean") return null;
+    out.atomic = raw.atomic;
+  }
+  if (raw.pageId !== void 0) {
+    if (typeof raw.pageId !== "string" || raw.pageId === "") return null;
+    out.pageId = raw.pageId;
+  }
+  return out;
+}
+function isEvalFailureData(v) {
+  return isRecord3(v) && v.kind === "eval-failure" && isRecord3(v.stats);
+}
+
 // bridge-server/src/tools/eval.ts
 var EVAL_TIMEOUT_DEFAULT_MS = 3e4;
 var EVAL_TIMEOUT_MIN_MS = 1e3;
 var EVAL_TIMEOUT_MAX_MS = 3e5;
 var EVAL_RPC_MARGIN_MS = 5e3;
 var EVAL_PARTIAL_HINT = "partial changes may remain; inspect before retry";
+var EVAL_KEPT_MAX = 20;
 var PROTOTYPES_NOTE = "node.query(), node.matches(), node.set() and node.screenshot() are not available in this file; call query(node, selector), matches(node, selector), set(node, props) and screenshot(node) instead";
-var DESCRIPTION = "Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot are passed as parameters. One call is one undo step. Not atomic: a failed run may leave partial changes. Load the ezg-figma-bridge skill first.";
+var DESCRIPTION2 = "Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot, and the kit object (tokens, text, components, variants, auto layout), are passed as parameters; user code runs in an inner function, so it may declare its own names. One call is one undo step. Not atomic by default: a failed run may leave partial changes. Pass atomic: true to remove the nodes the call created when it fails (edits to existing nodes stay). Pass pageId to put new top-level nodes on that page. The result reports elapsed time, queue time and created node ids. Load the ezg-figma-bridge skill first.";
 var evalInputSchema = {
   fileKey: external_exports.string().min(1),
   code: external_exports.string().max(5e4),
   description: external_exports.string().max(2e3),
   skillNames: external_exports.string().optional(),
-  timeoutMs: external_exports.number().int().min(EVAL_TIMEOUT_MIN_MS).max(EVAL_TIMEOUT_MAX_MS).default(EVAL_TIMEOUT_DEFAULT_MS)
+  timeoutMs: external_exports.number().int().min(EVAL_TIMEOUT_MIN_MS).max(EVAL_TIMEOUT_MAX_MS).default(EVAL_TIMEOUT_DEFAULT_MS),
+  atomic: external_exports.boolean().optional(),
+  pageId: external_exports.string().min(1).optional()
 };
+function statsNote(s) {
+  return `stats: ${s.elapsedMs} ms (queue ${s.queueMs} ms), created ${s.createdCount} on page ${s.pageId}`;
+}
+function failureNotes2(d) {
+  const at = d.line === void 0 ? "" : `at line ${d.line}${d.column === void 0 ? "" : ":" + d.column}`;
+  if (d.rolledBack) return [at, `rolled back ${d.removed} created nodes`];
+  const kept = d.kept.length ? "kept: " + d.kept.slice(0, EVAL_KEPT_MAX).join(", ") + (d.kept.length > EVAL_KEPT_MAX ? ` (+${d.kept.length - EVAL_KEPT_MAX} more)` : "") : "";
+  return [at, kept, EVAL_PARTIAL_HINT];
+}
 var registerEval = (server2, ctx2) => {
   server2.registerTool(
     TOOL_NAMES.eval,
-    { description: DESCRIPTION, inputSchema: evalInputSchema },
-    async ({ fileKey: fileKey4, code, description, timeoutMs }) => {
+    { description: DESCRIPTION2, inputSchema: evalInputSchema },
+    async ({ fileKey: fileKey4, code, description, timeoutMs, atomic, pageId }) => {
       const r = ctx2.files.resolve(fileKey4);
       if ("error" in r) return errorResult(r.error);
       try {
         const res = await ctx2.rpc.call(
           r.file.connectionId,
           "eval",
-          { code, description, timeoutMs },
+          {
+            code,
+            description,
+            timeoutMs,
+            ...atomic === void 0 ? {} : { atomic },
+            ...pageId === void 0 ? {} : { pageId }
+          },
           timeoutMs + EVAL_RPC_MARGIN_MS
         );
         const out = withNotes(jsonResult(res.value), [
           res.logs.length ? "Logs:\n" + res.logs.join("\n") : "",
+          res.stats ? statsNote(res.stats) : "",
           r.note ?? "",
           res.prototypes ? "" : PROTOTYPES_NOTE
         ]);
         out.content.push(...imageBlocks(res.images));
+        if (res.stats) out._meta = { ezgStats: res.stats };
         return out;
       } catch (e) {
         const out = fromCallError(e);
-        if (e instanceof BridgeCallError)
+        if (e instanceof BridgeCallError) {
+          const data = e.remote?.data;
+          if (e.code === "remote" && isEvalFailureData(data)) {
+            const noted = withNotes(out, failureNotes2(data));
+            noted._meta = { ezgStats: data.stats };
+            return noted;
+          }
           return withNotes(out, [EVAL_PARTIAL_HINT]);
+        }
         return out;
       }
     }
@@ -41705,24 +42294,41 @@ var registerEventTools = (server2, ctx2) => {
 
 // bridge-server/src/tools/export.ts
 import { mkdir, writeFile } from "node:fs/promises";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import { isAbsolute, join as join2, relative, resolve } from "node:path";
 
-// plugins/ezg-tools/src/shared/bridge-ops.ts
-var OP_TABLE = {
-  eval: true,
-  "view.get": true,
-  "view.set": true,
-  "history.checkpoint": true,
-  "history.undo": true,
-  export: true,
-  watch: true,
-  "codegen.set": true,
-  "glossary.get": true,
-  "glossary.set": true
-};
-var BRIDGE_OPS = Object.keys(
-  OP_TABLE
-);
+// plugins/ezg-tools/src/shared/bridge-inventory.ts
+var INVENTORY_SECTIONS = [
+  "pages",
+  "variables",
+  "styles",
+  "components"
+];
+var SECTION_SET = new Set(INVENTORY_SECTIONS);
+var isSection = (v) => typeof v === "string" && SECTION_SET.has(v);
+function parseInventoryPayload(raw) {
+  if (raw === void 0 || raw === null) raw = {};
+  if (!isRecord(raw)) return null;
+  const { include, pageIds, name } = raw;
+  let sections = [...INVENTORY_SECTIONS];
+  if (include !== void 0) {
+    if (!Array.isArray(include) || include.length === 0) return null;
+    if (!include.every(isSection)) return null;
+    sections = [...new Set(include)];
+  }
+  const out = { include: sections };
+  if (pageIds !== void 0) {
+    if (!Array.isArray(pageIds) || !pageIds.every((v) => typeof v === "string"))
+      return null;
+    out.pageIds = pageIds;
+  }
+  if (name !== void 0) {
+    if (typeof name !== "string") return null;
+    if (name !== "") out.name = name;
+  }
+  return out;
+}
+
+// plugins/ezg-tools/src/shared/bridge-parse.ts
 var EXPORT_FORMATS = [
   "PNG",
   "JPG",
@@ -41730,22 +42336,20 @@ var EXPORT_FORMATS = [
   "PDF",
   "JSON"
 ];
-var OP_SET = new Set(BRIDGE_OPS);
 var FORMAT_SET = new Set(EXPORT_FORMATS);
-function isBridgeOp(raw) {
-  return typeof raw === "string" && OP_SET.has(raw);
-}
-var str = (v) => typeof v === "string";
-var nonEmptyStr = (v) => str(v) && v.trim() !== "";
+var str2 = (v) => typeof v === "string";
+var nonEmptyStr = (v) => str2(v) && v.trim() !== "";
 var positive = (v) => isFiniteNumber(v) && v > 0;
-var strArray = (v) => Array.isArray(v) && v.every(str);
+var strArray = (v) => Array.isArray(v) && v.every(str2);
 var parseEmpty = (raw) => raw === void 0 || raw === null || isRecord(raw) ? {} : null;
 function parseEval(raw) {
   if (!isRecord(raw)) return null;
   const { code, description, timeoutMs } = raw;
-  if (!nonEmptyStr(code) || !str(description) || !positive(timeoutMs))
+  if (!nonEmptyStr(code) || !str2(description) || !positive(timeoutMs))
     return null;
-  return { code, description, timeoutMs };
+  const options = parseEvalOptions(raw);
+  if (!options) return null;
+  return { code, description, timeoutMs, ...options };
 }
 function parseViewSet(raw) {
   if (!isRecord(raw)) return null;
@@ -41760,11 +42364,11 @@ function parseViewSet(raw) {
     out.focusIds = focusIds.slice();
   }
   if (pageId !== void 0) {
-    if (!str(pageId)) return null;
+    if (!str2(pageId)) return null;
     out.pageId = pageId;
   }
   if (notify !== void 0) {
-    if (!str(notify)) return null;
+    if (!str2(notify)) return null;
     out.notify = notify;
   }
   if (zoom !== void 0) {
@@ -41776,14 +42380,14 @@ function parseViewSet(raw) {
 function parseCheckpoint(raw) {
   if (!isRecord(raw) || !nonEmptyStr(raw.title)) return null;
   if (raw.description === void 0) return { title: raw.title };
-  if (!str(raw.description)) return null;
+  if (!str2(raw.description)) return null;
   return { title: raw.title, description: raw.description };
 }
 function parseExport(raw) {
   if (!isRecord(raw)) return null;
   const { nodeIds, format, scale } = raw;
   if (!strArray(nodeIds) || nodeIds.length === 0) return null;
-  if (!str(format) || !FORMAT_SET.has(format)) return null;
+  if (!str2(format) || !FORMAT_SET.has(format)) return null;
   const out = { nodeIds: nodeIds.slice(), format };
   if (scale === void 0) return out;
   return positive(scale) ? { ...out, scale } : null;
@@ -41818,8 +42422,35 @@ var PARSERS = {
   watch: parseWatch,
   "codegen.set": parseCodegen,
   "glossary.get": parseEmpty,
-  "glossary.set": parseGlossarySet
+  "glossary.set": parseGlossarySet,
+  inventory: parseInventoryPayload,
+  lint: parseLintPayload,
+  build: parseBuildPayload
 };
+
+// plugins/ezg-tools/src/shared/bridge-ops.ts
+var OP_TABLE = {
+  eval: true,
+  "view.get": true,
+  "view.set": true,
+  "history.checkpoint": true,
+  "history.undo": true,
+  export: true,
+  watch: true,
+  "codegen.set": true,
+  "glossary.get": true,
+  "glossary.set": true,
+  inventory: true,
+  lint: true,
+  build: true
+};
+var BRIDGE_OPS = Object.keys(
+  OP_TABLE
+);
+var OP_SET = new Set(BRIDGE_OPS);
+function isBridgeOp(raw) {
+  return typeof raw === "string" && OP_SET.has(raw);
+}
 function parsePayload(op, raw) {
   if (!isBridgeOp(op)) return null;
   try {
@@ -41859,7 +42490,7 @@ function exportFileName(file2) {
 }
 function resolveInside(outDir, fileName) {
   const root = resolve(outDir);
-  const target = resolve(join(root, fileName));
+  const target = resolve(join2(root, fileName));
   const rel = relative(root, target);
   if (!rel || rel.startsWith("..") || isAbsolute(rel)) return null;
   return target;
@@ -42028,6 +42659,147 @@ var registerHistoryTools = (server2, ctx2) => {
   );
 };
 
+// bridge-server/src/tools/inventory.ts
+var INVENTORY_TIMEOUT_MS = 6e4;
+var INVENTORY_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use inventory";
+var DESCRIPTION3 = "Lists what the connected Figma file holds in one call: pages (id, name, child count), variables (collections with modes, and each variable with type, scopes and first-mode value), styles (text, paint, effect, grid) and components (component sets and components with their property keys and friendly names, which kit.props in eval accepts). pageIds narrows which pages are loaded for components. Use name (case-insensitive substring) and include to narrow large files; a section that hits the item cap is listed in truncated. Reads live data every call.";
+var inventoryInputSchema = {
+  fileKey: external_exports.string().min(1).optional().describe(
+    "fileKey or clientId from files. Optional with one file connected."
+  ),
+  include: external_exports.array(external_exports.enum(INVENTORY_SECTIONS)).optional(),
+  pageIds: external_exports.array(external_exports.string()).optional(),
+  name: external_exports.string().optional()
+};
+var registerInventory = (server2, ctx2) => {
+  server2.registerTool(
+    TOOL_NAMES.inventory,
+    { description: DESCRIPTION3, inputSchema: inventoryInputSchema },
+    async ({ fileKey: fileKey4, include, pageIds, name }) => {
+      const r = ctx2.files.resolve(fileKey4);
+      if ("error" in r) return errorResult(r.error);
+      const payload = {
+        include: include ?? [...INVENTORY_SECTIONS],
+        ...pageIds ? { pageIds } : {},
+        ...name ? { name } : {}
+      };
+      try {
+        const res = await ctx2.rpc.call(
+          r.file.connectionId,
+          "inventory",
+          payload,
+          INVENTORY_TIMEOUT_MS
+        );
+        return jsonResult(res, r.note);
+      } catch (e) {
+        if (e instanceof BridgeCallError && e.code === "remote" && e.remote?.message.startsWith("unknown op: inventory"))
+          return errorResult(e.remote.message, INVENTORY_OLD_PLUGIN_HINT);
+        return fromCallError(e);
+      }
+    }
+  );
+};
+
+// bridge-server/src/tools/journal.ts
+var JOURNAL_LIMIT_MIN = 1;
+var JOURNAL_LIMIT_MAX = 1e3;
+var JOURNAL_OFF_NOTE = "the journal is off (EZG_FIGMA_BRIDGE_JOURNAL=off); nothing is recorded";
+var DESCRIPTION4 = "Returns the tool-call journal: one metadata entry per call (time, session, tool, file, label, duration, ok, error head, byte sizes, stats) plus per-tool totals. The journal never stores eval code or results. session is current (default), all, or a session id; entries from other sessions may belong to other projects.";
+var journalInputSchema = {
+  session: external_exports.string().min(1).optional(),
+  since: external_exports.number().int().min(0).optional(),
+  tool: external_exports.string().min(1).optional(),
+  limit: external_exports.number().int().min(JOURNAL_LIMIT_MIN).max(JOURNAL_LIMIT_MAX).optional()
+};
+function summarize(entries) {
+  const byTool = {};
+  let totalMs = 0;
+  for (const e of entries) {
+    const t = byTool[e.tool] ??= { count: 0, ms: 0, errors: 0 };
+    t.count++;
+    t.ms += e.ms;
+    if (!e.ok) t.errors++;
+    totalMs += e.ms;
+  }
+  return { count: entries.length, totalMs, byTool };
+}
+var registerJournal = (server2, ctx2) => {
+  server2.registerTool(
+    TOOL_NAMES.journal,
+    { description: DESCRIPTION4, inputSchema: journalInputSchema },
+    ({ session: session2, since, tool, limit }) => {
+      const { journal: journal2, session: current } = ctx2.journal;
+      const scope = session2 === void 0 ? "current" : session2;
+      const id = scope === "current" ? current : scope;
+      const entries = journal2.read({
+        session: scope === "all" ? void 0 : id,
+        since,
+        tool,
+        limit
+      });
+      return jsonResult(
+        {
+          path: journal2.path,
+          session: scope === "all" ? "all" : id,
+          entries,
+          summary: summarize(entries)
+        },
+        journal2.path === null ? JOURNAL_OFF_NOTE : void 0
+      );
+    }
+  );
+};
+
+// bridge-server/src/tools/lint.ts
+var LINT_TIMEOUT_MS = 12e4;
+var LINT_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use lint";
+var LINT_INVALID_HINT = 'options shapes: "name-pattern" {pattern, flags?, types?}; clip {allow?}; "safe-zone" {top?, bottom?, left?, right?, frame?{width,height}, types?, names?}; "grid-style" {styleId?, frame?{width,height}}; "unbound-number" {fields?}; overflow {tolerance?}; reuse {min?}';
+var DESCRIPTION5 = "Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more.";
+var lintInputSchema = {
+  fileKey: external_exports.string().optional(),
+  nodeIds: external_exports.array(external_exports.string()).optional(),
+  pageIds: external_exports.array(external_exports.string()).optional(),
+  rules: external_exports.array(external_exports.enum(LINT_RULE_IDS)).optional(),
+  options: external_exports.record(external_exports.string(), external_exports.unknown()).optional(),
+  includeInstances: external_exports.boolean().optional(),
+  limit: external_exports.number().int().min(1).max(5e3).optional()
+};
+var registerLint = (server2, ctx2) => {
+  server2.registerTool(
+    TOOL_NAMES.lint,
+    { description: DESCRIPTION5, inputSchema: lintInputSchema },
+    async ({ fileKey: fileKey4, ...rest }) => {
+      const r = ctx2.files.resolve(fileKey4);
+      if ("error" in r) return errorResult(r.error);
+      const payload = Object.fromEntries(
+        Object.entries(rest).filter(([, v]) => v !== void 0)
+      );
+      try {
+        const report = await ctx2.rpc.call(
+          r.file.connectionId,
+          "lint",
+          payload,
+          LINT_TIMEOUT_MS
+        );
+        const n = report.findings.length;
+        const summary = `${n} findings (rules: ${report.rules.join(", ")})`;
+        const out = jsonResult(report, r.note);
+        out.content.unshift({ type: "text", text: summary });
+        return out;
+      } catch (e) {
+        if (e instanceof BridgeCallError && e.code === "remote") {
+          const m = e.remote?.message ?? e.message;
+          if (m.startsWith("unknown op: lint"))
+            return errorResult(m, LINT_OLD_PLUGIN_HINT);
+          if (m.startsWith("invalid payload for lint"))
+            return errorResult(m, LINT_INVALID_HINT);
+        }
+        return fromCallError(e);
+      }
+    }
+  );
+};
+
 // bridge-server/src/tools/session.ts
 var NO_FILES = "No files connected. In Figma, open the MCP tab in EZG Tools and press Connect.";
 function toRow(f) {
@@ -42155,11 +42927,20 @@ var events = createEventStore();
 var rpc = createRpc((id, frame) => link.send(id, frame));
 var files = createFileRegistry(() => link.error());
 var link = startLink({ env: process.env, handlers });
-var ctx = { link, files, rpc, events };
+var session = randomUUID4().slice(0, 8);
+var journal = createJournal(process.env, homedir());
+var ctx = {
+  link,
+  files,
+  rpc,
+  events,
+  journal: { session, journal }
+};
 var server = new McpServer(
   { name: BRIDGE_MCP_NAME, version: SERVER_VERSION },
   { instructions: INSTRUCTIONS }
 );
+var tools = withJournal(server, journal, session);
 for (const register of [
   registerEval,
   registerSession,
@@ -42167,9 +42948,13 @@ for (const register of [
   registerHistoryTools,
   registerExport,
   registerEventTools,
-  registerAuthoring
+  registerAuthoring,
+  registerInventory,
+  registerLint,
+  registerBuild,
+  registerJournal
 ]) {
-  register(server, ctx);
+  register(tools, ctx);
 }
 await server.connect(new StdioServerTransport());
 var closing = false;

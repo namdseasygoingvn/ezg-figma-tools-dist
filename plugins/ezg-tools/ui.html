@@ -1389,7 +1389,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var sliders = [el.size, el.sx, el.sy, el.steps];
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.20" : "dev";
+  var BUILD_VERSION = true ? "0.1.21" : "dev";
 
   // plugins/ezg-tools/src/ui/labels.ts
   var CORNER_NAMES = {
@@ -1736,6 +1736,41 @@ input[type=range]:focus-visible::-moz-range-thumb {
   ];
   var LANGUAGE_SET = new Set(CODEGEN_LANGUAGES);
 
+  // plugins/ezg-tools/src/shared/bridge-inventory.ts
+  var INVENTORY_SECTIONS = [
+    "pages",
+    "variables",
+    "styles",
+    "components"
+  ];
+  var SECTION_SET = new Set(INVENTORY_SECTIONS);
+
+  // plugins/ezg-tools/src/shared/bridge-build.ts
+  var LAYOUT_ENUMS = {
+    mode: ["HORIZONTAL", "VERTICAL"],
+    main: ["MIN", "CENTER", "MAX", "SPACE_BETWEEN"],
+    cross: ["MIN", "CENTER", "MAX", "BASELINE"],
+    width: ["FIXED", "HUG", "FILL"],
+    height: ["FIXED", "HUG", "FILL"]
+  };
+  var LAYOUT_KEYS = [
+    "mode",
+    "gap",
+    "padding",
+    "wrap",
+    ...Object.keys(LAYOUT_ENUMS)
+  ];
+
+  // plugins/ezg-tools/src/shared/bridge-parse.ts
+  var EXPORT_FORMATS = [
+    "PNG",
+    "JPG",
+    "SVG",
+    "PDF",
+    "JSON"
+  ];
+  var FORMAT_SET = new Set(EXPORT_FORMATS);
+
   // plugins/ezg-tools/src/shared/bridge-ops.ts
   var OP_TABLE = {
     eval: true,
@@ -1747,20 +1782,15 @@ input[type=range]:focus-visible::-moz-range-thumb {
     watch: true,
     "codegen.set": true,
     "glossary.get": true,
-    "glossary.set": true
+    "glossary.set": true,
+    inventory: true,
+    lint: true,
+    build: true
   };
   var BRIDGE_OPS = Object.keys(
     OP_TABLE
   );
-  var EXPORT_FORMATS = [
-    "PNG",
-    "JPG",
-    "SVG",
-    "PDF",
-    "JSON"
-  ];
   var OP_SET = new Set(BRIDGE_OPS);
-  var FORMAT_SET = new Set(EXPORT_FORMATS);
   function isBridgeOp(raw) {
     return typeof raw === "string" && OP_SET.has(raw);
   }
