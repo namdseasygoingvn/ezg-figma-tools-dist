@@ -5,7 +5,7 @@ description: Use for live work in the Figma file the user has open through the e
 
 # ezg-figma-bridge
 
-Tools for the Figma file the user has open right now. The Claude tab of the EZG plugin must be running in that file.
+Tools for the Figma file the user has open right now. The MCP tab of the EZG plugin must be running in that file.
 
 ## When to use
 
@@ -27,11 +27,11 @@ Load the `figma-use` skill first for Plugin API rules; this file only covers wha
 ## Connect
 
 1. Call `files`. It lists every connected file.
-2. If it shows none, ask the user to press "Kết nối tới MCP server" in the Claude tab.
+2. If it shows none, ask the user to press "Kết nối tới MCP server" in the MCP tab.
 
 `fileKey` in a tool call may be a `fileKey` or a `clientId`. With exactly one connected file it may be omitted. Any number of Claude sessions can use the same file at once.
 
-The port defaults to 39410. To use another port (39410–39419), set `EZG_FIGMA_BRIDGE_PORT` in the MCP server config and the same number in the Claude tab.
+The port defaults to 39410. To use another port (39410–39419), set `EZG_FIGMA_BRIDGE_PORT` in the MCP server config and the same number in the MCP tab.
 
 ## eval
 
@@ -91,5 +91,5 @@ Prototype methods (`node.query(...)`) are best effort. When they are unavailable
 
 ## Codegen and glossary
 
-- `codegen_set` stores snippets on a node, shown in Dev Mode under the language "Claude". It is stored, not generated live, so set it after the design is final. Snippets are shared plugin data on the node: anyone opening the file sees them.
+- `codegen_set` stores snippets on a node, shown in Dev Mode under the language "MCP". It is stored, not generated live, so set it after the design is final. Snippets are shared plugin data on the node: anyone opening the file sees them.
 - `glossary_get` and `glossary_set` read and replace the whole rule list for text review. The list is the current user's only, not team-shared. Always call `glossary_get` first and send back the merged list.

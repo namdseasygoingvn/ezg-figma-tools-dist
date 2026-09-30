@@ -40421,7 +40421,7 @@ ${describeFiles(list())}`
     }
     if (all.length === 0) {
       return {
-        error: linkError() ?? "No Figma file is connected. In Figma, open the Claude tab in EZG Tools and press Connect."
+        error: linkError() ?? "No Figma file is connected. In Figma, open the MCP tab in EZG Tools and press Connect."
       };
     }
     if (t) {
@@ -40456,7 +40456,7 @@ ${describeFiles(list())}`
 }
 
 // bridge-server/src/instructions.ts
-var INSTRUCTIONS = 'Runs Plugin API code in the Figma file whose Claude tab in EZG Tools is connected, and reads or controls its selection, viewport, events, history and exports. If `files` shows none, ask the user to press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server" in the Claude tab. Any number of Claude sessions can use the same file at once. Load the ezg-figma-bridge skill first.';
+var INSTRUCTIONS = 'Runs Plugin API code in the Figma file whose MCP tab in EZG Tools is connected, and reads or controls its selection, viewport, events, history and exports. If `files` shows none, ask the user to press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server" in the MCP tab. Any number of Claude sessions can use the same file at once. Load the ezg-figma-bridge skill first.';
 
 // node_modules/ws/wrapper.mjs
 var import_stream = __toESM(require_stream(), 1);
@@ -41386,7 +41386,7 @@ function truncateJson(text2, max = MAX_RESULT_CHARS) {
 // bridge-server/src/tool-result.ts
 var HINTS = {
   timeout: "The plugin may still be running the request. Check with view_get or events before you retry.",
-  closed: "The Figma file disconnected. Ask the user to press Connect in the Claude tab, then call files."
+  closed: "The Figma file disconnected. Ask the user to press Connect in the MCP tab, then call files."
 };
 function cap(text2) {
   return truncateJson(text2);
@@ -41482,7 +41482,7 @@ var registerAuthoring = (server2, ctx2) => {
   server2.registerTool(
     TOOL_NAMES.codegenSet,
     {
-      description: `Store Dev Mode code snippets on a node (replaces its snippets; [] clears). Max ${MAX_SNIPPETS} snippets, ${MAX_SNIPPET_CHARS} chars of title+code in total. Shown only in Dev Mode under the language "Claude", for the selected node.`,
+      description: `Store Dev Mode code snippets on a node (replaces its snippets; [] clears). Max ${MAX_SNIPPETS} snippets, ${MAX_SNIPPET_CHARS} chars of title+code in total. Shown only in Dev Mode under the language "MCP", for the selected node.`,
       inputSchema: {
         fileKey,
         nodeId: external_exports.string().min(1),
@@ -41505,7 +41505,7 @@ var registerAuthoring = (server2, ctx2) => {
         const text2 = storedText(reply.count, snippets.length, "snippets").replace(
           /^(Stored \d+ of \d+ snippets)\./,
           `$1 on ${nodeId}.`
-        ) + '\nShown only in Dev Mode under the language "Claude".';
+        ) + '\nShown only in Dev Mode under the language "MCP".';
         return finish(textResult(text2), picked.note);
       } catch (e) {
         return fromCallError(e);
@@ -42029,7 +42029,7 @@ var registerHistoryTools = (server2, ctx2) => {
 };
 
 // bridge-server/src/tools/session.ts
-var NO_FILES = "No files connected. In Figma, open the Claude tab in EZG Tools and press Connect.";
+var NO_FILES = "No files connected. In Figma, open the MCP tab in EZG Tools and press Connect.";
 function toRow(f) {
   return {
     name: f.fileName,

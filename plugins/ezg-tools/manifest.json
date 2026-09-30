@@ -14,7 +14,7 @@
   ],
   "codegenLanguages": [
     {
-      "label": "Claude",
+      "label": "MCP",
       "value": "claude"
     }
   ],
@@ -37,7 +37,7 @@
       "ws://localhost:39418",
       "ws://localhost:39419"
     ],
-    "reasoning": "Connects to the local EZG bridge server so Claude Code can work in the open file."
+    "reasoning": "Connects to the local EZG bridge server so an MCP client can work in the open file."
   },
   "relaunchButtons": [
     {
