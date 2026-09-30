@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 // installer/src/install.ts
-import { copyFile, readFile, rm as rm2, writeFile as writeFile2 } from "node:fs/promises";
+import { copyFile, readFile, rm as rm3, writeFile as writeFile3 } from "node:fs/promises";
 import { homedir as homedir2 } from "node:os";
-import { join as join3 } from "node:path";
+import { join as join4 } from "node:path";
 
 // plugins/_loader/src/shared/version.ts
 function parseVersion(v) {
@@ -19,10 +19,15 @@ var DIST_BRANCH = "main";
 var RAW_ORIGIN = "https://raw.githubusercontent.com";
 var CHECK_INTERVAL_MS = 10 * 60 * 1e3;
 var INSTALL_DIR_PARTS = [".ezg", "figma-tools"];
+var BRIDGE_DIR = "_bridge";
+var BRIDGE_MCP_NAME = "ezg-figma-bridge";
+var SKILL_DIR_PARTS = [".claude", "skills", "ezg-figma-bridge"];
 var DIST_FILES = {
   index: "index.json",
   version: "version.json",
-  installer: "install.mjs"
+  installer: "install.mjs",
+  bridgeServer: "bridge-server.mjs",
+  bridgeSkill: "bridge-skill.md"
 };
 var PLUGIN_FILES = {
   manifest: "manifest.json",
@@ -62,6 +67,10 @@ function parseIndex(raw) {
   }
   return { version: r.version, plugins };
 }
+
+// installer/src/fetch-bridge.ts
+import { mkdir as mkdir2, rename as rename2, rm as rm2, writeFile as writeFile2 } from "node:fs/promises";
+import { dirname, join as join2 } from "node:path";
 
 // installer/src/fetch-plugins.ts
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
@@ -109,10 +118,42 @@ async function fetchPlugins(home) {
   return { version: index.version, plugins };
 }
 
+// installer/src/fetch-bridge.ts
+async function writeAtomic(target, text) {
+  const tmp = `${target}.tmp`;
+  await mkdir2(dirname(target), { recursive: true });
+  try {
+    await writeFile2(tmp, text);
+    await rename2(tmp, target);
+  } catch (error) {
+    await rm2(tmp, { force: true });
+    throw error;
+  }
+}
+async function downloadText(name) {
+  const text = await download(name);
+  if (text.trim() === "") throw new Error(`${name} is empty`);
+  return text;
+}
+async function fetchBridge(home) {
+  const server = join2(
+    home,
+    ...INSTALL_DIR_PARTS,
+    BRIDGE_DIR,
+    DIST_FILES.bridgeServer
+  );
+  const skill = join2(home, ...SKILL_DIR_PARTS, "SKILL.md");
+  const serverText = await downloadText(DIST_FILES.bridgeServer);
+  const skillText = await downloadText(DIST_FILES.bridgeSkill);
+  await writeAtomic(server, serverText);
+  await writeAtomic(skill, skillText);
+  return { server, skill };
+}
+
 // installer/src/figma-app.ts
 import { execFileSync, spawn } from "node:child_process";
 import { homedir } from "node:os";
-import { join as join2 } from "node:path";
+import { join as join3 } from "node:path";
 var POLL_MS = 500;
 function unsupported() {
   throw new Error("macOS and Windows only");
@@ -126,7 +167,7 @@ function run(file, args) {
 }
 function settingsPath() {
   if (process.platform === "darwin") {
-    return join2(
+    return join3(
       homedir(),
       "Library",
       "Application Support",
@@ -135,8 +176,8 @@ function settingsPath() {
     );
   }
   if (process.platform === "win32") {
-    const appData = process.env.APPDATA ?? join2(homedir(), "AppData", "Roaming");
-    return join2(appData, "Figma", "settings.json");
+    const appData = process.env.APPDATA ?? join3(homedir(), "AppData", "Roaming");
+    return join3(appData, "Figma", "settings.json");
   }
   return unsupported();
 }
@@ -181,8 +222,8 @@ function openFigma() {
   if (process.platform === "darwin") {
     spawn("open", ["-a", "Figma"], { detached: true, stdio: "ignore" }).unref();
   } else if (process.platform === "win32") {
-    const localAppData = process.env.LOCALAPPDATA ?? join2(homedir(), "AppData", "Local");
-    const exe = join2(localAppData, "Figma", "Figma.exe");
+    const localAppData = process.env.LOCALAPPDATA ?? join3(homedir(), "AppData", "Local");
+    const exe = join3(localAppData, "Figma", "Figma.exe");
     spawn(exe, [], { detached: true, stdio: "ignore" }).unref();
   } else {
     unsupported();
@@ -190,16 +231,16 @@ function openFigma() {
 }
 
 // installer/src/figma-settings.ts
-import { dirname as dirname2 } from "node:path";
+import { dirname as dirname3 } from "node:path";
 
 // installer/src/stale-dirs.ts
-import { dirname, relative, sep } from "node:path";
+import { dirname as dirname2, relative, sep } from "node:path";
 function isPluginDirIn(dir, root) {
   const rel = relative(root, dir);
   return rel !== "" && !rel.startsWith("..") && !rel.includes(sep);
 }
 function staleDirs(manifestPaths, root) {
-  return manifestPaths.map(dirname).filter((dir) => isPluginDirIn(dir, root));
+  return manifestPaths.map(dirname2).filter((dir) => isPluginDirIn(dir, root));
 }
 
 // installer/src/figma-settings.ts
@@ -265,7 +306,7 @@ function movedManifests(entries, plugins, installRoot) {
   const paths = new Set(plugins.map((plugin) => plugin.manifestPath));
   const ids = new Set(plugins.map((plugin) => plugin.id));
   return entries.filter(
-    (entry) => isManifestEntry(entry) && ids.has(String(entry.lastKnownPluginId)) && !paths.has(entry.manifestPath) && isPluginDirIn(dirname2(entry.manifestPath), installRoot)
+    (entry) => isManifestEntry(entry) && ids.has(String(entry.lastKnownPluginId)) && !paths.has(entry.manifestPath) && isPluginDirIn(dirname3(entry.manifestPath), installRoot)
   );
 }
 function movedManifestPaths(settings, plugins, installRoot) {
@@ -303,6 +344,89 @@ function planInstall(settings, plugins, installRoot) {
   };
 }
 
+// installer/src/register-mcp.ts
+import { spawnSync } from "node:child_process";
+
+// installer/src/mcp-args.ts
+var NAME = /^[A-Za-z0-9_-]+$/;
+var BARE = /^[A-Za-z0-9_\-.:\\/=]+$/;
+function assertName(name) {
+  if (!NAME.test(name)) throw new Error(`bad mcp server name: ${name}`);
+}
+function removeArgs(name) {
+  assertName(name);
+  return ["mcp", "remove", name, "-s", "user"];
+}
+function addArgs(spec) {
+  assertName(spec.name);
+  return [
+    "mcp",
+    "add",
+    "--scope",
+    "user",
+    spec.name,
+    "--",
+    spec.node,
+    spec.server
+  ];
+}
+function quoteForShell(arg, platform) {
+  if (platform !== "win32") return arg;
+  if (arg === "") return '""';
+  if (BARE.test(arg)) return arg;
+  const escaped = arg.replace(/(\\*)"/g, (_, slashes) => `${slashes}${slashes}\\"`).replace(/(\\+)$/, "$1$1");
+  return `"${escaped}"`;
+}
+
+// installer/src/register-mcp.ts
+var WIN = process.platform === "win32";
+function run2(cmd, args) {
+  return spawnSync(
+    cmd,
+    args.map((a) => quoteForShell(a, process.platform)),
+    { shell: WIN, encoding: "utf8", stdio: "pipe", timeout: 3e4 }
+  );
+}
+function hasClaude() {
+  if (WIN) return run2("where", ["claude"]).status === 0;
+  return spawnSync("sh", ["-c", "command -v claude"], { stdio: "ignore" }).status === 0;
+}
+function firstLine(text) {
+  return (text ?? "").split(/\r?\n/).find((l) => l.trim() !== "") ?? "";
+}
+function reason(r) {
+  const text = firstLine(r.stderr) || firstLine(r.stdout) || r.error?.message || `exit ${r.status}`;
+  return text.trim().slice(0, 120);
+}
+function fail(why) {
+  console.log(`Claude Code: could not register ezg-figma-bridge (${why})`);
+  return "failed";
+}
+function registerMcp(server) {
+  try {
+    if (!hasClaude()) {
+      console.log(
+        "Claude Code not found. Install it, then re-run this installer to register ezg-figma-bridge."
+      );
+      return "no-claude";
+    }
+    run2("claude", removeArgs(BRIDGE_MCP_NAME));
+    const add = run2(
+      "claude",
+      addArgs({ name: BRIDGE_MCP_NAME, node: process.execPath, server })
+    );
+    if (add.status !== 0) return fail(reason(add));
+    const get = run2("claude", ["mcp", "get", BRIDGE_MCP_NAME]);
+    if (get.status !== 0) {
+      return fail("added but claude mcp get failed: " + reason(get));
+    }
+    console.log("Claude Code: registered ezg-figma-bridge");
+    return "registered";
+  } catch (e) {
+    return fail(String(e));
+  }
+}
+
 // installer/src/install.ts
 async function readSettings(path) {
   let raw;
@@ -322,13 +446,24 @@ async function readSettings(path) {
 function indentOf(raw) {
   return /^\{\r?\n([ \t]+)"/.exec(raw)?.[1] ?? 2;
 }
+async function installBridge(home) {
+  try {
+    const { server } = await fetchBridge(home);
+    registerMcp(server);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log(`  warn Claude bridge failed: ${message}`);
+  }
+}
 async function main() {
   console.log("> Downloading EZG Figma plugins\u2026");
   const { version, plugins } = await fetchPlugins(homedir2());
   for (const plugin of plugins) console.log(`  ok ${plugin.name}`);
+  console.log("> Setting up the Claude bridge\u2026");
+  await installBridge(homedir2());
   console.log("> Registering in Figma\u2026");
   const path = settingsPath();
-  const installRoot = join3(homedir2(), ...INSTALL_DIR_PARTS);
+  const installRoot = join4(homedir2(), ...INSTALL_DIR_PARTS);
   const plan = planInstall(
     (await readSettings(path)).json,
     plugins,
@@ -336,7 +471,7 @@ async function main() {
   );
   if (!plan.rewrite) {
     for (const dir of plan.stale)
-      await rm2(dir, { recursive: true, force: true });
+      await rm3(dir, { recursive: true, force: true });
     console.log(`  ok already registered (v${version})`);
     console.log("Done. Open Figma \u2192 Plugins \u2192 Development.");
     return;
@@ -345,8 +480,8 @@ async function main() {
   const { raw, json } = await readSettings(path);
   const next = registerPlugins(json, plugins, installRoot);
   await copyFile(path, `${path}.ezg-bak`);
-  await writeFile2(path, JSON.stringify(next, null, indentOf(raw)));
-  for (const dir of plan.stale) await rm2(dir, { recursive: true, force: true });
+  await writeFile3(path, JSON.stringify(next, null, indentOf(raw)));
+  for (const dir of plan.stale) await rm3(dir, { recursive: true, force: true });
   openFigma();
   console.log(`  ok ${plan.missing.length} plugin added (Figma restarted)`);
   console.log("Done. Open Figma \u2192 Plugins \u2192 Development.");

@@ -5,13 +5,30 @@
   "main": "code.js",
   "ui": "ui.html",
   "editorType": [
-    "figma"
+    "figma",
+    "dev"
   ],
+  "capabilities": [
+    "codegen",
+    "textreview"
+  ],
+  "codegenLanguages": [
+    {
+      "label": "Claude",
+      "value": "claude"
+    }
+  ],
+  "permissions": [
+    "currentuser"
+  ],
+  "enablePrivatePluginApi": true,
   "documentAccess": "dynamic-page",
   "networkAccess": {
     "allowedDomains": [
-      "https://raw.githubusercontent.com"
-    ]
+      "https://raw.githubusercontent.com",
+      "ws://localhost:39410"
+    ],
+    "reasoning": "Connects to the local EZG bridge server so Claude Code can work in the open file."
   },
   "relaunchButtons": [
     {
