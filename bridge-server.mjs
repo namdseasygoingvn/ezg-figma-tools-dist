@@ -40388,6 +40388,7 @@ function createEventStore(capacity = EVENT_CAPACITY) {
 
 // bridge-server/src/files.ts
 var FILE_KEY_SHAPE = /^[0-9a-zA-Z]{22,128}$/;
+var NOT_CONNECTED = 'No Figma file is connected to this server yet. If the MCP tab already shows connected, the plugin may be reconnecting. Retry in a few seconds. Otherwise open the MCP tab in EZG Tools and press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server".';
 var clean = (text2) => text2.replace(/\s+/g, " ");
 function describeFiles(files2) {
   return files2.map(
@@ -40430,7 +40431,7 @@ ${describeFiles(list())}`
     }
     if (all.length === 0) {
       return {
-        error: linkError() ?? "No Figma file is connected. In Figma, open the MCP tab in EZG Tools and press Connect."
+        error: linkError() ?? NOT_CONNECTED
       };
     }
     if (t) {
@@ -42801,7 +42802,6 @@ var registerLint = (server2, ctx2) => {
 };
 
 // bridge-server/src/tools/session.ts
-var NO_FILES = "No files connected. In Figma, open the MCP tab in EZG Tools and press Connect.";
 function toRow(f) {
   return {
     name: f.fileName,
@@ -42823,7 +42823,8 @@ var registerSession = (server2, ctx2) => {
     async () => {
       try {
         const rows = ctx2.files.list().map(toRow);
-        if (rows.length === 0) return textResult(ctx2.link.error() ?? NO_FILES);
+        if (rows.length === 0)
+          return textResult(ctx2.link.error() ?? NOT_CONNECTED);
         return jsonResult(rows);
       } catch (e) {
         return fromCallError(e);

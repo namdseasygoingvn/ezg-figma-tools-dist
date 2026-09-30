@@ -924,6 +924,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
 .br-summary[data-status=ready] {
   color: var(--figma-color-text-success, #14ae5c);
 }
+.br-summary[data-status=reconnecting] {
+  color: var(--figma-color-text-warning, #f5a623);
+}
 .br-summary[data-status=blocked] {
   color: var(--figma-color-text-danger, #f24822);
 }
@@ -1389,7 +1392,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var sliders = [el.size, el.sx, el.sy, el.steps];
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.22" : "dev";
+  var BUILD_VERSION = true ? "0.1.23" : "dev";
 
   // plugins/ezg-tools/src/ui/labels.ts
   var CORNER_NAMES = {
@@ -1604,6 +1607,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     status: {
       offline: "Kh\xF4ng t\xECm th\u1EA5y server. H\xE3y m\u1EDF MCP client r\u1ED3i th\u1EED l\u1EA1i",
       connecting: "\u0110ang k\u1EBFt n\u1ED1i t\u1EDBi server...",
+      reconnecting: "M\u1EA5t k\u1EBFt n\u1ED1i, \u0111ang k\u1EBFt n\u1ED1i l\u1EA1i...",
       blocked: "Plugin n\xE0y ch\u01B0a \u0111\u01B0\u1EE3c ph\xE9p k\u1EBFt n\u1ED1i localhost. H\xE3y c\xE0i l\u1EA1i plugin b\u1EB1ng installer",
       unsupportedProtocol: "Phi\xEAn b\u1EA3n plugin v\xE0 server kh\xF4ng kh\u1EDBp. H\xE3y c\u1EADp nh\u1EADt b\u1EB1ng c\xE1ch c\xE0i l\u1EA1i plugin b\u1EB1ng installer",
       idle: "Ch\u01B0a k\u1EBFt n\u1ED1i",
@@ -1797,7 +1801,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
 
   // plugins/ezg-tools/src/ui/bridge/socket.ts
   var BACKOFF_MIN_MS = 1e3;
-  var BACKOFF_MAX_MS = 3e4;
+  var BACKOFF_MAX_MS = 2e3;
   var JITTER = 0.2;
   function openSocket(options2) {
     let ws = null;
@@ -1831,6 +1835,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       ws = socket2;
       socket2.onopen = () => {
         if (ws !== socket2 || closed) return;
+        attempt = 0;
         setStatus("open");
         try {
           socket2.send(JSON.stringify(options2.hello()));
@@ -1897,7 +1902,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
     connect: false,
     status: "idle",
     reason: void 0,
-    sessions: 0
+    sessions: 0,
+    wasReady: false
   };
   var listeners = /* @__PURE__ */ new Set();
   function subscribe(fn) {
@@ -1931,7 +1937,12 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
   function openLink() {
     closeSocket();
-    update({ status: "connecting", reason: void 0, sessions: 0 });
+    update({
+      status: "connecting",
+      reason: void 0,
+      sessions: 0,
+      wasReady: false
+    });
     socket = openSocket({
       port: bridgeState.port,
       hello: () => ({
@@ -1961,7 +1972,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
       connect: false,
       status: "idle",
       reason: void 0,
-      sessions: 0
+      sessions: 0,
+      wasReady: false
     });
     saveLink();
   }
@@ -1975,7 +1987,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   function onFrame(frame) {
     switch (frame.kind) {
       case "welcome":
-        update({ status: "ready", reason: void 0 });
+        update({ status: "ready", reason: void 0, wasReady: true });
         return;
       case "sessions":
         update({ sessions: frame.count });
@@ -2072,7 +2084,15 @@ input[type=range]:focus-visible::-moz-range-thumb {
 
   // plugins/ezg-tools/src/ui/bridge/render.ts
   var { status: STATUS, panel: PANEL } = BRIDGE_COPY;
+  function isReconnecting(state2) {
+    if (!state2.connect || !state2.wasReady) return false;
+    return state2.status === "connecting" || state2.status === "offline" && state2.reason !== BYE_REASONS.protocol;
+  }
+  function displayStatus(state2) {
+    return isReconnecting(state2) ? "reconnecting" : state2.status;
+  }
   function summarize(state2) {
+    if (isReconnecting(state2)) return STATUS.reconnecting;
     switch (state2.status) {
       case "idle":
         return STATUS.idle;
@@ -2088,7 +2108,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
   function renderBridge(refs, state2) {
     refs.summary.textContent = summarize(state2);
-    refs.summary.dataset.status = state2.status;
+    refs.summary.dataset.status = displayStatus(state2);
     refs.button.textContent = state2.connect ? PANEL.disconnect : PANEL.connect;
     if (document.activeElement !== refs.port) {
       refs.port.value = String(state2.port);
