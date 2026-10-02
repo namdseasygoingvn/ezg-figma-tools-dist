@@ -2,9 +2,14 @@
   "libraries": [
     {
       "id": "picto",
-      "name": "GUI Pro Casual - Picto Icon",
+      "name": "Picto Icon - GUI Pro Casual",
       "file": "picto.json"
+    },
+    {
+      "id": "picto-super-casual",
+      "name": "Picto Icon - GUI Pro Super Casual",
+      "file": "picto-super-casual.json"
     }
   ],
-  "updated": 1790935491531
+  "updated": 1790939888268
 }
