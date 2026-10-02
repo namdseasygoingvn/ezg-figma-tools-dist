@@ -934,6 +934,33 @@ input[type=range]:focus-visible::-moz-range-thumb {
 .ic-detail {
   grid-column: 1 / -1;
   display: grid;
+  grid-template-rows: 0fr;
+  min-width: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    grid-template-rows 140ms ease-in,
+    opacity 140ms ease-in,
+    transform 140ms ease-in;
+}
+.ic-detail.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: none;
+  transition-duration: 180ms;
+  transition-timing-function: ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ic-detail {
+    transition: none;
+  }
+}
+.ic-detail-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+.ic-detail-box {
+  display: grid;
   gap: 6px;
   min-width: 0;
   padding: 8px;
@@ -1383,7 +1410,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.32" : "dev";
+  var BUILD_VERSION = true ? "0.1.33" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -2879,7 +2906,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
     input2.setAttribute("aria-label", ICON_TAG_COPY.placeholder);
     const note = make3("p", "ic-tags-note");
     const signIn = buildTagSignIn();
-    root.append(head, chips, input2, note, signIn);
+    const clip = make3("div", "ic-detail-clip");
+    const box = make3("div", "ic-detail-box");
+    box.append(head, chips, input2, note, signIn);
+    clip.append(box);
+    root.append(clip);
     input2.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" || event.isComposing) return;
       event.preventDefault();
@@ -2949,6 +2980,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     for (const tile of visibleTiles)
       if (tile.offsetTop === selectedTile.offsetTop) last = tile;
     last.after(detail);
+    detail.classList.add("open");
   }
   function tileTitle(hit) {
     const tags = iconsState.tags[iconTagKey(hit.libraryId, hit.name)] ?? [];
@@ -3055,23 +3087,75 @@ ${tags.join(", ")}` : hit.name;
     if (hold) statusTimer = setTimeout(() => iconsEl.status.hidden = true, hold);
   }
 
+  // plugins/ezg-tools/src/ui/icons/detail-motion.ts
+  var SETTLE_MS = 260;
+  var reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function reflow(node) {
+    void node.offsetHeight;
+  }
+  function animateOpen(row) {
+    if (reducedMotion()) return;
+    row.classList.remove("open");
+    reflow(row);
+    row.classList.add("open");
+  }
+  function animateClose(row) {
+    if (!row.isConnected) return;
+    if (reducedMotion()) return row.remove();
+    const copy2 = row.cloneNode(true);
+    copy2.setAttribute("aria-hidden", "true");
+    copy2.inert = true;
+    row.replaceWith(copy2);
+    reflow(copy2);
+    copy2.classList.remove("open");
+    setTimeout(() => copy2.remove(), SETTLE_MS);
+  }
+  function fadeContent(row) {
+    if (reducedMotion()) return;
+    row.firstElementChild?.animate([{ opacity: 0.3 }, { opacity: 1 }], {
+      duration: 100,
+      easing: "ease-out"
+    });
+  }
+  function holdInView(tile, scroller, done) {
+    const top = tile.getBoundingClientRect().top;
+    const end = performance.now() + (reducedMotion() ? 0 : SETTLE_MS);
+    const step = () => {
+      scroller.scrollTop += tile.getBoundingClientRect().top - top;
+      if (performance.now() < end) requestAnimationFrame(step);
+      else done();
+    };
+    step();
+  }
+
   // plugins/ezg-tools/src/ui/icons/toggle-tile.ts
+  function pressedTile() {
+    return iconsEl.grid.querySelector(
+      '.ic-tile[aria-pressed="true"]'
+    );
+  }
   function toggleTile(tile) {
+    const row = tagEditorEl();
+    if (!row) return;
     const libraryId = tile.dataset.library ?? "";
     const name = tile.dataset.name ?? "";
     const { selected } = iconsState;
     const same = selected?.libraryId === libraryId && selected.name === name;
+    const previous = pressedTile();
+    const sameRow = !same && row.isConnected && previous?.offsetTop === tile.offsetTop;
     iconsState.selected = same ? null : { libraryId, name };
-    const before = tile.getBoundingClientRect().top;
-    for (const pressed of iconsEl.grid.querySelectorAll(
-      '.ic-tile[aria-pressed="true"]'
-    ))
-      pressed.setAttribute("aria-pressed", "false");
+    previous?.setAttribute("aria-pressed", "false");
     tile.setAttribute("aria-pressed", String(!same));
+    const finish = () => {
+      if (!same) row.scrollIntoView({ block: "nearest" });
+    };
+    holdInView(tile, iconsEl.panel, finish);
+    if (!sameRow) animateClose(row);
     renderTagEditor();
     placeDetail();
-    iconsEl.panel.scrollTop += tile.getBoundingClientRect().top - before;
-    if (!same) tagEditorEl()?.scrollIntoView({ block: "nearest" });
+    if (same) return;
+    if (sameRow) fadeContent(row);
+    else animateOpen(row);
   }
 
   // plugins/ezg-tools/src/ui/icons/interact.ts
