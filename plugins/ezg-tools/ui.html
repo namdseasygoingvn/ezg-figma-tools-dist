@@ -8,6 +8,7 @@
 :root {
   color-scheme: light;
   --cp-focus: var(--figma-color-border-selected, #0d99ff);
+  --cp-title-height: 40px;
 }
 :root.figma-dark {
   color-scheme: dark;
@@ -62,7 +63,7 @@ input {
 .cp-group-title {
   display: flex;
   align-items: center;
-  height: 40px;
+  height: var(--cp-title-height);
   margin: 0;
   padding: 0 12px;
   font-size: inherit;
@@ -839,6 +840,16 @@ input[type=range]:focus-visible::-moz-range-thumb {
   gap: 8px;
   padding: 12px;
 }
+.ic-bar {
+  position: sticky;
+  top: var(--cp-title-height);
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+  margin: -12px -12px 0;
+  padding: 12px 12px 4px;
+  background: var(--figma-color-bg, #fff);
+}
 .ic-select {
   width: 100%;
   height: 24px;
@@ -1319,7 +1330,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.27" : "dev";
+  var BUILD_VERSION = true ? "0.1.28" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -2535,9 +2546,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const panel = document.getElementById("tool-icon-library");
     if (!panel) throw new Error("ui.html is missing #tool-icon-library");
     const content = make2("main", "cp-content ic-content", panel);
-    const select2 = make2("select", "ic-select", content);
+    const bar = make2("div", "ic-bar", content);
+    const select2 = make2("select", "ic-select", bar);
     select2.setAttribute("aria-label", UI_TEXT.iconLibraryLabel);
-    const search = make2("input", "ic-search", content);
+    const search = make2("input", "ic-search", bar);
     search.type = "text";
     search.placeholder = UI_TEXT.iconSearch;
     search.setAttribute("aria-label", UI_TEXT.iconSearch);
