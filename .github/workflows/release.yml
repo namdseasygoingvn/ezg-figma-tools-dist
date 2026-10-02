@@ -43,6 +43,8 @@ jobs:
           fetch-depth: 0
 
       - name: Build release
+        env:
+          EZG_ICON_TAGS_PRUNE_KEY: ${{ secrets.EZG_ICON_TAGS_PRUNE_KEY }}
         run: |
           V=$(node scripts/next-version.mjs dist-repo/version.json $(git -C dist-repo tag -l "v*"))
           echo "VERSION=$V" >> "$GITHUB_ENV"
