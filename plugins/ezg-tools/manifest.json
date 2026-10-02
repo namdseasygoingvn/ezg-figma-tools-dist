@@ -26,6 +26,7 @@
   "networkAccess": {
     "allowedDomains": [
       "https://raw.githubusercontent.com",
+      "https://img-gen.easygoing.vn",
       "ws://localhost:39410",
       "ws://localhost:39411",
       "ws://localhost:39412",
@@ -37,7 +38,7 @@
       "ws://localhost:39418",
       "ws://localhost:39419"
     ],
-    "reasoning": "Connects to the local EZG bridge server so an MCP client can work in the open file."
+    "reasoning": "Connects to the local EZG bridge server so an MCP client can work in the open file. Signs the user in with their EasyGoing Google account."
   },
   "relaunchButtons": [
     {

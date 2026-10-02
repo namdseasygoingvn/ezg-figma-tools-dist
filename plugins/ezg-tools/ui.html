@@ -946,6 +946,41 @@ input[type=range]:focus-visible::-moz-range-thumb {
   width: 100%;
 }
 
+/* plugins/ezg-tools/src/ui/styles/auth.css */
+.cp-auth {
+  display: grid;
+  gap: 12px;
+  align-content: center;
+  justify-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  text-align: center;
+}
+.cp-auth-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--figma-color-text, #1e1e1e);
+}
+.cp-auth-line,
+.cp-auth-status {
+  margin: 0;
+  max-width: 280px;
+  color: var(--figma-color-text-secondary, #666);
+}
+.cp-auth-status {
+  color: var(--figma-color-text, #1e1e1e);
+}
+.cp-account {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 0 12px 12px;
+}
+.cp-account p {
+  margin: 0;
+}
+
 /* plugins/ezg-tools/src/ui/styles/index.css */
 
     </style>
@@ -1177,6 +1212,28 @@ input[type=range]:focus-visible::-moz-range-thumb {
     <script>
       "use strict";
 (() => {
+  // plugins/ezg-tools/src/shared/auth-copy.ts
+  var AUTH_COPY = {
+    title: "\u0110\u0103ng nh\u1EADp",
+    intro: "\u0110\u0103ng nh\u1EADp b\u1EB1ng t\xE0i kho\u1EA3n Google @easygoing.vn \u0111\u1EC3 d\xF9ng EZG Figma Tools",
+    signIn: "\u0110\u0103ng nh\u1EADp b\u1EB1ng Google",
+    cancel: "Hu\u1EF7",
+    retry: "Th\u1EED l\u1EA1i",
+    status: {
+      checking: "\u0110ang ki\u1EC3m tra \u0111\u0103ng nh\u1EADp...",
+      starting: "\u0110ang m\u1EDF tr\xECnh duy\u1EC7t...",
+      waiting: "H\xE3y ho\xE0n t\u1EA5t \u0111\u0103ng nh\u1EADp trong tr\xECnh duy\u1EC7t",
+      expired: "\u0110\u0103ng nh\u1EADp \u0111\xE3 h\u1EBFt h\u1EA1n. H\xE3y \u0111\u0103ng nh\u1EADp l\u1EA1i",
+      timedOut: "H\u1EBFt th\u1EDDi gian ch\u1EDD. H\xE3y th\u1EED l\u1EA1i",
+      offline: "Kh\xF4ng k\u1EBFt n\u1ED1i \u0111\u01B0\u1EE3c server \u0111\u0103ng nh\u1EADp. H\xE3y ki\u1EC3m tra m\u1EA1ng r\u1ED3i th\u1EED l\u1EA1i",
+      blocked: "Plugin n\xE0y ch\u01B0a \u0111\u01B0\u1EE3c ph\xE9p k\u1EBFt n\u1ED1i server \u0111\u0103ng nh\u1EADp. H\xE3y ch\u1EA1y l\u1EA1i installer r\u1ED3i kh\u1EDFi \u0111\u1ED9ng l\u1EA1i Figma",
+      failed: "\u0110\u0103ng nh\u1EADp th\u1EA5t b\u1EA1i. H\xE3y th\u1EED l\u1EA1i"
+    },
+    account: (email) => `\u0110\xE3 \u0111\u0103ng nh\u1EADp: ${email}`,
+    signOut: "\u0110\u0103ng xu\u1EA5t",
+    signedOut: "\u0110\xE3 \u0111\u0103ng xu\u1EA5t kh\u1ECFi EZG Figma Tools"
+  };
+
   // plugins/ezg-tools/src/shared/values.ts
   function isRecord(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -1197,6 +1254,46 @@ input[type=range]:focus-visible::-moz-range-thumb {
   function clamp01(value) {
     return clamp(value, 0, 1);
   }
+
+  // plugins/ezg-tools/src/shared/version.ts
+  var BUILD_VERSION = true ? "0.1.26" : "dev";
+
+  // plugins/ezg-tools/src/shared/auth.ts
+  var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
+  var AUTH_PATHS = {
+    keys: "/api/figma-auth/keys",
+    poll: "/api/figma-auth/poll",
+    session: "/api/figma-auth/session"
+  };
+  var AUTH_POLL_MS = 2e3;
+  var AUTH_POLL_TIMEOUT_MS = 10 * 60 * 1e3;
+  var AUTH_OFFLINE_GRACE_MS = 7 * 24 * 60 * 60 * 1e3;
+  var AUTH_REQUIRED = BUILD_VERSION !== "dev";
+  var nonEmpty = (v) => typeof v === "string" && v.length > 0;
+  var authUrl = (path) => `${AUTH_ORIGIN}${path}`;
+  var isAuthUrl = (v) => typeof v === "string" && v.startsWith(`${AUTH_ORIGIN}/`);
+  function parseAuthSession(raw) {
+    if (!isRecord(raw) || !nonEmpty(raw.token) || !nonEmpty(raw.email))
+      return null;
+    if (!isFiniteNumber(raw.checkedAt)) return null;
+    return { token: raw.token, email: raw.email, checkedAt: raw.checkedAt };
+  }
+  function parseAuthKeys(raw) {
+    if (!isRecord(raw) || !nonEmpty(raw.readKey) || !isAuthUrl(raw.loginUrl))
+      return null;
+    return { readKey: raw.readKey, loginUrl: raw.loginUrl };
+  }
+  function parseAuthPoll(raw) {
+    if (!isRecord(raw)) return null;
+    if (raw.status === "pending") return { status: "pending" };
+    if (raw.status !== "done" || !nonEmpty(raw.token) || !nonEmpty(raw.email))
+      return null;
+    return { status: "done", token: raw.token, email: raw.email };
+  }
+  function parseSessionEmail(raw) {
+    return isRecord(raw) && nonEmpty(raw.email) ? raw.email : null;
+  }
+  var withinOfflineGrace = (session, now) => now - session.checkedAt >= 0 && now - session.checkedAt < AUTH_OFFLINE_GRACE_MS;
 
   // plugins/ezg-tools/src/ui/bridge.ts
   function post(message) {
@@ -1391,8 +1488,220 @@ input[type=range]:focus-visible::-moz-range-thumb {
   };
   var sliders = [el.size, el.sx, el.sy, el.steps];
 
-  // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.25" : "dev";
+  // plugins/ezg-tools/src/ui/auth/net.ts
+  var CSP_SETTLE_MS = 50;
+  var blocked = false;
+  var listening = false;
+  function watchCsp() {
+    if (listening) return;
+    listening = true;
+    document.addEventListener("securitypolicyviolation", (event) => {
+      if (event.blockedURI.startsWith(AUTH_ORIGIN)) blocked = true;
+    });
+  }
+  async function call(path, init, parse) {
+    watchCsp();
+    let response;
+    try {
+      response = await fetch(authUrl(path), { ...init, cache: "no-store" });
+    } catch (_) {
+      await new Promise((done) => setTimeout(done, CSP_SETTLE_MS));
+      return { ok: false, reason: blocked ? "blocked" : "offline" };
+    }
+    if (response.status === 401) return { ok: false, reason: "unauthorized" };
+    if (response.status === 404 || response.status === 410)
+      return { ok: false, reason: "gone" };
+    if (!response.ok) return { ok: false, reason: "offline" };
+    const value = parse(await response.json().catch(() => null));
+    return value === null ? { ok: false, reason: "bad" } : { ok: true, value };
+  }
+  var bearer = (token) => ({
+    Authorization: `Bearer ${token}`
+  });
+  var requestKeys = () => call(AUTH_PATHS.keys, { method: "POST" }, parseAuthKeys);
+  var pollSignIn = (readKey) => call(
+    `${AUTH_PATHS.poll}?key=${encodeURIComponent(readKey)}`,
+    { method: "GET" },
+    parseAuthPoll
+  );
+  var checkSession = (token) => call(
+    AUTH_PATHS.session,
+    { method: "GET", headers: bearer(token) },
+    parseSessionEmail
+  );
+  var revokeSession = (token) => call(
+    AUTH_PATHS.session,
+    { method: "DELETE", headers: bearer(token) },
+    () => true
+  );
+
+  // plugins/ezg-tools/src/ui/auth/account.ts
+  function buildAccount(session) {
+    const row = document.createElement("div");
+    row.className = "cp-account";
+    const email = document.createElement("p");
+    email.className = "cp-about-line";
+    email.textContent = AUTH_COPY.account(session.email);
+    const signOut = document.createElement("button");
+    signOut.type = "button";
+    signOut.className = "cp-btn secondary";
+    signOut.textContent = AUTH_COPY.signOut;
+    signOut.addEventListener("click", async () => {
+      signOut.disabled = true;
+      await revokeSession(session.token);
+      post({ type: "auth-sign-out" });
+    });
+    row.append(email, signOut);
+    el.about.after(row);
+  }
+
+  // plugins/ezg-tools/src/ui/auth/sign-in.ts
+  function runSignIn(open, onWaiting) {
+    let cancelled = false;
+    let wake = null;
+    const sleep = (ms) => new Promise((done) => {
+      const timer = setTimeout(done, ms);
+      wake = () => {
+        clearTimeout(timer);
+        done();
+      };
+    });
+    async function run() {
+      const keys = await requestKeys();
+      if (cancelled) return { ok: false, reason: "cancelled" };
+      if (!keys.ok) return keys;
+      open(keys.value.loginUrl);
+      onWaiting();
+      const deadline = Date.now() + AUTH_POLL_TIMEOUT_MS;
+      while (Date.now() < deadline) {
+        await sleep(AUTH_POLL_MS);
+        if (cancelled) return { ok: false, reason: "cancelled" };
+        const poll = await pollSignIn(keys.value.readKey);
+        if (cancelled) return { ok: false, reason: "cancelled" };
+        if (poll.ok && poll.value.status === "done") {
+          const { token, email } = poll.value;
+          return { ok: true, session: { token, email, checkedAt: Date.now() } };
+        }
+        if (!poll.ok && poll.reason !== "offline") return poll;
+      }
+      return { ok: false, reason: "timeout" };
+    }
+    return {
+      result: run(),
+      cancel() {
+        cancelled = true;
+        wake?.();
+      }
+    };
+  }
+
+  // plugins/ezg-tools/src/ui/auth/view.ts
+  function button2(text, className, onClick) {
+    const node = document.createElement("button");
+    node.type = "button";
+    node.className = className;
+    node.textContent = text;
+    node.addEventListener("click", onClick);
+    return node;
+  }
+  function createGateView(actions) {
+    const root = document.createElement("main");
+    root.className = "cp-auth";
+    const title = document.createElement("h1");
+    title.className = "cp-auth-title";
+    title.textContent = AUTH_COPY.title;
+    const intro = document.createElement("p");
+    intro.className = "cp-auth-line";
+    intro.textContent = AUTH_COPY.intro;
+    const status = document.createElement("p");
+    status.className = "cp-auth-status";
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    const signIn = button2(AUTH_COPY.signIn, "cp-btn", actions.signIn);
+    const cancel = button2(AUTH_COPY.cancel, "cp-btn ghost", actions.cancel);
+    const retry = button2(AUTH_COPY.retry, "cp-btn", actions.retry);
+    root.append(title, intro, status, signIn, cancel, retry);
+    document.body.append(root);
+    function show(view) {
+      status.textContent = view.kind === "busy" || view.kind === "retry" ? view.text : view.kind === "sign-in" ? view.note ?? "" : view.kind === "waiting" ? AUTH_COPY.status.waiting : AUTH_COPY.status.blocked;
+      status.hidden = status.textContent === "";
+      signIn.hidden = view.kind !== "sign-in";
+      cancel.hidden = view.kind !== "waiting";
+      retry.hidden = view.kind !== "retry";
+    }
+    return { show, remove: () => root.remove() };
+  }
+
+  // plugins/ezg-tools/src/ui/auth/gate.ts
+  var FAILURE_TEXT = {
+    blocked: AUTH_COPY.status.blocked,
+    offline: AUTH_COPY.status.offline,
+    unauthorized: AUTH_COPY.status.failed,
+    gone: AUTH_COPY.status.expired,
+    bad: AUTH_COPY.status.failed,
+    timeout: AUTH_COPY.status.timedOut
+  };
+  function startAuthGate(boot2) {
+    if (!AUTH_REQUIRED) return boot2();
+    el.root.hidden = true;
+    let stored = null;
+    let loaded = false;
+    let run = null;
+    const view = createGateView({ signIn, cancel, retry: check });
+    function unlock(session) {
+      view.remove();
+      el.root.hidden = false;
+      boot2();
+      buildAccount(session);
+    }
+    function accept(session) {
+      post({ type: "auth-save", session });
+      unlock(session);
+    }
+    async function check() {
+      const session = stored;
+      if (!session) return view.show({ kind: "sign-in" });
+      view.show({ kind: "busy", text: AUTH_COPY.status.checking });
+      const result = await checkSession(session.token);
+      if (result.ok)
+        return accept({ ...session, email: result.value, checkedAt: Date.now() });
+      if (result.reason === "unauthorized" || result.reason === "gone") {
+        stored = null;
+        return view.show({ kind: "sign-in", note: AUTH_COPY.status.expired });
+      }
+      if (result.reason === "blocked") return view.show({ kind: "blocked" });
+      if (withinOfflineGrace(session, Date.now())) return unlock(session);
+      view.show({ kind: "retry", text: AUTH_COPY.status.offline });
+    }
+    async function signIn() {
+      view.show({ kind: "busy", text: AUTH_COPY.status.starting });
+      const current = runSignIn(
+        (url) => post({ type: "auth-open", url }),
+        () => view.show({ kind: "waiting" })
+      );
+      run = current;
+      const result = await current.result;
+      if (run !== current) return;
+      run = null;
+      if (result.ok) return accept(result.session);
+      if (result.reason === "cancelled") return view.show({ kind: "sign-in" });
+      if (result.reason === "blocked") return view.show({ kind: "blocked" });
+      view.show({ kind: "sign-in", note: FAILURE_TEXT[result.reason] });
+    }
+    function cancel() {
+      run?.cancel();
+      run = null;
+      view.show({ kind: "sign-in" });
+    }
+    onSandboxMessage((msg) => {
+      if (msg.type !== "auth-session" || loaded) return;
+      loaded = true;
+      stored = parseAuthSession(msg.session);
+      void check();
+    });
+    view.show({ kind: "busy", text: AUTH_COPY.status.checking });
+    post({ type: "auth-load" });
+  }
 
   // plugins/ezg-tools/src/ui/labels.ts
   var CORNER_NAMES = {
@@ -1696,7 +2005,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     parent2.append(node);
     return node;
   }
-  function button2(className, label, parent2) {
+  function button3(className, label, parent2) {
     const node = make("button", className, parent2);
     node.type = "button";
     node.textContent = label;
@@ -1713,7 +2022,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     port.step = "1";
     port.min = String(BRIDGE_PORTS[0]);
     port.max = String(BRIDGE_PORTS[BRIDGE_PORTS.length - 1]);
-    const connect = button2("cp-btn br-connect", copy.connect, content);
+    const connect = button3("cp-btn br-connect", copy.connect, content);
     const summary = make("p", "br-summary", content);
     const hint = make("p", "br-hint", content);
     hint.textContent = copy.hint;
@@ -1810,10 +2119,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     let attempt = 0;
     let timer = null;
     let closed = false;
-    let blocked = false;
+    let blocked2 = false;
     function onViolation(event) {
       if (!event.blockedURI.startsWith(`ws://localhost:${options2.port}`)) return;
-      blocked = true;
+      blocked2 = true;
       if (timer) clearTimeout(timer);
       timer = null;
       setStatus("blocked");
@@ -1825,7 +2134,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       options2.onStatus(next);
     }
     function scheduleReconnect() {
-      if (closed || blocked) return;
+      if (closed || blocked2) return;
       const base = Math.min(BACKOFF_MAX_MS, BACKOFF_MIN_MS * 2 ** attempt);
       const delay = base * (1 + JITTER * (Math.random() * 2 - 1));
       attempt += 1;
@@ -1872,7 +2181,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       socket2.onclose = () => {
         if (ws !== socket2 || closed) return;
         ws = null;
-        if (blocked) return;
+        if (blocked2) return;
         setStatus("offline");
         scheduleReconnect();
       };
@@ -4294,35 +4603,40 @@ input[type=range]:focus-visible::-moz-range-thumb {
     });
   }
 
+  // plugins/ezg-tools/src/ui/boot.ts
+  function boot() {
+    onSandboxMessage(handleSandboxMessage);
+    installPicker();
+    installIconsUi();
+    installControls();
+    installProfiles();
+    installEditor();
+    installPoints();
+    installIcons();
+    installRadiusIcons();
+    installRadius();
+    installCoords();
+    installShortcuts();
+    const bridgeRefs = buildBridgePanel();
+    renderBridge(bridgeRefs, bridgeState);
+    subscribe(() => renderBridge(bridgeRefs, bridgeState));
+    installBridgeUi(bridgeRefs);
+    startRelay();
+    buildRail(el.rail);
+    buildTitles();
+    buildAbout();
+    installRail();
+    buildPresets();
+    render();
+    renderRail();
+    reportHeight();
+    post({ type: "ready" });
+    post({ type: "bridge-ui-ready" });
+    post({ type: "icons-load" });
+  }
+
   // plugins/ezg-tools/src/ui/main.ts
-  onSandboxMessage(handleSandboxMessage);
-  installPicker();
-  installIconsUi();
-  installControls();
-  installProfiles();
-  installEditor();
-  installPoints();
-  installIcons();
-  installRadiusIcons();
-  installRadius();
-  installCoords();
-  installShortcuts();
-  var bridgeRefs = buildBridgePanel();
-  renderBridge(bridgeRefs, bridgeState);
-  subscribe(() => renderBridge(bridgeRefs, bridgeState));
-  installBridgeUi(bridgeRefs);
-  startRelay();
-  buildRail(el.rail);
-  buildTitles();
-  buildAbout();
-  installRail();
-  buildPresets();
-  render();
-  renderRail();
-  reportHeight();
-  post({ type: "ready" });
-  post({ type: "bridge-ui-ready" });
-  post({ type: "icons-load" });
+  startAuthGate(boot);
 })();
 
     </script>
