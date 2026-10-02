@@ -920,14 +920,27 @@ input[type=range]:focus-visible::-moz-range-thumb {
   font-size: 10px;
   color: var(--figma-color-text-secondary, #666);
 }
-.ic-tags {
+.ic-detail {
+  grid-column: 1 / -1;
   display: grid;
   gap: 6px;
+  min-width: 0;
   padding: 8px;
+  border: 1px solid var(--figma-color-border);
   border-radius: 5px;
   background: var(--figma-color-bg-secondary);
 }
+.ic-detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.ic-detail-place {
+  flex: none;
+}
 .ic-tags-title {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
   font-weight: 500;
@@ -1359,7 +1372,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.29" : "dev";
+  var BUILD_VERSION = true ? "0.1.30" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -1450,8 +1463,6 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var PREVIEW_FALLBACK = { width: 160, height: 100 };
   var ICON_PREFIX = "icon_";
   var ALL_LIBRARIES_ID = "all";
-  var ICON_DRAG_KIND = "ezg-icon";
-  var ICON_DRAG_MIME = "text/plain";
 
   // plugins/ezg-tools/src/ui/dom/props.ts
   var TEXT_ENTRY = 'input:not([type=range]):not([type=checkbox]):not([type=radio]), textarea, [contenteditable]:not([contenteditable="false"])';
@@ -2601,11 +2612,6 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
-  // plugins/ezg-tools/src/shared/icon-drag.ts
-  function serializeIconDrag(libraryId, name) {
-    return JSON.stringify({ kind: ICON_DRAG_KIND, libraryId, name });
-  }
-
   // plugins/ezg-tools/src/ui/icons/dom.ts
   function make2(tag, className, parent2) {
     const node = document.createElement(tag);
@@ -2712,119 +2718,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
     selected: null
   };
 
-  // plugins/ezg-tools/src/ui/icons/thumb.ts
-  var SVG_ROOT = /^\s*(<\?xml[^>]*\?>\s*)?(<!--[\s\S]*?-->\s*)?<svg[\s>]/;
-  function svgDataUrl(svg3) {
-    if (!SVG_ROOT.test(svg3)) return null;
-    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg3);
-  }
-
-  // plugins/ezg-tools/src/ui/icons/render.ts
-  var tiles = /* @__PURE__ */ new Map();
-  var statusTimer = 0;
-  function tileTitle(hit) {
-    const tags = iconsState.tags[iconTagKey(hit.libraryId, hit.name)] ?? [];
-    return tags.length ? `${hit.name}
-${tags.join(", ")}` : hit.name;
-  }
-  function makeTile(hit) {
-    const tile = document.createElement("button");
-    tile.type = "button";
-    tile.className = "ic-tile";
-    tile.draggable = true;
-    tile.title = tileTitle(hit);
-    tile.dataset.library = hit.libraryId;
-    tile.dataset.name = hit.name;
-    tile.setAttribute("role", "listitem");
-    const face = document.createElement("span");
-    face.className = "ic-face";
-    const url = svgDataUrl(hit.svg);
-    if (url) {
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = "";
-      img.draggable = false;
-      face.append(img);
-    }
-    const label = document.createElement("span");
-    label.className = "ic-label";
-    label.textContent = iconDisplayName(hit.name);
-    tile.append(face, label);
-    return tile;
-  }
-  function tileFor(hit) {
-    const key = iconTagKey(hit.libraryId, hit.name);
-    let tile = tiles.get(key);
-    if (!tile) {
-      tile = makeTile(hit);
-      tiles.set(key, tile);
-    }
-    return tile;
-  }
-  function renderGrid() {
-    const { catalog, libraryId, query, tags, selected } = iconsState;
-    const hits = catalog ? filterIcons(catalog, libraryId, query, tags) : [];
-    const tileList = hits.map((hit) => {
-      const tile = tileFor(hit);
-      tile.title = tileTitle(hit);
-      const on = selected?.libraryId === hit.libraryId && selected.name === hit.name;
-      tile.setAttribute("aria-pressed", String(on));
-      return tile;
-    });
-    iconsEl.grid.replaceChildren(...tileList);
-    iconsEl.grid.hidden = hits.length === 0;
-    iconsEl.empty.textContent = catalog ? UI_TEXT.iconNoResults : "";
-    iconsEl.empty.hidden = hits.length > 0 || !catalog;
-  }
-  function renderLibraries(catalog) {
-    const options2 = [
-      { id: ALL_LIBRARIES_ID, name: UI_TEXT.iconAllLibraries },
-      ...catalog.libraries
-    ].map(({ id, name }) => {
-      const option = document.createElement("option");
-      option.value = id;
-      option.textContent = name;
-      return option;
-    });
-    if (!options2.some((o) => o.value === iconsState.libraryId))
-      iconsState.libraryId = ALL_LIBRARIES_ID;
-    iconsEl.select.replaceChildren(...options2);
-    iconsEl.select.value = iconsState.libraryId;
-  }
-  function setCatalog(catalog) {
-    iconsState.catalog = catalog;
-    const { selected } = iconsState;
-    if (selected && !catalog.libraries.some(
-      (l) => l.id === selected.libraryId && l.icons.some((i) => i.name === selected.name)
-    ))
-      iconsState.selected = null;
-    tiles.clear();
-    renderLibraries(catalog);
-    renderGrid();
-  }
-  function setTags(tags, state2) {
-    iconsState.tags = tags;
-    iconsState.tagsState = state2;
-    renderGrid();
-  }
-  var HOLD_MS = {
-    "up-to-date": 2500,
-    offline: 6e3,
-    "spawn-failed": 4e3
-  };
-  function showIconsStatus(state2) {
-    clearTimeout(statusTimer);
-    iconsEl.status.textContent = ICONS_STATUS_TEXT[state2];
-    iconsEl.status.dataset.level = state2 === "offline" || state2 === "no-data" || state2 === "spawn-failed" ? "error" : "info";
-    iconsEl.status.hidden = false;
-    const hold = HOLD_MS[state2];
-    if (hold) statusTimer = setTimeout(() => iconsEl.status.hidden = true, hold);
-  }
-
   // plugins/ezg-tools/src/shared/icon-tag-copy.ts
   var ICON_TAG_COPY = {
-    title: (name) => `Tag c\u1EE7a ${name}`,
-    none: "Ch\u1ECDn m\u1ED9t icon \u0111\u1EC3 s\u1EEDa tag",
+    place: "\u0110\u1EB7t v\xE0o file",
     empty: "Ch\u01B0a c\xF3 tag",
     placeholder: "Th\xEAm tag (EN/VI), Enter \u0111\u1EC3 l\u01B0u",
     remove: (tag) => `Xo\xE1 tag ${tag}`,
@@ -2948,8 +2844,23 @@ ${tags.join(", ")}` : hit.name;
   }
   function installTagEditor() {
     if (parts) return;
-    const section = make3("section", "ic-tags");
+    const root = make3("section", "ic-detail");
+    const head = make3("div", "ic-detail-head");
     const title = make3("h3", "ic-tags-title");
+    const place = make3("button", "cp-btn ic-detail-place");
+    place.type = "button";
+    place.textContent = ICON_TAG_COPY.place;
+    place.addEventListener("click", () => {
+      const { selected } = iconsState;
+      if (selected) {
+        post({
+          type: "icon-spawn",
+          libraryId: selected.libraryId,
+          name: selected.name
+        });
+      }
+    });
+    head.append(title, place);
     const chips = make3("div", "ic-tags-chips");
     const input2 = make3("input", "ic-tag-input");
     input2.type = "text";
@@ -2957,29 +2868,31 @@ ${tags.join(", ")}` : hit.name;
     input2.setAttribute("aria-label", ICON_TAG_COPY.placeholder);
     const note = make3("p", "ic-tags-note");
     const signIn = buildTagSignIn();
-    section.append(title, chips, input2, note, signIn);
+    root.append(head, chips, input2, note, signIn);
     input2.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" || event.isComposing) return;
       event.preventDefault();
       addFromInput();
     });
     input2.addEventListener("input", () => showNote(""));
-    iconsEl.empty.after(section);
-    parts = { section, title, chips, input: input2, note, signIn };
+    parts = { root, title, chips, input: input2, note, signIn };
     renderTagEditor();
+  }
+  function tagEditorEl() {
+    return parts?.root ?? null;
   }
   function renderTagEditor() {
     if (!parts) return;
     const { selected, tagsState } = iconsState;
-    const { title, chips, input: input2, note, signIn } = parts;
+    const { root, title, chips, input: input2, note, signIn } = parts;
     const editable = selected !== null && tagsState === "ready";
-    title.hidden = selected === null;
-    title.textContent = selected ? ICON_TAG_COPY.title(iconDisplayName(selected.name)) : "";
+    title.textContent = selected ? iconDisplayName(selected.name) : "";
+    root.setAttribute("aria-label", title.textContent);
     signIn.hidden = !(selected !== null && tagsState === "signed-out");
     chips.hidden = !editable;
     input2.hidden = !editable;
     chips.replaceChildren();
-    if (!selected) return showNote(ICON_TAG_COPY.none);
+    if (!selected) return showNote("");
     if (tagsState === "loading" || tagsState === "offline") {
       return showNote(ICON_TAG_COPY.state[tagsState]);
     }
@@ -2992,13 +2905,146 @@ ${tags.join(", ")}` : hit.name;
     }
   }
 
+  // plugins/ezg-tools/src/ui/icons/thumb.ts
+  var SVG_ROOT = /^\s*(<\?xml[^>]*\?>\s*)?(<!--[\s\S]*?-->\s*)?<svg[\s>]/;
+  function svgDataUrl(svg3) {
+    if (!SVG_ROOT.test(svg3)) return null;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg3);
+  }
+
+  // plugins/ezg-tools/src/ui/icons/render.ts
+  var tiles = /* @__PURE__ */ new Map();
+  var statusTimer = 0;
+  var visibleTiles = [];
+  var lastGridWidth = -1;
+  var observer = new ResizeObserver((entries) => {
+    const width = entries[entries.length - 1]?.contentRect.width ?? 0;
+    if (width === lastGridWidth) return;
+    lastGridWidth = width;
+    placeDetail();
+  });
+  var observing = false;
+  function placeDetail() {
+    const detail = tagEditorEl();
+    if (!detail) return;
+    const selectedTile = visibleTiles.find(
+      (t) => t.getAttribute("aria-pressed") === "true"
+    );
+    if (!selectedTile) {
+      detail.remove();
+      return;
+    }
+    let last = selectedTile;
+    for (const tile of visibleTiles)
+      if (tile.offsetTop === selectedTile.offsetTop) last = tile;
+    last.after(detail);
+  }
+  function tileTitle(hit) {
+    const tags = iconsState.tags[iconTagKey(hit.libraryId, hit.name)] ?? [];
+    return tags.length ? `${hit.name}
+${tags.join(", ")}` : hit.name;
+  }
+  function makeTile(hit) {
+    const tile = document.createElement("button");
+    tile.type = "button";
+    tile.className = "ic-tile";
+    tile.title = tileTitle(hit);
+    tile.dataset.library = hit.libraryId;
+    tile.dataset.name = hit.name;
+    tile.setAttribute("role", "listitem");
+    const face = document.createElement("span");
+    face.className = "ic-face";
+    const url = svgDataUrl(hit.svg);
+    if (url) {
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "";
+      face.append(img);
+    }
+    const label = document.createElement("span");
+    label.className = "ic-label";
+    label.textContent = iconDisplayName(hit.name);
+    tile.append(face, label);
+    return tile;
+  }
+  function tileFor(hit) {
+    const key = iconTagKey(hit.libraryId, hit.name);
+    let tile = tiles.get(key);
+    if (!tile) {
+      tile = makeTile(hit);
+      tiles.set(key, tile);
+    }
+    return tile;
+  }
+  function renderGrid() {
+    const { catalog, libraryId, query, tags, selected } = iconsState;
+    const hits = catalog ? filterIcons(catalog, libraryId, query, tags) : [];
+    const tileList = hits.map((hit) => {
+      const tile = tileFor(hit);
+      tile.title = tileTitle(hit);
+      const on = selected?.libraryId === hit.libraryId && selected.name === hit.name;
+      tile.setAttribute("aria-pressed", String(on));
+      return tile;
+    });
+    visibleTiles = tileList;
+    iconsEl.grid.replaceChildren(...tileList);
+    iconsEl.grid.hidden = hits.length === 0;
+    placeDetail();
+    if (!observing) {
+      observer.observe(iconsEl.grid);
+      observing = true;
+    }
+    iconsEl.empty.textContent = catalog ? UI_TEXT.iconNoResults : "";
+    iconsEl.empty.hidden = hits.length > 0 || !catalog;
+  }
+  function renderLibraries(catalog) {
+    const options2 = [
+      { id: ALL_LIBRARIES_ID, name: UI_TEXT.iconAllLibraries },
+      ...catalog.libraries
+    ].map(({ id, name }) => {
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = name;
+      return option;
+    });
+    if (!options2.some((o) => o.value === iconsState.libraryId))
+      iconsState.libraryId = ALL_LIBRARIES_ID;
+    iconsEl.select.replaceChildren(...options2);
+    iconsEl.select.value = iconsState.libraryId;
+  }
+  function setCatalog(catalog) {
+    iconsState.catalog = catalog;
+    const { selected } = iconsState;
+    if (selected && !catalog.libraries.some(
+      (l) => l.id === selected.libraryId && l.icons.some((i) => i.name === selected.name)
+    ))
+      iconsState.selected = null;
+    tiles.clear();
+    renderLibraries(catalog);
+    renderGrid();
+  }
+  function setTags(tags, state2) {
+    iconsState.tags = tags;
+    iconsState.tagsState = state2;
+    renderGrid();
+  }
+  var HOLD_MS = {
+    "up-to-date": 2500,
+    offline: 6e3,
+    "spawn-failed": 4e3
+  };
+  function showIconsStatus(state2) {
+    clearTimeout(statusTimer);
+    iconsEl.status.textContent = ICONS_STATUS_TEXT[state2];
+    iconsEl.status.dataset.level = state2 === "offline" || state2 === "no-data" || state2 === "spawn-failed" ? "error" : "info";
+    iconsEl.status.hidden = false;
+    const hold = HOLD_MS[state2];
+    if (hold) statusTimer = setTimeout(() => iconsEl.status.hidden = true, hold);
+  }
+
   // plugins/ezg-tools/src/ui/icons/interact.ts
   function tileOf(target) {
     return target instanceof Element ? target.closest(".ic-tile") : null;
-  }
-  var payload = (tile) => serializeIconDrag(tile.dataset.library ?? "", tile.dataset.name ?? "");
-  function outsideFrame(e) {
-    return e.clientX < 0 || e.clientY < 0 || e.clientX > window.innerWidth || e.clientY > window.innerHeight;
   }
   function installIconsUi() {
     iconsEl.select.addEventListener("change", () => {
@@ -3014,33 +3060,11 @@ ${tags.join(", ")}` : hit.name;
       if (!tile) return;
       const libraryId = tile.dataset.library ?? "";
       const name = tile.dataset.name ?? "";
-      iconsState.selected = { libraryId, name };
+      const { selected } = iconsState;
+      const same = selected?.libraryId === libraryId && selected.name === name;
+      iconsState.selected = same ? null : { libraryId, name };
       renderGrid();
       renderTagEditor();
-      post({ type: "icon-spawn", libraryId, name });
-    });
-    iconsEl.grid.addEventListener("dragstart", (e) => {
-      const tile = tileOf(e.target);
-      if (!tile || !e.dataTransfer) return;
-      e.dataTransfer.setData(ICON_DRAG_MIME, payload(tile));
-      e.dataTransfer.effectAllowed = "copy";
-    });
-    iconsEl.grid.addEventListener("dragend", (e) => {
-      const tile = tileOf(e.target);
-      if (!tile || e.dataTransfer?.dropEffect !== "none" || !outsideFrame(e))
-        return;
-      const data = payload(tile);
-      parent.postMessage(
-        {
-          pluginDrop: {
-            clientX: e.clientX,
-            clientY: e.clientY,
-            items: [{ type: ICON_DRAG_MIME, data }],
-            dropMetadata: JSON.parse(data)
-          }
-        },
-        "*"
-      );
     });
   }
 
@@ -4341,17 +4365,17 @@ ${tags.join(", ")}` : hit.name;
   function reportHeight() {
     const panels = Array.from(el.root.querySelectorAll(".cp-tool"));
     let lastHeight = 0;
-    const observer = new ResizeObserver(() => {
+    const observer2 = new ResizeObserver(() => {
       const height = contentHeight(panels);
       if (height !== lastHeight) {
         lastHeight = height;
         post({ type: "resize", height });
       }
     });
-    observer.observe(el.rail);
+    observer2.observe(el.rail);
     for (const panel of panels) {
-      observer.observe(panel);
-      for (const child of Array.from(panel.children)) observer.observe(child);
+      observer2.observe(panel);
+      for (const child of Array.from(panel.children)) observer2.observe(child);
     }
   }
 
