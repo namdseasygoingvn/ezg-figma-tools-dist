@@ -196,6 +196,8 @@ The report has `checked`, `counts`, `findings` (`rule`, `nodeId`, `path`, `detai
 
 - `view_get` returns the page, the selection and the viewport.
 - `view_set` can select nodes, change page, focus, zoom and notify.
+- `ui_screenshot` returns a PNG of the EZG Tools plugin window content, not the canvas. Optional `scale` and an absolute `outPath` ending in `.png`.
+- It needs a plugin build that has the tool. An old plugin answers `unknown op`.
 
 ## Export
 

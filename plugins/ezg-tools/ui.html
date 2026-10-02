@@ -1471,7 +1471,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.36" : "dev";
+  var BUILD_VERSION = true ? "0.1.37" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -2290,7 +2290,48 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return { root, summary, port, button: connect, hint };
   }
 
+  // plugins/ezg-tools/src/shared/glossary.ts
+  var MAX_GLOSSARY_RULES = 500;
+  var MAX_FIND_CHARS = 100;
+  var MAX_SUGGESTIONS = 10;
+  var MAX_SUGGESTION_CHARS = 100;
+  var MAX_NOTE_CHARS = 200;
+  function sanitizeSuggestions(raw) {
+    if (!Array.isArray(raw)) return [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const item of raw) {
+      if (seen.size >= MAX_SUGGESTIONS) break;
+      if (typeof item === "string" && item.length >= 1 && item.length <= MAX_SUGGESTION_CHARS) {
+        seen.add(item);
+      }
+    }
+    return Array.from(seen);
+  }
+  function sanitizeRule(raw) {
+    if (!isRecord(raw)) return null;
+    const { find, note } = raw;
+    if (typeof find !== "string" || find.trim() === "") return null;
+    if (find.length > MAX_FIND_CHARS) return null;
+    const rule = { find, replace: sanitizeSuggestions(raw.replace) };
+    if (typeof note === "string") rule.note = note.slice(0, MAX_NOTE_CHARS);
+    if (raw.caseSensitive === true) rule.caseSensitive = true;
+    if (raw.wholeWord === true) rule.wholeWord = true;
+    return rule;
+  }
+  function sanitizeRules(raw) {
+    const rules = [];
+    if (!Array.isArray(raw)) return rules;
+    for (const item of raw) {
+      if (rules.length >= MAX_GLOSSARY_RULES) break;
+      const rule = sanitizeRule(item);
+      if (rule) rules.push(rule);
+    }
+    return rules;
+  }
+
   // plugins/ezg-tools/src/shared/codegen-data.ts
+  var MAX_SNIPPETS = 8;
+  var MAX_SNIPPET_CHARS = 6e4;
   var CODEGEN_LANGUAGES = [
     "TYPESCRIPT",
     "CPP",
@@ -2310,6 +2351,49 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "PLAINTEXT"
   ];
   var LANGUAGE_SET = new Set(CODEGEN_LANGUAGES);
+  function isRecord2(v) {
+    return typeof v === "object" && v !== null && !Array.isArray(v);
+  }
+  function normalizeSnippets(raw) {
+    if (!Array.isArray(raw)) return [];
+    const kept = [];
+    let total = 0;
+    for (const item of raw) {
+      if (!isRecord2(item)) continue;
+      const { title, language, code } = item;
+      if (typeof title !== "string" || title.trim() === "") continue;
+      if (typeof language !== "string" || !LANGUAGE_SET.has(language)) continue;
+      if (typeof code !== "string" || code === "") continue;
+      const trimmed = title.trim();
+      const size2 = trimmed.length + code.length;
+      if (total + size2 > MAX_SNIPPET_CHARS) break;
+      kept.push({ title: trimmed, language, code });
+      total += size2;
+      if (kept.length >= MAX_SNIPPETS) break;
+    }
+    return kept;
+  }
+  function decodeSnippets(raw) {
+    try {
+      return normalizeSnippets(JSON.parse(raw));
+    } catch {
+      return [];
+    }
+  }
+
+  // plugins/ezg-tools/src/shared/bridge-eval.ts
+  function parseEvalOptions(raw) {
+    const out = {};
+    if (raw.atomic !== void 0) {
+      if (typeof raw.atomic !== "boolean") return null;
+      out.atomic = raw.atomic;
+    }
+    if (raw.pageId !== void 0) {
+      if (typeof raw.pageId !== "string" || raw.pageId === "") return null;
+      out.pageId = raw.pageId;
+    }
+    return out;
+  }
 
   // plugins/ezg-tools/src/shared/bridge-inventory.ts
   var INVENTORY_SECTIONS = [
@@ -2319,8 +2403,181 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "components"
   ];
   var SECTION_SET = new Set(INVENTORY_SECTIONS);
+  var isSection = (v) => typeof v === "string" && SECTION_SET.has(v);
+  function parseInventoryPayload(raw) {
+    if (raw === void 0 || raw === null) raw = {};
+    if (!isRecord(raw)) return null;
+    const { include, pageIds, name } = raw;
+    let sections = [...INVENTORY_SECTIONS];
+    if (include !== void 0) {
+      if (!Array.isArray(include) || include.length === 0) return null;
+      if (!include.every(isSection)) return null;
+      sections = [...new Set(include)];
+    }
+    const out = { include: sections };
+    if (pageIds !== void 0) {
+      if (!Array.isArray(pageIds) || !pageIds.every((v) => typeof v === "string"))
+        return null;
+      out.pageIds = pageIds;
+    }
+    if (name !== void 0) {
+      if (typeof name !== "string") return null;
+      if (name !== "") out.name = name;
+    }
+    return out;
+  }
+
+  // plugins/ezg-tools/src/shared/lint-types.ts
+  var LINT_RULE_IDS = [
+    "generic-name",
+    "unbound-color",
+    "text-no-style",
+    "missing-font",
+    "variant-conflict",
+    "name-pattern",
+    "clip",
+    "safe-zone",
+    "grid-style",
+    "unbound-number",
+    "overflow",
+    "reuse"
+  ];
+  var LINT_LIMIT_MAX = 5e3;
+  var isRec = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+  var isRuleId = (v) => typeof v === "string" && LINT_RULE_IDS.includes(v);
+  function strings(v) {
+    if (!Array.isArray(v) || !v.every((s) => typeof s === "string")) return null;
+    return v;
+  }
+  function regexOk(src, flags) {
+    if (typeof src !== "string") return false;
+    try {
+      new RegExp(src, flags);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  var num = (v) => typeof v === "number" && Number.isFinite(v);
+  var posInt = (v) => typeof v === "number" && Number.isInteger(v) && v > 0;
+  function size(v) {
+    if (!isRec(v) || !num(v.width) || !num(v.height)) return null;
+    if (v.width <= 0 || v.height <= 0) return null;
+    return { width: v.width, height: v.height };
+  }
+  function pick(raw, shape, required = []) {
+    const out = {};
+    for (const key of Object.keys(shape)) {
+      if (raw[key] === void 0) {
+        if (required.includes(key)) return null;
+        continue;
+      }
+      const v = shape[key](raw[key]);
+      if (v === null) return null;
+      out[key] = v;
+    }
+    return out;
+  }
+  var asNum = (v) => num(v) ? v : null;
+  var asStr = (v) => typeof v === "string" ? v : null;
+  var asRegex = (v) => regexOk(v) ? v : null;
+  var OPTION_SHAPES = {
+    "generic-name": null,
+    "unbound-color": null,
+    "text-no-style": null,
+    "missing-font": null,
+    "variant-conflict": null,
+    "name-pattern": {
+      pattern: asRegex,
+      flags: asStr,
+      types: strings
+    },
+    clip: { allow: asRegex },
+    "safe-zone": {
+      top: asNum,
+      bottom: asNum,
+      left: asNum,
+      right: asNum,
+      frame: size,
+      types: strings,
+      names: asRegex
+    },
+    "grid-style": { styleId: asStr, frame: size },
+    "unbound-number": { fields: strings },
+    overflow: { tolerance: (v) => num(v) && v >= 0 ? v : null },
+    reuse: { min: (v) => posInt(v) ? v : null }
+  };
+  function parseOptions(raw) {
+    if (!isRec(raw)) return null;
+    const out = {};
+    for (const key of Object.keys(raw)) {
+      if (!isRuleId(key) || !isRec(raw[key])) return null;
+      const shape = OPTION_SHAPES[key];
+      const parsed = shape ? pick(raw[key], shape, key === "name-pattern" ? ["pattern"] : []) : {};
+      if (!parsed) return null;
+      if (key === "name-pattern" && !regexOk(parsed.pattern, parsed.flags))
+        return null;
+      out[key] = parsed;
+    }
+    return out;
+  }
+  function parseLintPayload(raw) {
+    if (!isRec(raw)) return null;
+    const out = {};
+    for (const key of ["nodeIds", "pageIds"]) {
+      if (raw[key] === void 0) continue;
+      const list = strings(raw[key]);
+      if (!list) return null;
+      out[key] = list;
+    }
+    if (raw.rules !== void 0) {
+      if (!Array.isArray(raw.rules) || !raw.rules.every(isRuleId)) return null;
+      out.rules = [...new Set(raw.rules)];
+    }
+    if (raw.options !== void 0) {
+      const options2 = parseOptions(raw.options);
+      if (!options2) return null;
+      out.options = options2;
+    }
+    if (raw.includeInstances !== void 0) {
+      if (typeof raw.includeInstances !== "boolean") return null;
+      out.includeInstances = raw.includeInstances;
+    }
+    if (raw.limit !== void 0) {
+      if (!posInt(raw.limit) || raw.limit > LINT_LIMIT_MAX) return null;
+      out.limit = raw.limit;
+    }
+    return out;
+  }
 
   // plugins/ezg-tools/src/shared/bridge-build.ts
+  var BUILD_TYPES = [
+    "FRAME",
+    "COMPONENT",
+    "COMPONENT_SET",
+    "SECTION",
+    "RECTANGLE",
+    "ELLIPSE",
+    "POLYGON",
+    "STAR",
+    "LINE",
+    "TEXT",
+    "INSTANCE"
+  ];
+  var BUILD_NODE_CAP = 2e3;
+  var BUILD_DEPTH_CAP = 32;
+  var isRec2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+  var num2 = (v) => typeof v === "number" && Number.isFinite(v);
+  var LEAF_TYPES = [
+    "RECTANGLE",
+    "ELLIPSE",
+    "POLYGON",
+    "STAR",
+    "LINE",
+    "TEXT",
+    "INSTANCE"
+  ];
+  var LAYOUT_TYPES = ["FRAME", "COMPONENT", "COMPONENT_SET"];
   var LAYOUT_ENUMS = {
     mode: ["HORIZONTAL", "VERTICAL"],
     main: ["MIN", "CENTER", "MAX", "SPACE_BETWEEN"],
@@ -2335,12 +2592,155 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "wrap",
     ...Object.keys(LAYOUT_ENUMS)
   ];
+  function isJson(v, depth = 0) {
+    if (depth > 20) return false;
+    if (Array.isArray(v)) return v.every((x) => isJson(x, depth + 1));
+    if (isRec2(v)) return Object.values(v).every((x) => isJson(x, depth + 1));
+    return v === null || ["string", "boolean"].includes(typeof v) || num2(v);
+  }
+  var allOf = (v, ok) => isRec2(v) && Object.values(v).every(ok);
+  var isStr = (x) => typeof x === "string";
+  var isStrOrBool = (x) => isStr(x) || typeof x === "boolean";
+  function layoutErrors(l, at) {
+    if (!isRec2(l)) return [`${at}: layout must be an object`];
+    const out = [];
+    const bad = (m) => out.push(`${at}: layout.${m}`);
+    for (const key of Object.keys(l))
+      if (!LAYOUT_KEYS.includes(key))
+        out.push(`${at}: unknown layout key "${key}"`);
+    for (const [key, allowed] of Object.entries(LAYOUT_ENUMS))
+      if (l[key] !== void 0 || key === "mode") {
+        if (!isStr(l[key]) || !allowed.includes(l[key]))
+          bad(`${key} must be one of ${allowed.join(", ")}`);
+      }
+    if (l.gap !== void 0 && !num2(l.gap)) bad("gap must be a number");
+    if (l.wrap !== void 0 && typeof l.wrap !== "boolean")
+      bad("wrap must be a boolean");
+    const p = l.padding;
+    const quad = Array.isArray(p) && p.length === 4 && p.every(num2);
+    if (p !== void 0 && !num2(p) && !quad)
+      bad("padding must be a number or 4 numbers");
+    return out;
+  }
+  function nodeErrors(n, at) {
+    const type = n.type;
+    if (!isStr(type) || !BUILD_TYPES.includes(type))
+      return [`${at}: unknown type ${JSON.stringify(type)}`];
+    const out = [];
+    const bad = (m) => out.push(`${at}: ${m}`);
+    const only = (key, on) => {
+      if (n[key] === void 0) return true;
+      if (type === on) return false;
+      bad(`${key} only allowed on ${on}`);
+      return true;
+    };
+    if (n.name !== void 0 && !isStr(n.name)) bad("name must be a string");
+    if (n.ref !== void 0 && (!isStr(n.ref) || n.ref === ""))
+      bad("ref must be a non-empty string");
+    else if (isStr(n.ref) && /^nodes\[\d+\]/.test(n.ref))
+      bad(`ref "${n.ref}" looks like a node path`);
+    if (n.props !== void 0 && !(isRec2(n.props) && isJson(n.props)))
+      bad("props must be a JSON object");
+    if (n.layout !== void 0) {
+      if (LAYOUT_TYPES.includes(type)) out.push(...layoutErrors(n.layout, at));
+      else bad(`layout not allowed on ${type}`);
+    }
+    if (n.bind !== void 0 && !allOf(n.bind, isStr))
+      bad("bind values must be strings");
+    if (!only("text", "TEXT")) {
+      const t = n.text;
+      if (!isRec2(t) || !isStr(t.chars)) bad("text.chars must be a string");
+      else if (t.style !== void 0 && !isStr(t.style))
+        bad("text.style must be a string");
+    }
+    if (type === "INSTANCE" && (!isStr(n.component) || n.component === ""))
+      bad("INSTANCE needs component");
+    if (type !== "INSTANCE") only("component", "INSTANCE");
+    if (!only("setProps", "INSTANCE") && !allOf(n.setProps, isStrOrBool))
+      bad("setProps values must be strings or booleans");
+    if (!only("variants", "COMPONENT_SET")) {
+      const v = n.variants;
+      const cols = isRec2(v) ? v.cols : void 0;
+      if (!isRec2(v)) bad("variants must be an object");
+      else {
+        if (cols !== void 0 && !(Number.isInteger(cols) && cols > 0))
+          bad("variants.cols must be a positive integer");
+        for (const k of ["gap", "padding"])
+          if (v[k] !== void 0 && !(num2(v[k]) && v[k] >= 0))
+            bad(`variants.${k} must be a number >= 0`);
+      }
+    }
+    return out;
+  }
+  function buildErrors(raw) {
+    if (!isRec2(raw)) return ["payload must be an object"];
+    const errors = [];
+    for (const k of ["parentId", "pageId"])
+      if (raw[k] !== void 0 && !isStr(raw[k]))
+        errors.push(`${k} must be a string`);
+    if (raw.atomic !== void 0 && typeof raw.atomic !== "boolean")
+      errors.push("atomic must be a boolean");
+    const l = raw.lint;
+    if (l !== void 0 && (!isRec2(l) || "nodeIds" in l || "pageIds" in l || !parseLintPayload(l)))
+      errors.push("lint must be valid lint options without nodeIds and pageIds");
+    if (!Array.isArray(raw.nodes) || raw.nodes.length === 0)
+      return [...errors, "nodes must be a non-empty array"];
+    const refs = /* @__PURE__ */ new Set();
+    let count = 0;
+    const walk2 = (n, at, depth) => {
+      const bad = (m) => void errors.push(`${at}: ${m}`);
+      if (count > BUILD_NODE_CAP) return;
+      if (++count > BUILD_NODE_CAP)
+        return bad(`more than ${BUILD_NODE_CAP} nodes`);
+      if (!isRec2(n)) return bad("node must be an object");
+      errors.push(...nodeErrors(n, at));
+      if (isStr(n.ref) && n.ref !== "") {
+        if (refs.has(n.ref)) bad(`duplicate ref "${n.ref}"`);
+        refs.add(n.ref);
+      }
+      const kids = n.children;
+      const set = n.type === "COMPONENT_SET";
+      if (kids === void 0)
+        return set ? bad("COMPONENT_SET needs children") : void 0;
+      if (isStr(n.type) && LEAF_TYPES.includes(n.type))
+        return bad(`children not allowed on ${n.type}`);
+      if (!Array.isArray(kids)) return bad("children must be an array");
+      if (set && kids.length === 0) bad("COMPONENT_SET needs children");
+      if (kids.length > 0 && depth >= BUILD_DEPTH_CAP)
+        return bad(`deeper than ${BUILD_DEPTH_CAP} levels`);
+      kids.forEach((c, i) => {
+        const cat = `${at}.children[${i}]`;
+        if (set && isRec2(c) && c.type !== "COMPONENT")
+          errors.push(`${cat}: COMPONENT_SET children must be COMPONENT`);
+        walk2(c, cat, depth + 1);
+      });
+    };
+    raw.nodes.forEach((n, i) => walk2(n, `nodes[${i}]`, 1));
+    return errors;
+  }
+  function parseBuildPayload(raw) {
+    if (buildErrors(raw).length > 0) return null;
+    const r = raw;
+    const out = {
+      nodes: r.nodes,
+      atomic: r.atomic !== false
+    };
+    if (typeof r.parentId === "string") out.parentId = r.parentId;
+    if (typeof r.pageId === "string") out.pageId = r.pageId;
+    if (r.lint !== void 0) out.lint = parseLintPayload(r.lint) ?? void 0;
+    return out;
+  }
 
   // plugins/ezg-tools/src/shared/icon-tags.ts
   var TAG_MAX_LENGTH = 32;
   var TAGS_PER_ICON_MAX = 24;
+  var ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
+  var NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
   function iconTagKey(libraryId, name) {
     return `${libraryId}/${name}`;
+  }
+  function validIds(libraryId, name) {
+    return typeof libraryId === "string" && typeof name === "string" && ID_PATTERN.test(libraryId) && libraryId !== ALL_LIBRARIES_ID && NAME_PATTERN.test(name);
   }
   function normalizeTag(raw) {
     const tag = raw.trim().replace(/\s+/g, " ").toLowerCase();
@@ -2352,6 +2752,75 @@ input[type=range]:focus-visible::-moz-range-thumb {
   function foldText(text) {
     return text.normalize("NFD").replace(/\p{M}/gu, "").replace(/[đĐ]/g, "d").toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ").trim();
   }
+  function normalizeAll(raw) {
+    const out = /* @__PURE__ */ new Set();
+    for (const item of raw) {
+      if (typeof item !== "string") continue;
+      const tag = normalizeTag(item);
+      if (tag !== null) out.add(tag);
+    }
+    return [...out];
+  }
+  function changeList(raw) {
+    if (raw === void 0) return [];
+    if (!Array.isArray(raw)) return null;
+    const tags = normalizeAll(raw);
+    return tags.length > TAGS_PER_ICON_MAX ? null : tags;
+  }
+  function parseIconTagChange(raw) {
+    if (!isRecord(raw) || !validIds(raw.libraryId, raw.name)) return null;
+    const add = changeList(raw.add);
+    const remove = changeList(raw.remove);
+    if (add === null || remove === null) return null;
+    if (add.length === 0 && remove.length === 0) return null;
+    if (add.some((tag) => remove.includes(tag))) return null;
+    return {
+      libraryId: raw.libraryId,
+      name: raw.name,
+      add,
+      remove
+    };
+  }
+
+  // plugins/ezg-tools/src/shared/bridge-icons.ts
+  var ICONS_SEARCH_MAX = 100;
+  var HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
+  var nonEmptyStr = (v) => typeof v === "string" && v.trim() !== "";
+  function parseIconsSearch(raw) {
+    if (!isRecord(raw) || typeof raw.query !== "string") return null;
+    const out = { query: raw.query };
+    const { libraryId, limit } = raw;
+    if (libraryId !== void 0) {
+      if (!nonEmptyStr(libraryId)) return null;
+      out.libraryId = libraryId;
+    }
+    if (limit !== void 0) {
+      if (typeof limit !== "number" || !Number.isInteger(limit) || limit < 1 || limit > ICONS_SEARCH_MAX)
+        return null;
+      out.limit = limit;
+    }
+    return out;
+  }
+  function parseTint(raw) {
+    if (!isRecord(raw)) return null;
+    const { color, token } = raw;
+    if (color !== void 0 && token !== void 0) return null;
+    if (color !== void 0) {
+      return typeof color === "string" && HEX_COLOR.test(color) ? { color } : null;
+    }
+    return nonEmptyStr(token) ? { token } : null;
+  }
+  function parseIconsPlace(raw) {
+    if (!isRecord(raw)) return null;
+    const { libraryId, name, tint } = raw;
+    if (!nonEmptyStr(libraryId) || !nonEmptyStr(name)) return null;
+    if (tint === void 0) return { libraryId, name };
+    const parsed = parseTint(tint);
+    return parsed ? { libraryId, name, tint: parsed } : null;
+  }
+  function parseIconsTag(raw) {
+    return parseIconTagChange(raw);
+  }
 
   // plugins/ezg-tools/src/shared/bridge-parse.ts
   var EXPORT_FORMATS = [
@@ -2362,6 +2831,108 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "JSON"
   ];
   var FORMAT_SET = new Set(EXPORT_FORMATS);
+  var str = (v) => typeof v === "string";
+  var nonEmptyStr2 = (v) => str(v) && v.trim() !== "";
+  var positive = (v) => isFiniteNumber(v) && v > 0;
+  var strArray = (v) => Array.isArray(v) && v.every(str);
+  var parseEmpty = (raw) => raw === void 0 || raw === null || isRecord(raw) ? {} : null;
+  function parseEval(raw) {
+    if (!isRecord(raw)) return null;
+    const { code, description, timeoutMs } = raw;
+    if (!nonEmptyStr2(code) || !str(description) || !positive(timeoutMs))
+      return null;
+    const options2 = parseEvalOptions(raw);
+    if (!options2) return null;
+    return { code, description, timeoutMs, ...options2 };
+  }
+  function parseViewSet(raw) {
+    if (!isRecord(raw)) return null;
+    const out = {};
+    const { selectionIds, focusIds, pageId, notify, zoom } = raw;
+    if (selectionIds !== void 0) {
+      if (!strArray(selectionIds)) return null;
+      out.selectionIds = selectionIds.slice();
+    }
+    if (focusIds !== void 0) {
+      if (!strArray(focusIds)) return null;
+      out.focusIds = focusIds.slice();
+    }
+    if (pageId !== void 0) {
+      if (!str(pageId)) return null;
+      out.pageId = pageId;
+    }
+    if (notify !== void 0) {
+      if (!str(notify)) return null;
+      out.notify = notify;
+    }
+    if (zoom !== void 0) {
+      if (!positive(zoom)) return null;
+      out.zoom = zoom;
+    }
+    return out;
+  }
+  function parseCheckpoint(raw) {
+    if (!isRecord(raw) || !nonEmptyStr2(raw.title)) return null;
+    if (raw.description === void 0) return { title: raw.title };
+    if (!str(raw.description)) return null;
+    return { title: raw.title, description: raw.description };
+  }
+  function parseExport(raw) {
+    if (!isRecord(raw)) return null;
+    const { nodeIds, format, scale } = raw;
+    if (!strArray(nodeIds) || nodeIds.length === 0) return null;
+    if (!str(format) || !FORMAT_SET.has(format)) return null;
+    const out = { nodeIds: nodeIds.slice(), format };
+    if (scale === void 0) return out;
+    return positive(scale) ? { ...out, scale } : null;
+  }
+  function parseWatch(raw) {
+    if (!isRecord(raw) || typeof raw.document !== "boolean") return null;
+    return { document: raw.document };
+  }
+  function parseCodegen(raw) {
+    if (!isRecord(raw) || !nonEmptyStr2(raw.nodeId)) return null;
+    const { snippets } = raw;
+    if (!Array.isArray(snippets)) return null;
+    try {
+      const decoded = decodeSnippets(JSON.stringify(snippets));
+      if (decoded.length !== snippets.length) return null;
+      return { nodeId: raw.nodeId, snippets: decoded };
+    } catch {
+      return null;
+    }
+  }
+  function parseGlossarySet(raw) {
+    if (!isRecord(raw) || !Array.isArray(raw.rules)) return null;
+    return { rules: sanitizeRules(raw.rules) };
+  }
+  var UI_SCREENSHOT_MAX_SCALE = 4;
+  function parseUiScreenshot(raw) {
+    if (raw === void 0 || raw === null) return {};
+    if (!isRecord(raw)) return null;
+    if (raw.scale === void 0) return {};
+    if (!positive(raw.scale) || raw.scale > UI_SCREENSHOT_MAX_SCALE) return null;
+    return { scale: raw.scale };
+  }
+  var PARSERS = {
+    eval: parseEval,
+    "view.get": parseEmpty,
+    "view.set": parseViewSet,
+    "history.checkpoint": parseCheckpoint,
+    "history.undo": parseEmpty,
+    export: parseExport,
+    watch: parseWatch,
+    "codegen.set": parseCodegen,
+    "glossary.get": parseEmpty,
+    "glossary.set": parseGlossarySet,
+    inventory: parseInventoryPayload,
+    lint: parseLintPayload,
+    build: parseBuildPayload,
+    "icons.search": parseIconsSearch,
+    "icons.place": parseIconsPlace,
+    "icons.tag": parseIconsTag,
+    "ui.screenshot": parseUiScreenshot
+  };
 
   // plugins/ezg-tools/src/shared/bridge-ops.ts
   var OP_TABLE = {
@@ -2380,7 +2951,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
     build: true,
     "icons.search": true,
     "icons.place": true,
-    "icons.tag": true
+    "icons.tag": true,
+    "ui.screenshot": true
   };
   var BRIDGE_OPS = Object.keys(
     OP_TABLE
@@ -2388,6 +2960,17 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var OP_SET = new Set(BRIDGE_OPS);
   function isBridgeOp(raw) {
     return typeof raw === "string" && OP_SET.has(raw);
+  }
+  function isUiOp(op) {
+    return op === "ui.screenshot";
+  }
+  function parsePayload(op, raw) {
+    if (!isBridgeOp(op)) return null;
+    try {
+      return PARSERS[op](raw);
+    } catch {
+      return null;
+    }
   }
 
   // plugins/ezg-tools/src/ui/bridge/socket.ts
@@ -2527,6 +3110,291 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
+  // plugins/ezg-tools/src/shared/bridge-result.ts
+  var MAX_DEPTH = 20;
+  var MAX_ERROR_CHARS = 4e3;
+  var UNREADABLE = "[Unreadable]";
+  var CHUNK_CHARS = 12 * 1024;
+  var DROP = /* @__PURE__ */ Symbol("drop");
+  function put(out, key, v) {
+    Object.defineProperty(out, key, {
+      value: v,
+      enumerable: true,
+      writable: true,
+      configurable: true
+    });
+  }
+  function read(obj, key) {
+    try {
+      return obj[key];
+    } catch {
+      return UNREADABLE;
+    }
+  }
+  function isObject(v) {
+    return typeof v === "object" && v !== null;
+  }
+  function isNodeLike(v) {
+    if (!isObject(v)) return false;
+    const parts2 = [read(v, "id"), read(v, "type"), read(v, "name")];
+    return parts2.every((p) => typeof p === "string") && parts2.some((p) => p !== UNREADABLE);
+  }
+  function isError(v) {
+    return v instanceof Error || isObject(v) && typeof read(v, "message") === "string";
+  }
+  function scalar(v) {
+    if (v === void 0) return DROP;
+    const t = typeof v;
+    if (t === "function" || t === "symbol") return DROP;
+    if (t === "number") return Number.isFinite(v) ? v : null;
+    if (t === "bigint") return String(v);
+    if (t === "string" || t === "boolean") return v;
+    if (v === null) return null;
+    return void 0;
+  }
+  function special(v) {
+    if (v instanceof Uint8Array) return { bytes: v.length };
+    if (v instanceof Date) {
+      const time = v.getTime();
+      return Number.isNaN(time) ? null : v.toISOString();
+    }
+    if (isError(v)) {
+      const out = {};
+      const name = read(v, "name");
+      put(out, "name", typeof name === "string" ? name : "Error");
+      put(out, "message", String(read(v, "message")));
+      return out;
+    }
+    if (isNodeLike(v)) {
+      const out = {};
+      for (const k of ["id", "type", "name"]) put(out, k, read(v, k));
+      return out;
+    }
+    return void 0;
+  }
+  function child(v, depth, path) {
+    const r = convert(v, depth, path);
+    return r === DROP ? null : r;
+  }
+  function walk(v, depth, path) {
+    try {
+      if (v instanceof Set) return Array.from(v, (x) => child(x, depth + 1, path));
+      if (v instanceof Map) {
+        return Array.from(v, ([k, val]) => [
+          child(k, depth + 2, path),
+          child(val, depth + 2, path)
+        ]);
+      }
+      if (Array.isArray(v)) {
+        return Array.from(
+          { length: v.length },
+          (_, i) => child(read(v, String(i)), depth + 1, path)
+        );
+      }
+      const out = {};
+      for (const k of Object.keys(v)) {
+        const r = convert(read(v, k), depth + 1, path);
+        if (r !== DROP) put(out, k, r);
+      }
+      return out;
+    } catch {
+      return UNREADABLE;
+    }
+  }
+  function convert(v, depth, path) {
+    const s = scalar(v);
+    if (s !== void 0) return s;
+    const o = v;
+    const sp = special(o);
+    if (sp !== void 0) return sp;
+    if (path.includes(o)) return "[Circular]";
+    if (depth > MAX_DEPTH) return "[Depth]";
+    path.push(o);
+    try {
+      return walk(o, depth, path);
+    } finally {
+      path.pop();
+    }
+  }
+  function toJsonValue(value) {
+    const r = convert(value, 0, []);
+    return r === DROP ? null : r;
+  }
+  function isRecord3(v) {
+    return isObject(v) && !Array.isArray(v);
+  }
+  function errorOf(e) {
+    let message;
+    let stack;
+    let name;
+    let data;
+    if (typeof e === "string") {
+      message = e;
+    } else if (isError(e)) {
+      message = String(read(e, "message"));
+      stack = read(e, "stack");
+      name = read(e, "name");
+      data = read(e, "data");
+    } else if (e === void 0 || e === null) {
+      message = "";
+    } else {
+      message = JSON.stringify(toJsonValue(e));
+      if (isRecord3(e)) data = read(e, "data");
+    }
+    if (message === "")
+      message = typeof name === "string" && name ? name : "Unknown error";
+    const out = {
+      message: message.slice(0, MAX_ERROR_CHARS)
+    };
+    if (typeof stack === "string") out.stack = stack.slice(0, MAX_ERROR_CHARS);
+    if (isRecord3(data)) out.data = toJsonValue(data);
+    return out;
+  }
+
+  // plugins/ezg-tools/src/ui/bridge/capture-dom.ts
+  function syncFormState(orig, copy2) {
+    if (orig instanceof HTMLInputElement) {
+      copy2.setAttribute("value", orig.value);
+      if (orig.checked) copy2.setAttribute("checked", "");
+      else copy2.removeAttribute("checked");
+    } else if (orig instanceof HTMLTextAreaElement) {
+      copy2.textContent = orig.value;
+    } else if (orig instanceof HTMLSelectElement) {
+      Array.from(copy2.querySelectorAll("option")).forEach((option, i) => {
+        if (i === orig.selectedIndex) option.setAttribute("selected", "");
+        else option.removeAttribute("selected");
+      });
+    }
+  }
+  function canvasToImg(orig, copy2) {
+    let src;
+    try {
+      src = orig.toDataURL();
+    } catch {
+      return;
+    }
+    const img = copy2.ownerDocument.createElement("img");
+    img.src = src;
+    img.setAttribute("width", String(orig.width));
+    img.setAttribute("height", String(orig.height));
+    const cls = orig.getAttribute("class");
+    const style = orig.getAttribute("style");
+    if (cls !== null) img.setAttribute("class", cls);
+    if (style !== null) img.setAttribute("style", style);
+    copy2.replaceWith(img);
+  }
+  function applyScroll(orig, copy2) {
+    if (orig.scrollTop <= 0 && orig.scrollLeft <= 0) return;
+    const shift = `translate(-${orig.scrollLeft}px, -${orig.scrollTop}px)`;
+    for (const child2 of Array.from(copy2.children)) {
+      if (!(child2 instanceof HTMLElement)) continue;
+      const existing = child2.style.transform;
+      child2.style.transform = existing ? `${existing} ${shift}` : shift;
+    }
+  }
+  function cloneForCapture(doc) {
+    const root = doc.documentElement;
+    const clone = root.cloneNode(true);
+    const originals = Array.from(root.querySelectorAll("*"));
+    const copies = Array.from(clone.querySelectorAll("*"));
+    const pairs = originals.map((orig, i) => [orig, copies[i]]);
+    for (const [orig, copy2] of pairs) {
+      syncFormState(orig, copy2);
+      applyScroll(orig, copy2);
+    }
+    for (const [orig, copy2] of pairs) {
+      if (orig instanceof HTMLCanvasElement) canvasToImg(orig, copy2);
+    }
+    clone.querySelectorAll("script").forEach((el2) => el2.remove());
+    clone.querySelectorAll("style").forEach((el2) => {
+      el2.textContent = (el2.textContent ?? "").replace(/:root/g, "html");
+    });
+    const view = doc.defaultView;
+    if (view) {
+      clone.style.width = `${view.innerWidth}px`;
+      clone.style.height = `${view.innerHeight}px`;
+    }
+    return clone;
+  }
+
+  // plugins/ezg-tools/src/ui/bridge/capture.ts
+  var PNG_PREFIX = "data:image/png;base64,";
+  function clampScale(scale) {
+    const s = scale ?? devicePixelRatio ?? 1;
+    if (!(s > 0)) return 1;
+    return Math.min(s, UI_SCREENSHOT_MAX_SCALE);
+  }
+  function loadSvg(svg3) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("ui screenshot: SVG did not load"));
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg3);
+    });
+  }
+  async function captureUi(scale) {
+    const w = innerWidth;
+    const h = innerHeight;
+    const s = clampScale(scale);
+    const markup2 = new XMLSerializer().serializeToString(
+      cloneForCapture(document)
+    );
+    const svg3 = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject x="0" y="0" width="100%" height="100%">${markup2}</foreignObject></svg>`;
+    const img = await loadSvg(svg3);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(w * s);
+    canvas.height = Math.round(h * s);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("ui screenshot: no 2d context");
+    ctx.fillStyle = getComputedStyle(document.body).backgroundColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(s, s);
+    ctx.drawImage(img, 0, 0);
+    let url;
+    try {
+      url = canvas.toDataURL("image/png");
+    } catch {
+      throw new Error("ui screenshot: canvas is tainted");
+    }
+    return {
+      image: {
+        name: `plugin-ui (${w}x${h} @${s}x).png`,
+        base64: url.slice(PNG_PREFIX.length),
+        mimeType: "image/png"
+      },
+      width: w,
+      height: h
+    };
+  }
+
+  // plugins/ezg-tools/src/ui/bridge/ui-ops.ts
+  async function runUiOp(id, op, payload) {
+    try {
+      const parsed = parsePayload(op, payload);
+      if (parsed === null) {
+        return {
+          kind: "reply",
+          id,
+          ok: false,
+          error: errorOf(`invalid payload for ${op}`)
+        };
+      }
+      switch (op) {
+        case "ui.screenshot":
+          return {
+            kind: "reply",
+            id,
+            ok: true,
+            result: await captureUi(parsed.scale)
+          };
+        default:
+          return op;
+      }
+    } catch (e) {
+      return { kind: "reply", id, ok: false, error: errorOf(e) };
+    }
+  }
+
   // plugins/ezg-tools/src/ui/bridge/relay.ts
   var started = false;
   var socket = null;
@@ -2614,17 +3482,24 @@ input[type=range]:focus-visible::-moz-range-thumb {
       });
       return;
     }
+    if (isUiOp(op)) {
+      void runUiOp(frame.id, op, frame.payload).then(sendReply);
+      return;
+    }
     post({ type: "bridge-request", id: frame.id, op, payload: frame.payload });
   }
-  function onReply(msg) {
-    const frame = msg.ok ? { kind: "reply", id: msg.id, ok: true, result: msg.result } : { kind: "reply", id: msg.id, ok: false, error: msg.error };
+  function sendReply(frame) {
     if (socket?.send(frame)) return;
     socket?.send({
       kind: "reply",
-      id: msg.id,
+      id: frame.id,
       ok: false,
       error: { message: "reply too large or connection lost" }
     });
+  }
+  function onReply(msg) {
+    const frame = msg.ok ? { kind: "reply", id: msg.id, ok: true, result: msg.result } : { kind: "reply", id: msg.id, ok: false, error: msg.error };
+    sendReply(frame);
   }
   function patchPage(data) {
     const { pageId, pageName } = data;
@@ -4285,8 +5160,8 @@ ${tags.join(", ")}` : hit.name;
       bl: scaled(bl, Math.min(bottom, left))
     };
   }
-  function isSharpCorner(corner, size) {
-    return corner.kind === "none" || size.sx < MIN_CORNER_SIZE || size.sy < MIN_CORNER_SIZE;
+  function isSharpCorner(corner, size2) {
+    return corner.kind === "none" || size2.sx < MIN_CORNER_SIZE || size2.sy < MIN_CORNER_SIZE;
   }
   function cornerFrame(id, w, h) {
     const frames = {
@@ -4297,16 +5172,16 @@ ${tags.join(", ")}` : hit.name;
     };
     return frames[id];
   }
-  function cornerCubics(id, corner, size, frame, w, h) {
-    if (isSharpCorner(corner, size)) return [];
+  function cornerCubics(id, corner, size2, frame, w, h) {
+    if (isSharpCorner(corner, size2)) return [];
     const map = (u, v) => ({
       x: clamp(
-        frame.o.x + u * size.sx * frame.u.x + v * size.sy * frame.v.x,
+        frame.o.x + u * size2.sx * frame.u.x + v * size2.sy * frame.v.x,
         0,
         w
       ),
       y: clamp(
-        frame.o.y + u * size.sx * frame.u.y + v * size.sy * frame.v.y,
+        frame.o.y + u * size2.sx * frame.u.y + v * size2.sy * frame.v.y,
         0,
         h
       )
@@ -4333,12 +5208,12 @@ ${tags.join(", ")}` : hit.name;
     const sizes = effectiveSizes(config, w, h);
     return CORNER_IDS.map((id) => {
       const frame = cornerFrame(id, w, h);
-      const size = sizes[id];
+      const size2 = sizes[id];
       return {
         id,
         frame,
-        size,
-        cubics: cornerCubics(id, config[id], size, frame, w, h)
+        size: size2,
+        cubics: cornerCubics(id, config[id], size2, frame, w, h)
       };
     });
   }
@@ -4392,9 +5267,9 @@ ${tags.join(", ")}` : hit.name;
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
   function outward(p, corner, bleed) {
-    const { frame, size } = corner;
-    const vertical = along(frame.o, frame.v, size.sy);
-    const horizontal = along(frame.o, frame.u, size.sx);
+    const { frame, size: size2 } = corner;
+    const vertical = along(frame.o, frame.v, size2.sy);
+    const horizontal = along(frame.o, frame.u, size2.sx);
     const onVertical = distance(p, vertical) <= distance(p, horizontal);
     return along(p, onVertical ? frame.u : frame.v, -bleed);
   }
@@ -4656,7 +5531,7 @@ ${tags.join(", ")}` : hit.name;
     observer2.observe(el.rail);
     for (const panel of panels) {
       observer2.observe(panel);
-      for (const child of Array.from(panel.children)) observer2.observe(child);
+      for (const child2 of Array.from(panel.children)) observer2.observe(child2);
     }
   }
 

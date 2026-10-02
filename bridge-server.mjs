@@ -42086,12 +42086,12 @@ var init_mcp = __esm({
         }
         return registeredPrompt;
       }
-      _createRegisteredTool(name, title, description, inputSchema2, outputSchema, annotations, execution, _meta, handler) {
+      _createRegisteredTool(name, title, description, inputSchema3, outputSchema, annotations, execution, _meta, handler) {
         validateAndWarnToolName(name);
         const registeredTool = {
           title,
           description,
-          inputSchema: getZodSchemaObject(inputSchema2),
+          inputSchema: getZodSchemaObject(inputSchema3),
           outputSchema: getZodSchemaObject(outputSchema),
           annotations,
           execution,
@@ -42142,7 +42142,7 @@ var init_mcp = __esm({
           throw new Error(`Tool ${name} is already registered`);
         }
         let description;
-        let inputSchema2;
+        let inputSchema3;
         let outputSchema;
         let annotations;
         if (typeof rest[0] === "string") {
@@ -42151,7 +42151,7 @@ var init_mcp = __esm({
         if (rest.length > 1) {
           const firstArg = rest[0];
           if (isZodRawShapeCompat(firstArg)) {
-            inputSchema2 = rest.shift();
+            inputSchema3 = rest.shift();
             if (rest.length > 1 && typeof rest[0] === "object" && rest[0] !== null && !isZodRawShapeCompat(rest[0])) {
               annotations = rest.shift();
             }
@@ -42163,7 +42163,7 @@ var init_mcp = __esm({
           }
         }
         const callback = rest[0];
-        return this._createRegisteredTool(name, void 0, description, inputSchema2, outputSchema, annotations, { taskSupport: "forbidden" }, void 0, callback);
+        return this._createRegisteredTool(name, void 0, description, inputSchema3, outputSchema, annotations, { taskSupport: "forbidden" }, void 0, callback);
       }
       /**
        * Registers a tool with a config object and callback.
@@ -42172,8 +42172,8 @@ var init_mcp = __esm({
         if (this._registeredTools[name]) {
           throw new Error(`Tool ${name} is already registered`);
         }
-        const { title, description, inputSchema: inputSchema2, outputSchema, annotations, _meta } = config2;
-        return this._createRegisteredTool(name, title, description, inputSchema2, outputSchema, annotations, { taskSupport: "forbidden" }, _meta, cb);
+        const { title, description, inputSchema: inputSchema3, outputSchema, annotations, _meta } = config2;
+        return this._createRegisteredTool(name, title, description, inputSchema3, outputSchema, annotations, { taskSupport: "forbidden" }, _meta, cb);
       }
       prompt(name, ...rest) {
         if (this._registeredPrompts[name]) {
@@ -42646,7 +42646,8 @@ var init_context = __esm({
       journal: "journal",
       iconsSearch: "icons_search",
       iconsPlace: "icons_place",
-      iconsTag: "icons_tag"
+      iconsTag: "icons_tag",
+      uiScreenshot: "ui_screenshot"
     };
     BridgeCallError = class extends Error {
       code;
@@ -44003,7 +44004,14 @@ function parseGlossarySet(raw) {
   if (!isRecord(raw) || !Array.isArray(raw.rules)) return null;
   return { rules: sanitizeRules(raw.rules) };
 }
-var EXPORT_FORMATS, FORMAT_SET, str2, nonEmptyStr2, positive, strArray, parseEmpty, PARSERS;
+function parseUiScreenshot(raw) {
+  if (raw === void 0 || raw === null) return {};
+  if (!isRecord(raw)) return null;
+  if (raw.scale === void 0) return {};
+  if (!positive(raw.scale) || raw.scale > UI_SCREENSHOT_MAX_SCALE) return null;
+  return { scale: raw.scale };
+}
+var EXPORT_FORMATS, FORMAT_SET, str2, nonEmptyStr2, positive, strArray, parseEmpty, UI_SCREENSHOT_MAX_SCALE, PARSERS;
 var init_bridge_parse = __esm({
   "plugins/ezg-tools/src/shared/bridge-parse.ts"() {
     "use strict";
@@ -44028,6 +44036,7 @@ var init_bridge_parse = __esm({
     positive = (v) => isFiniteNumber(v) && v > 0;
     strArray = (v) => Array.isArray(v) && v.every(str2);
     parseEmpty = (raw) => raw === void 0 || raw === null || isRecord(raw) ? {} : null;
+    UI_SCREENSHOT_MAX_SCALE = 4;
     PARSERS = {
       eval: parseEval,
       "view.get": parseEmpty,
@@ -44044,7 +44053,8 @@ var init_bridge_parse = __esm({
       build: parseBuildPayload,
       "icons.search": parseIconsSearch,
       "icons.place": parseIconsPlace,
-      "icons.tag": parseIconsTag
+      "icons.tag": parseIconsTag,
+      "ui.screenshot": parseUiScreenshot
     };
   }
 });
@@ -44083,7 +44093,8 @@ var init_bridge_ops = __esm({
       build: true,
       "icons.search": true,
       "icons.place": true,
-      "icons.tag": true
+      "icons.tag": true,
+      "ui.screenshot": true
     };
     BRIDGE_OPS = Object.keys(
       OP_TABLE
@@ -44651,6 +44662,92 @@ var init_session = __esm({
   }
 });
 
+// bridge-server/src/tools/ui-screenshot.ts
+import { mkdir as mkdir2, writeFile as writeFile2 } from "node:fs/promises";
+import { dirname as dirname2, isAbsolute as isAbsolute2 } from "node:path";
+var UI_SCREENSHOT_TIMEOUT_MS, UPDATE_HINT, inputSchema2, registerUiScreenshot;
+var init_ui_screenshot = __esm({
+  "bridge-server/src/tools/ui-screenshot.ts"() {
+    "use strict";
+    init_zod();
+    init_bridge_parse();
+    init_bridge_ops();
+    init_context();
+    init_tool_result();
+    UI_SCREENSHOT_TIMEOUT_MS = 15e3;
+    UPDATE_HINT = "Update the plugin (re-run the installer) and reopen it.";
+    inputSchema2 = {
+      fileKey: external_exports.string().min(1).optional().describe(
+        "file key or clientId from `files`; may be omitted when one file is connected"
+      ),
+      scale: external_exports.number().gt(0).max(UI_SCREENSHOT_MAX_SCALE).optional(),
+      outPath: external_exports.string().optional()
+    };
+    registerUiScreenshot = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.uiScreenshot,
+        {
+          title: "Screenshot the plugin UI",
+          description: "Captures the content of the EZG Tools plugin window (not the canvas, not Figma chrome) as a PNG. scale defaults to the screen pixel ratio. outPath, an absolute path ending in .png, also writes the file on the machine that runs the server; an existing file is overwritten. Use it to document or check the plugin UI.",
+          inputSchema: inputSchema2,
+          annotations: { readOnlyHint: true }
+        },
+        async ({ fileKey: fileKey5, scale, outPath }) => {
+          if (outPath !== void 0 && !(isAbsolute2(outPath) && /\.png$/i.test(outPath)))
+            return errorResult(
+              "outPath must be an absolute path ending in .png",
+              "The tool does not expand ~ or relative paths."
+            );
+          const resolved = ctx2.files.resolve(fileKey5);
+          if ("error" in resolved) return errorResult(resolved.error);
+          const { file: file2, note } = resolved;
+          const payload = parsePayload(
+            "ui.screenshot",
+            scale === void 0 ? {} : { scale }
+          );
+          if (!payload) return errorResult("invalid screenshot arguments");
+          let shot;
+          try {
+            shot = await ctx2.rpc.call(
+              file2.connectionId,
+              "ui.screenshot",
+              payload,
+              UI_SCREENSHOT_TIMEOUT_MS
+            );
+          } catch (e) {
+            if (e instanceof BridgeCallError && e.code === "remote" && e.message.includes("ui.screenshot"))
+              return fromBridgeError(
+                e.remote ?? { message: e.message },
+                UPDATE_HINT
+              );
+            return fromCallError(e);
+          }
+          if (outPath) {
+            try {
+              await mkdir2(dirname2(outPath), { recursive: true });
+              await writeFile2(outPath, Buffer.from(shot.image.base64, "base64"));
+            } catch (e) {
+              return errorResult(
+                "Cannot write outPath: " + (e instanceof Error ? e.message : String(e))
+              );
+            }
+          }
+          const meta3 = { width: shot.width, height: shot.height, path: outPath };
+          return withNotes(
+            {
+              content: [
+                { type: "text", text: JSON.stringify(meta3) },
+                ...imageBlocks([shot.image])
+              ]
+            },
+            note ? [note] : []
+          );
+        }
+      );
+    };
+  }
+});
+
 // bridge-server/src/tools/view.ts
 function resolveFile(ctx2, target) {
   const resolved = ctx2.files.resolve(target);
@@ -44754,6 +44851,7 @@ var init_mcp2 = __esm({
     init_journal2();
     init_lint();
     init_session();
+    init_ui_screenshot();
     init_view();
     SERVER_VERSION = "1.0.0";
     EXIT_GRACE_MS2 = 2e3;
@@ -44806,6 +44904,7 @@ var init_mcp2 = __esm({
       registerEval,
       registerSession,
       registerView,
+      registerUiScreenshot,
       registerHistoryTools,
       registerExport,
       registerEventTools,
