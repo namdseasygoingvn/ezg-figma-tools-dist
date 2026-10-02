@@ -1372,7 +1372,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.30" : "dev";
+  var BUILD_VERSION = true ? "0.1.31" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -2636,7 +2636,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     grid.setAttribute("role", "list");
     const empty = make2("p", "ic-empty", content);
     empty.hidden = true;
-    return { select: select2, search, status, grid, empty };
+    return { panel, select: select2, search, status, grid, empty };
   }
   var iconsEl = buildIconsDom();
 
@@ -2987,9 +2987,11 @@ ${tags.join(", ")}` : hit.name;
       return tile;
     });
     visibleTiles = tileList;
+    const { scrollTop } = iconsEl.panel;
     iconsEl.grid.replaceChildren(...tileList);
     iconsEl.grid.hidden = hits.length === 0;
     placeDetail();
+    iconsEl.panel.scrollTop = scrollTop;
     if (!observing) {
       observer.observe(iconsEl.grid);
       observing = true;
@@ -3042,6 +3044,25 @@ ${tags.join(", ")}` : hit.name;
     if (hold) statusTimer = setTimeout(() => iconsEl.status.hidden = true, hold);
   }
 
+  // plugins/ezg-tools/src/ui/icons/toggle-tile.ts
+  function toggleTile(tile) {
+    const libraryId = tile.dataset.library ?? "";
+    const name = tile.dataset.name ?? "";
+    const { selected } = iconsState;
+    const same = selected?.libraryId === libraryId && selected.name === name;
+    iconsState.selected = same ? null : { libraryId, name };
+    const before = tile.getBoundingClientRect().top;
+    for (const pressed of iconsEl.grid.querySelectorAll(
+      '.ic-tile[aria-pressed="true"]'
+    ))
+      pressed.setAttribute("aria-pressed", "false");
+    tile.setAttribute("aria-pressed", String(!same));
+    renderTagEditor();
+    placeDetail();
+    iconsEl.panel.scrollTop += tile.getBoundingClientRect().top - before;
+    if (!same) tagEditorEl()?.scrollIntoView({ block: "nearest" });
+  }
+
   // plugins/ezg-tools/src/ui/icons/interact.ts
   function tileOf(target) {
     return target instanceof Element ? target.closest(".ic-tile") : null;
@@ -3057,14 +3078,7 @@ ${tags.join(", ")}` : hit.name;
     });
     iconsEl.grid.addEventListener("click", (e) => {
       const tile = tileOf(e.target);
-      if (!tile) return;
-      const libraryId = tile.dataset.library ?? "";
-      const name = tile.dataset.name ?? "";
-      const { selected } = iconsState;
-      const same = selected?.libraryId === libraryId && selected.name === name;
-      iconsState.selected = same ? null : { libraryId, name };
-      renderGrid();
-      renderTagEditor();
+      if (tile) toggleTile(tile);
     });
   }
 
