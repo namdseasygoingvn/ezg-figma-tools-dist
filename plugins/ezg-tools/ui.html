@@ -909,6 +909,69 @@ input[type=range]:focus-visible::-moz-range-thumb {
   font-size: 10px;
   color: var(--figma-color-text-secondary, #666);
 }
+.ic-tags {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 5px;
+  background: var(--figma-color-bg-secondary);
+}
+.ic-tags-title {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+  color: var(--figma-color-text);
+}
+.ic-tags-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ic-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 2px 0 6px;
+  border-radius: 5px;
+  background: var(--figma-color-bg-selected);
+  color: var(--figma-color-text);
+  overflow-wrap: anywhere;
+}
+.ic-chip-remove {
+  appearance: none;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--figma-color-text-secondary);
+  outline: none;
+  cursor: default;
+}
+.ic-chip-remove:hover {
+  background: var(--figma-color-bg-hover);
+  color: var(--figma-color-text);
+}
+.ic-chip-remove:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--figma-color-border-selected);
+}
+.ic-tag-input {
+  width: 100%;
+}
+.ic-tags-note {
+  margin: 0;
+  color: var(--figma-color-text-secondary);
+}
+.ic-tags-signin {
+  justify-self: start;
+}
 
 /* plugins/ezg-tools/src/ui/styles/bridge.css */
 .br-content {
@@ -1256,7 +1319,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.26" : "dev";
+  var BUILD_VERSION = true ? "0.1.27" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -1754,7 +1817,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     deleteSaved: (name) => `Xo\xE1 profile \u0111\xE3 l\u01B0u ${name}`,
     deleteProfile: "Xo\xE1 profile",
     presetAria: (kind) => `Profile ${KIND_LABELS[kind]}`,
-    selectedSummary: (parts, skipped) => `\u0110\xE3 ch\u1ECDn ${parts.join(" v\xE0 ")}` + (skipped > 0 ? `, b\u1ECF qua ${skipped}` : ""),
+    selectedSummary: (parts2, skipped) => `\u0110\xE3 ch\u1ECDn ${parts2.join(" v\xE0 ")}` + (skipped > 0 ? `, b\u1ECF qua ${skipped}` : ""),
     rectCount: (n) => `${n} h\xECnh ch\u1EEF nh\u1EADt`,
     profileLayerCount: (n) => `${n} layer profile`
   };
@@ -2075,6 +2138,23 @@ input[type=range]:focus-visible::-moz-range-thumb {
     ...Object.keys(LAYOUT_ENUMS)
   ];
 
+  // plugins/ezg-tools/src/shared/icon-tags.ts
+  var TAG_MAX_LENGTH = 32;
+  var TAGS_PER_ICON_MAX = 24;
+  function iconTagKey(libraryId, name) {
+    return `${libraryId}/${name}`;
+  }
+  function normalizeTag(raw) {
+    const tag = raw.trim().replace(/\s+/g, " ").toLowerCase();
+    if (tag === "" || tag.length > TAG_MAX_LENGTH || tag.includes("/")) {
+      return null;
+    }
+    return tag;
+  }
+  function foldText(text) {
+    return text.normalize("NFD").replace(/\p{M}/gu, "").replace(/[đĐ]/g, "d").toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  }
+
   // plugins/ezg-tools/src/shared/bridge-parse.ts
   var EXPORT_FORMATS = [
     "PNG",
@@ -2099,7 +2179,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "glossary.set": true,
     inventory: true,
     lint: true,
-    build: true
+    build: true,
+    "icons.search": true,
+    "icons.place": true,
+    "icons.tag": true
   };
   var BRIDGE_OPS = Object.keys(
     OP_TABLE
@@ -2477,23 +2560,59 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "spawn-failed": "Kh\xF4ng th\u1EC3 \u0111\u1EB7t icon l\xEAn canvas"
   };
 
+  // plugins/ezg-tools/src/shared/icon-rank.ts
+  function queryWords(query) {
+    const words = foldText(query).split(" ").filter(Boolean);
+    return words[0] === "icon" ? words.slice(1) : words;
+  }
+  function fold(name, tags) {
+    const nameText = foldText(iconDisplayName(name));
+    return {
+      nameText,
+      nameWords: nameText.split(" ").filter(Boolean),
+      tags: tags.map(foldText)
+    };
+  }
+  function wordScore(word, f) {
+    let best = 0;
+    for (const w of f.nameWords) {
+      if (w === word) return 3;
+      best = Math.max(best, w.startsWith(word) ? 2 : 0);
+    }
+    if (f.nameText.includes(word)) best = Math.max(best, 1);
+    for (const tag of f.tags) {
+      if (tag === word) return 3;
+      if (tag.startsWith(word)) best = Math.max(best, 2);
+      else if (tag.includes(word)) best = Math.max(best, 1);
+    }
+    return best;
+  }
+  function scoreFolded(words, f) {
+    let total = 0;
+    for (const word of words) {
+      const s = wordScore(word, f);
+      if (s === 0) return 0;
+      total += s;
+    }
+    return total;
+  }
+  function iconScore(name, tags, query) {
+    const words = queryWords(query);
+    if (words.length === 0) return 1;
+    return scoreFolded(words, fold(name, tags));
+  }
+
   // plugins/ezg-tools/src/shared/icon-search.ts
   function iconDisplayName(name) {
     return name.startsWith(ICON_PREFIX) ? name.slice(ICON_PREFIX.length) : name;
   }
-  function normalize(text) {
-    return text.toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ").trim();
-  }
-  function normalizeQuery(query) {
-    return normalize(query).replace(/^icon\b\s*/, "");
-  }
-  function filterIcons(catalog, libraryId, query) {
-    const needle = normalizeQuery(query);
+  function filterIcons(catalog, libraryId, query, tags = {}) {
     const hits = [];
     for (const library of catalog.libraries) {
       if (libraryId !== ALL_LIBRARIES_ID && library.id !== libraryId) continue;
       for (const { name, svg: svg3 } of library.icons) {
-        if (needle && !normalize(iconDisplayName(name)).includes(needle)) continue;
+        const iconTags = tags[iconTagKey(library.id, name)] ?? [];
+        if (iconScore(name, iconTags, query) <= 0) continue;
         hits.push({ libraryId: library.id, name, svg: svg3 });
       }
     }
@@ -2501,7 +2620,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/ui/icons/state.ts
-  var iconsState = { catalog: null, libraryId: ALL_LIBRARIES_ID, query: "" };
+  var iconsState = {
+    catalog: null,
+    libraryId: ALL_LIBRARIES_ID,
+    query: "",
+    tags: {},
+    tagsState: "loading",
+    selected: null
+  };
 
   // plugins/ezg-tools/src/ui/icons/thumb.ts
   var SVG_ROOT = /^\s*(<\?xml[^>]*\?>\s*)?(<!--[\s\S]*?-->\s*)?<svg[\s>]/;
@@ -2513,12 +2639,17 @@ input[type=range]:focus-visible::-moz-range-thumb {
   // plugins/ezg-tools/src/ui/icons/render.ts
   var tiles = /* @__PURE__ */ new Map();
   var statusTimer = 0;
+  function tileTitle(hit) {
+    const tags = iconsState.tags[iconTagKey(hit.libraryId, hit.name)] ?? [];
+    return tags.length ? `${hit.name}
+${tags.join(", ")}` : hit.name;
+  }
   function makeTile(hit) {
     const tile = document.createElement("button");
     tile.type = "button";
     tile.className = "ic-tile";
     tile.draggable = true;
-    tile.title = hit.name;
+    tile.title = tileTitle(hit);
     tile.dataset.library = hit.libraryId;
     tile.dataset.name = hit.name;
     tile.setAttribute("role", "listitem");
@@ -2539,7 +2670,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return tile;
   }
   function tileFor(hit) {
-    const key = `${hit.libraryId}/${hit.name}`;
+    const key = iconTagKey(hit.libraryId, hit.name);
     let tile = tiles.get(key);
     if (!tile) {
       tile = makeTile(hit);
@@ -2548,9 +2679,16 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return tile;
   }
   function renderGrid() {
-    const { catalog, libraryId, query } = iconsState;
-    const hits = catalog ? filterIcons(catalog, libraryId, query) : [];
-    iconsEl.grid.replaceChildren(...hits.map(tileFor));
+    const { catalog, libraryId, query, tags, selected } = iconsState;
+    const hits = catalog ? filterIcons(catalog, libraryId, query, tags) : [];
+    const tileList = hits.map((hit) => {
+      const tile = tileFor(hit);
+      tile.title = tileTitle(hit);
+      const on = selected?.libraryId === hit.libraryId && selected.name === hit.name;
+      tile.setAttribute("aria-pressed", String(on));
+      return tile;
+    });
+    iconsEl.grid.replaceChildren(...tileList);
     iconsEl.grid.hidden = hits.length === 0;
     iconsEl.empty.textContent = catalog ? UI_TEXT.iconNoResults : "";
     iconsEl.empty.hidden = hits.length > 0 || !catalog;
@@ -2572,8 +2710,18 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
   function setCatalog(catalog) {
     iconsState.catalog = catalog;
+    const { selected } = iconsState;
+    if (selected && !catalog.libraries.some(
+      (l) => l.id === selected.libraryId && l.icons.some((i) => i.name === selected.name)
+    ))
+      iconsState.selected = null;
     tiles.clear();
     renderLibraries(catalog);
+    renderGrid();
+  }
+  function setTags(tags, state2) {
+    iconsState.tags = tags;
+    iconsState.tagsState = state2;
     renderGrid();
   }
   var HOLD_MS = {
@@ -2588,6 +2736,177 @@ input[type=range]:focus-visible::-moz-range-thumb {
     iconsEl.status.hidden = false;
     const hold = HOLD_MS[state2];
     if (hold) statusTimer = setTimeout(() => iconsEl.status.hidden = true, hold);
+  }
+
+  // plugins/ezg-tools/src/shared/icon-tag-copy.ts
+  var ICON_TAG_COPY = {
+    title: (name) => `Tag c\u1EE7a ${name}`,
+    none: "Ch\u1ECDn m\u1ED9t icon \u0111\u1EC3 s\u1EEDa tag",
+    empty: "Ch\u01B0a c\xF3 tag",
+    placeholder: "Th\xEAm tag (EN/VI), Enter \u0111\u1EC3 l\u01B0u",
+    remove: (tag) => `Xo\xE1 tag ${tag}`,
+    invalid: "Tag 1\u201332 k\xFD t\u1EF1, kh\xF4ng c\xF3 d\u1EA5u /",
+    full: "T\u1ED1i \u0111a 24 tag cho m\u1ED7i icon",
+    saveFailed: "Kh\xF4ng l\u01B0u \u0111\u01B0\u1EE3c tag",
+    signIn: "\u0110\u0103ng nh\u1EADp \u0111\u1EC3 xem v\xE0 s\u1EEDa tag",
+    signInButton: "\u0110\u0103ng nh\u1EADp",
+    waiting: "\u0110ang ch\u1EDD \u0111\u0103ng nh\u1EADp tr\xEAn tr\xECnh duy\u1EC7t\u2026",
+    state: {
+      loading: "\u0110ang t\u1EA3i tag\u2026",
+      offline: "Kh\xF4ng k\u1EBFt n\u1ED1i \u0111\u01B0\u1EE3c, tag ch\u01B0a t\u1EA3i"
+    }
+  };
+
+  // plugins/ezg-tools/src/ui/icons/tag-sign-in.ts
+  var FAILURE_TEXT2 = {
+    blocked: AUTH_COPY.status.blocked,
+    offline: AUTH_COPY.status.offline,
+    unauthorized: AUTH_COPY.status.failed,
+    gone: AUTH_COPY.status.expired,
+    bad: AUTH_COPY.status.failed,
+    timeout: AUTH_COPY.status.timedOut
+  };
+  function buildTagSignIn() {
+    const note = document.createElement("p");
+    note.className = "ic-tags-note";
+    note.textContent = ICON_TAG_COPY.signIn;
+    const button4 = document.createElement("button");
+    button4.type = "button";
+    button4.className = "cp-btn secondary ic-tags-signin";
+    button4.textContent = ICON_TAG_COPY.signInButton;
+    const root = document.createElement("div");
+    root.append(note, button4);
+    let run = null;
+    function reset(text) {
+      note.textContent = text;
+      button4.textContent = ICON_TAG_COPY.signInButton;
+    }
+    async function signIn() {
+      if (run) {
+        run.cancel();
+        run = null;
+        return reset(ICON_TAG_COPY.signIn);
+      }
+      const current = runSignIn(
+        (url) => post({ type: "auth-open", url }),
+        () => {
+          note.textContent = ICON_TAG_COPY.waiting;
+          button4.textContent = AUTH_COPY.cancel;
+        }
+      );
+      run = current;
+      const result = await current.result;
+      if (run !== current) return;
+      run = null;
+      if (result.ok) {
+        post({ type: "auth-save", session: result.session });
+        return reset(ICON_TAG_COPY.signIn);
+      }
+      if (result.reason === "cancelled") return reset(ICON_TAG_COPY.signIn);
+      reset(FAILURE_TEXT2[result.reason]);
+    }
+    button4.addEventListener("click", () => void signIn());
+    return root;
+  }
+
+  // plugins/ezg-tools/src/ui/icons/tag-editor.ts
+  var parts = null;
+  function make3(tag, className) {
+    const node = document.createElement(tag);
+    node.className = className;
+    return node;
+  }
+  function selectedTags() {
+    const { selected, tags } = iconsState;
+    return selected ? tags[iconTagKey(selected.libraryId, selected.name)] ?? [] : [];
+  }
+  function send(add, remove) {
+    const { selected, tags } = iconsState;
+    if (!selected) return;
+    const current = selectedTags();
+    const next = [...current.filter((tag) => !remove.includes(tag)), ...add];
+    tags[iconTagKey(selected.libraryId, selected.name)] = next;
+    post({
+      type: "icon-tag-set",
+      change: { libraryId: selected.libraryId, name: selected.name, add, remove }
+    });
+    renderTagEditor();
+  }
+  function showNote(text) {
+    if (!parts) return;
+    parts.note.textContent = text;
+    parts.note.hidden = text === "";
+  }
+  function addFromInput() {
+    if (!parts) return;
+    const tag = normalizeTag(parts.input.value);
+    if (tag === null) return showNote(ICON_TAG_COPY.invalid);
+    const current = selectedTags();
+    if (current.includes(tag)) {
+      parts.input.value = "";
+      return showNote("");
+    }
+    if (current.length >= TAGS_PER_ICON_MAX) return showNote(ICON_TAG_COPY.full);
+    parts.input.value = "";
+    showNote("");
+    send([tag], []);
+  }
+  function buildChip(tag) {
+    const chip = make3("span", "ic-chip");
+    const text = document.createElement("span");
+    text.textContent = tag;
+    const remove = make3("button", "ic-chip-remove");
+    remove.type = "button";
+    remove.textContent = "\xD7";
+    remove.setAttribute("aria-label", ICON_TAG_COPY.remove(tag));
+    remove.addEventListener("click", () => send([], [tag]));
+    chip.append(text, remove);
+    return chip;
+  }
+  function installTagEditor() {
+    if (parts) return;
+    const section = make3("section", "ic-tags");
+    const title = make3("h3", "ic-tags-title");
+    const chips = make3("div", "ic-tags-chips");
+    const input2 = make3("input", "ic-tag-input");
+    input2.type = "text";
+    input2.placeholder = ICON_TAG_COPY.placeholder;
+    input2.setAttribute("aria-label", ICON_TAG_COPY.placeholder);
+    const note = make3("p", "ic-tags-note");
+    const signIn = buildTagSignIn();
+    section.append(title, chips, input2, note, signIn);
+    input2.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || event.isComposing) return;
+      event.preventDefault();
+      addFromInput();
+    });
+    input2.addEventListener("input", () => showNote(""));
+    iconsEl.empty.after(section);
+    parts = { section, title, chips, input: input2, note, signIn };
+    renderTagEditor();
+  }
+  function renderTagEditor() {
+    if (!parts) return;
+    const { selected, tagsState } = iconsState;
+    const { title, chips, input: input2, note, signIn } = parts;
+    const editable = selected !== null && tagsState === "ready";
+    title.hidden = selected === null;
+    title.textContent = selected ? ICON_TAG_COPY.title(iconDisplayName(selected.name)) : "";
+    signIn.hidden = !(selected !== null && tagsState === "signed-out");
+    chips.hidden = !editable;
+    input2.hidden = !editable;
+    chips.replaceChildren();
+    if (!selected) return showNote(ICON_TAG_COPY.none);
+    if (tagsState === "loading" || tagsState === "offline") {
+      return showNote(ICON_TAG_COPY.state[tagsState]);
+    }
+    if (tagsState === "signed-out") return showNote("");
+    const tags = selectedTags();
+    chips.append(...tags.map(buildChip));
+    if (tags.length === 0) return showNote(ICON_TAG_COPY.empty);
+    if (note.textContent !== ICON_TAG_COPY.invalid && note.textContent !== ICON_TAG_COPY.full) {
+      showNote("");
+    }
   }
 
   // plugins/ezg-tools/src/ui/icons/interact.ts
@@ -2610,11 +2929,12 @@ input[type=range]:focus-visible::-moz-range-thumb {
     iconsEl.grid.addEventListener("click", (e) => {
       const tile = tileOf(e.target);
       if (!tile) return;
-      post({
-        type: "icon-spawn",
-        libraryId: tile.dataset.library ?? "",
-        name: tile.dataset.name ?? ""
-      });
+      const libraryId = tile.dataset.library ?? "";
+      const name = tile.dataset.name ?? "";
+      iconsState.selected = { libraryId, name };
+      renderGrid();
+      renderTagEditor();
+      post({ type: "icon-spawn", libraryId, name });
     });
     iconsEl.grid.addEventListener("dragstart", (e) => {
       const tile = tileOf(e.target);
@@ -3385,7 +3705,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const segs = segmentsD(disp, ex, ey);
     const start2 = `M${ex(0)} ${ey(1)}`;
     const cut = `${start2}${segs}L${ex(1)} 0L0 0L0 ${ey(1)}Z`;
-    const parts = [
+    const parts2 = [
       `<rect class="e-bg" x="${E_PAD}" y="${E_PAD}" width="${E_S}" height="${E_S}"/>`,
       `<path class="e-grid" d="${gridPath()}"/>`,
       `<mask id="e-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="${E_SIZE}" height="${E_SIZE}"><rect width="${E_SIZE}" height="${E_SIZE}" fill="#fff"/>${none ? "" : `<path d="${cut}" fill="#000"/>`}</mask>`,
@@ -3398,24 +3718,24 @@ input[type=range]:focus-visible::-moz-range-thumb {
       for (const side of visibleHandles(disp, a)) {
         const hx = fmt(ex(side === "in" ? n.ix : n.ox));
         const hy = fmt(ey(side === "in" ? n.iy : n.oy));
-        parts.push(
+        parts2.push(
           `<line class="e-hline" x1="${fmt(ex(n.x))}" y1="${fmt(ey(n.y))}" x2="${hx}" y2="${hy}"/>`
         );
-        parts.push(`<circle class="e-handle" cx="${hx}" cy="${hy}" r="3.5"/>`);
+        parts2.push(`<circle class="e-handle" cx="${hx}" cy="${hy}" r="3.5"/>`);
       }
     }
     disp.forEach((n, i) => {
       const cls = "e-anchor" + (i === a ? " is-selected" : "") + (i === 0 || i === disp.length - 1 ? " is-end" : "");
       if (n.mode === "sharp")
-        parts.push(
+        parts2.push(
           `<rect class="${cls}" x="${fmt(ex(n.x) - 4)}" y="${fmt(ey(n.y) - 4)}" width="8" height="8"/>`
         );
       else
-        parts.push(
+        parts2.push(
           `<circle class="${cls}" cx="${fmt(ex(n.x))}" cy="${fmt(ey(n.y))}" r="4.5"/>`
         );
     });
-    setMarkup(el.editor, parts.join(""));
+    setMarkup(el.editor, parts2.join(""));
     renderPointTools(a >= 0 ? disp[a] : null, a, disp.length);
   }
   function renderPointTools(node, a, length) {
@@ -3745,30 +4065,30 @@ input[type=range]:focus-visible::-moz-range-thumb {
   function networkToPathData(network, dx = 0, dy = 0) {
     const { vertices, segments } = network;
     if (!segments.length) return "";
-    const parts = [];
-    const point = (x, y) => parts.push(formatNumber(x + dx), formatNumber(y + dy));
+    const parts2 = [];
+    const point = (x, y) => parts2.push(formatNumber(x + dx), formatNumber(y + dy));
     let current = -1;
     for (const segment of segments) {
       const p0 = vertices[segment.start];
       const p3 = vertices[segment.end];
       if (segment.start !== current) {
-        parts.push("M");
+        parts2.push("M");
         point(p0.x, p0.y);
       }
       const ts = segment.tangentStart;
       const te = segment.tangentEnd;
       if (isZeroVector(ts) && isZeroVector(te)) {
-        parts.push("L");
+        parts2.push("L");
       } else {
-        parts.push("C");
+        parts2.push("C");
         point(p0.x + ts.x, p0.y + ts.y);
         point(p3.x + te.x, p3.y + te.y);
       }
       point(p3.x, p3.y);
       current = segment.end;
     }
-    parts.push("Z");
-    return parts.join(" ");
+    parts2.push("Z");
+    return parts2.join(" ");
   }
   function cutterPathData(shape, width, height, bleed = CUTTER_BLEED) {
     return buildCutters(shape, width, height, bleed).map(
@@ -3788,14 +4108,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const oy = (P_H - h * s) / 2;
     const x1 = ox + w * s;
     const y1 = oy + h * s;
-    const parts = [
+    const parts2 = [
       `<rect class="s-bounds" x="${fmt(ox)}" y="${fmt(oy)}" width="${fmt(w * s)}" height="${fmt(h * s)}"/>`
     ];
     const cuts = cutterPathData(state.config, w, h, 2 / s);
     const holes = cuts.map((d) => `<path d="${d}" fill="#000"/>`).join("");
     const edges = cuts.map((d) => `<path class="s-edge" d="${d}"/>`).join("");
     const box = `x="0" y="0" width="${fmt(w)}" height="${fmt(h)}"`;
-    parts.push(
+    parts2.push(
       `<g transform="translate(${fmt(ox)} ${fmt(oy)}) scale(${s})"><mask id="s-cuts" maskUnits="userSpaceOnUse" ${FAR}><rect ${FAR} fill="#fff"/>${holes}</mask><clipPath id="s-clip"><rect ${box}/></clipPath><rect class="s-shape" ${box} mask="url(#s-cuts)"/><g clip-path="url(#s-clip)" mask="url(#s-cuts)">${edges}</g></g>`
     );
     const pos = {
@@ -3808,11 +4128,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
     for (const id of CORNER_IDS) {
       const [cx, cy, dx, dy] = pos[id];
       const on = state.edit.has(id);
-      parts.push(
+      parts2.push(
         `<g class="s-hot${on ? " is-on" : ""}" data-corner="${id}" tabindex="0" role="button" aria-pressed="${on}" aria-label="${CORNER_NAMES[id]} corner"><title>${CORNER_NAMES[id]}</title>` + (on ? `<path class="s-bracket" d="M${fmt(cx + dx * arm)} ${fmt(cy)}H${fmt(cx)}V${fmt(cy + dy * arm)}"/>` : "") + `<rect class="s-hit" x="${fmt(cx - 12)}" y="${fmt(cy - 12)}" width="24" height="24"/><rect class="s-dot" x="${fmt(cx - 4.5)}" y="${fmt(cy - 4.5)}" width="9" height="9" rx="2"/></g>`
       );
     }
-    if (!setMarkup(el.shape, parts.join(""))) return;
+    if (!setMarkup(el.shape, parts2.join(""))) return;
     if (focusedCorner) {
       const again = el.shape.querySelector(
         `[data-corner="${focusedCorner}"]`
@@ -3836,12 +4156,12 @@ input[type=range]:focus-visible::-moz-range-thumb {
   // plugins/ezg-tools/src/ui/status.ts
   function selectionSummary(sel) {
     if (!sel.valid) return sel.reason || SELECT_RECT;
-    const parts = [];
+    const parts2 = [];
     const rects = sel.valid - sel.profileLayers;
-    if (rects > 0) parts.push(UI_TEXT.rectCount(rects));
+    if (rects > 0) parts2.push(UI_TEXT.rectCount(rects));
     if (sel.profileLayers > 0)
-      parts.push(UI_TEXT.profileLayerCount(sel.profileLayers));
-    return UI_TEXT.selectedSummary(parts, sel.skipped);
+      parts2.push(UI_TEXT.profileLayerCount(sel.profileLayers));
+    return UI_TEXT.selectedSummary(parts2, sel.skipped);
   }
   var statusTimer2 = 0;
   function showStatus(text, level, holdMs) {
@@ -3910,6 +4230,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
         break;
       case "icons-data":
         setCatalog(msg.catalog);
+        renderTagEditor();
+        break;
+      case "icons-tags":
+        setTags(msg.tags, msg.state);
+        renderTagEditor();
         break;
       case "icons-status":
         showIconsStatus(msg.state);
@@ -4608,6 +4933,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     onSandboxMessage(handleSandboxMessage);
     installPicker();
     installIconsUi();
+    installTagEditor();
     installControls();
     installProfiles();
     installEditor();

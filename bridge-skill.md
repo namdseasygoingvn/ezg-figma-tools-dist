@@ -170,6 +170,10 @@ The report has `checked`, `counts`, `findings` (`rule`, `nodeId`, `path`, `detai
 
 `{session?, since?, tool?, limit?}`. `session` is `current` (default), `all` or a session id. The journal lists time, tool, file, label, duration, ok, error head, byte sizes and stats of past calls. It never stores code or results. Set `EZG_FIGMA_BRIDGE_JOURNAL` to a path, or `off`.
 
+## icons
+
+`icons_search`, `icons_place` and `icons_tag` use the shared EZG icon library. Their tool descriptions are the full guide.
+
 ## Safety
 
 - Call `checkpoint` before a large edit.

@@ -42446,7 +42446,7 @@ var INSTRUCTIONS;
 var init_instructions = __esm({
   "bridge-server/src/instructions.ts"() {
     "use strict";
-    INSTRUCTIONS = 'Runs Plugin API code in the Figma file whose MCP tab in EZG Tools is connected, and reads or controls its selection, viewport, events, history and exports. If `files` shows none, ask the user to press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server" in the MCP tab. Any number of Claude sessions can use the same file at once. Start with `inventory`, and prefer `build` and `kit` over hand-written node code. Load the ezg-figma-bridge skill first.';
+    INSTRUCTIONS = 'Runs Plugin API code in the Figma file whose MCP tab in EZG Tools is connected, and reads or controls its selection, viewport, events, history and exports. If `files` shows none, ask the user to press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server" in the MCP tab. Any number of Claude sessions can use the same file at once. Start with `inventory`, and prefer `build` and `kit` over hand-written node code. Load the ezg-figma-bridge skill first. A shared EZG icon library is free for any task: before you draw or fake an icon, call `icons_search`, then `icons_place`.';
   }
 });
 
@@ -42643,7 +42643,10 @@ var init_context = __esm({
       inventory: "inventory",
       lint: "lint",
       build: "build",
-      journal: "journal"
+      journal: "journal",
+      iconsSearch: "icons_search",
+      iconsPlace: "icons_place",
+      iconsTag: "icons_tag"
     };
     BridgeCallError = class extends Error {
       code;
@@ -43522,13 +43525,13 @@ var init_build = __esm({
       server2.registerTool(
         TOOL_NAMES.build,
         { description: DESCRIPTION, inputSchema: buildInputSchema },
-        async ({ fileKey: fileKey4, parentId, pageId, nodes, atomic, lint, timeoutMs }) => {
+        async ({ fileKey: fileKey5, parentId, pageId, nodes, atomic, lint, timeoutMs }) => {
           const raw = { parentId, pageId, nodes, atomic, lint };
           const errors = buildErrors(raw);
           if (errors.length > 0) return errorResult(errors.join("\n"));
           const payload = parseBuildPayload(raw);
           if (!payload) return errorResult("invalid build payload");
-          const r = ctx2.files.resolve(fileKey4);
+          const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
           try {
             const res = await ctx2.rpc.call(
@@ -43622,8 +43625,8 @@ var init_eval = __esm({
       server2.registerTool(
         TOOL_NAMES.eval,
         { description: DESCRIPTION2, inputSchema: evalInputSchema },
-        async ({ fileKey: fileKey4, code, description, timeoutMs, atomic, pageId }) => {
-          const r = ctx2.files.resolve(fileKey4);
+        async ({ fileKey: fileKey5, code, description, timeoutMs, atomic, pageId }) => {
+          const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
           try {
             const res = await ctx2.rpc.call(
@@ -43819,11 +43822,121 @@ var init_bridge_inventory = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/constants.ts
+var ALL_LIBRARIES_ID;
+var init_constants = __esm({
+  "plugins/ezg-tools/src/shared/constants.ts"() {
+    "use strict";
+    ALL_LIBRARIES_ID = "all";
+  }
+});
+
+// plugins/ezg-tools/src/shared/icon-tags.ts
+function validIds(libraryId, name) {
+  return typeof libraryId === "string" && typeof name === "string" && ID_PATTERN.test(libraryId) && libraryId !== ALL_LIBRARIES_ID && NAME_PATTERN.test(name);
+}
+function normalizeTag(raw) {
+  const tag = raw.trim().replace(/\s+/g, " ").toLowerCase();
+  if (tag === "" || tag.length > TAG_MAX_LENGTH || tag.includes("/")) {
+    return null;
+  }
+  return tag;
+}
+function normalizeAll(raw) {
+  const out = /* @__PURE__ */ new Set();
+  for (const item of raw) {
+    if (typeof item !== "string") continue;
+    const tag = normalizeTag(item);
+    if (tag !== null) out.add(tag);
+  }
+  return [...out];
+}
+function changeList(raw) {
+  if (raw === void 0) return [];
+  if (!Array.isArray(raw)) return null;
+  const tags = normalizeAll(raw);
+  return tags.length > TAGS_PER_ICON_MAX ? null : tags;
+}
+function parseIconTagChange(raw) {
+  if (!isRecord(raw) || !validIds(raw.libraryId, raw.name)) return null;
+  const add = changeList(raw.add);
+  const remove = changeList(raw.remove);
+  if (add === null || remove === null) return null;
+  if (add.length === 0 && remove.length === 0) return null;
+  if (add.some((tag) => remove.includes(tag))) return null;
+  return {
+    libraryId: raw.libraryId,
+    name: raw.name,
+    add,
+    remove
+  };
+}
+var TAG_MAX_LENGTH, TAGS_PER_ICON_MAX, ID_PATTERN, NAME_PATTERN;
+var init_icon_tags = __esm({
+  "plugins/ezg-tools/src/shared/icon-tags.ts"() {
+    "use strict";
+    init_constants();
+    init_values();
+    TAG_MAX_LENGTH = 32;
+    TAGS_PER_ICON_MAX = 24;
+    ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
+    NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
+  }
+});
+
+// plugins/ezg-tools/src/shared/bridge-icons.ts
+function parseIconsSearch(raw) {
+  if (!isRecord(raw) || typeof raw.query !== "string") return null;
+  const out = { query: raw.query };
+  const { libraryId, limit } = raw;
+  if (libraryId !== void 0) {
+    if (!nonEmptyStr(libraryId)) return null;
+    out.libraryId = libraryId;
+  }
+  if (limit !== void 0) {
+    if (typeof limit !== "number" || !Number.isInteger(limit) || limit < 1 || limit > ICONS_SEARCH_MAX)
+      return null;
+    out.limit = limit;
+  }
+  return out;
+}
+function parseTint(raw) {
+  if (!isRecord(raw)) return null;
+  const { color, token } = raw;
+  if (color !== void 0 && token !== void 0) return null;
+  if (color !== void 0) {
+    return typeof color === "string" && HEX_COLOR.test(color) ? { color } : null;
+  }
+  return nonEmptyStr(token) ? { token } : null;
+}
+function parseIconsPlace(raw) {
+  if (!isRecord(raw)) return null;
+  const { libraryId, name, tint } = raw;
+  if (!nonEmptyStr(libraryId) || !nonEmptyStr(name)) return null;
+  if (tint === void 0) return { libraryId, name };
+  const parsed = parseTint(tint);
+  return parsed ? { libraryId, name, tint: parsed } : null;
+}
+function parseIconsTag(raw) {
+  return parseIconTagChange(raw);
+}
+var ICONS_SEARCH_MAX, HEX_COLOR, nonEmptyStr;
+var init_bridge_icons = __esm({
+  "plugins/ezg-tools/src/shared/bridge-icons.ts"() {
+    "use strict";
+    init_icon_tags();
+    init_values();
+    ICONS_SEARCH_MAX = 100;
+    HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
+    nonEmptyStr = (v) => typeof v === "string" && v.trim() !== "";
+  }
+});
+
 // plugins/ezg-tools/src/shared/bridge-parse.ts
 function parseEval(raw) {
   if (!isRecord(raw)) return null;
   const { code, description, timeoutMs } = raw;
-  if (!nonEmptyStr(code) || !str2(description) || !positive(timeoutMs))
+  if (!nonEmptyStr2(code) || !str2(description) || !positive(timeoutMs))
     return null;
   const options = parseEvalOptions(raw);
   if (!options) return null;
@@ -43856,7 +43969,7 @@ function parseViewSet(raw) {
   return out;
 }
 function parseCheckpoint(raw) {
-  if (!isRecord(raw) || !nonEmptyStr(raw.title)) return null;
+  if (!isRecord(raw) || !nonEmptyStr2(raw.title)) return null;
   if (raw.description === void 0) return { title: raw.title };
   if (!str2(raw.description)) return null;
   return { title: raw.title, description: raw.description };
@@ -43875,7 +43988,7 @@ function parseWatch(raw) {
   return { document: raw.document };
 }
 function parseCodegen(raw) {
-  if (!isRecord(raw) || !nonEmptyStr(raw.nodeId)) return null;
+  if (!isRecord(raw) || !nonEmptyStr2(raw.nodeId)) return null;
   const { snippets } = raw;
   if (!Array.isArray(snippets)) return null;
   try {
@@ -43890,7 +44003,7 @@ function parseGlossarySet(raw) {
   if (!isRecord(raw) || !Array.isArray(raw.rules)) return null;
   return { rules: sanitizeRules(raw.rules) };
 }
-var EXPORT_FORMATS, FORMAT_SET, str2, nonEmptyStr, positive, strArray, parseEmpty, PARSERS;
+var EXPORT_FORMATS, FORMAT_SET, str2, nonEmptyStr2, positive, strArray, parseEmpty, PARSERS;
 var init_bridge_parse = __esm({
   "plugins/ezg-tools/src/shared/bridge-parse.ts"() {
     "use strict";
@@ -43900,6 +44013,7 @@ var init_bridge_parse = __esm({
     init_bridge_inventory();
     init_lint_types();
     init_bridge_build();
+    init_bridge_icons();
     init_values();
     EXPORT_FORMATS = [
       "PNG",
@@ -43910,7 +44024,7 @@ var init_bridge_parse = __esm({
     ];
     FORMAT_SET = new Set(EXPORT_FORMATS);
     str2 = (v) => typeof v === "string";
-    nonEmptyStr = (v) => str2(v) && v.trim() !== "";
+    nonEmptyStr2 = (v) => str2(v) && v.trim() !== "";
     positive = (v) => isFiniteNumber(v) && v > 0;
     strArray = (v) => Array.isArray(v) && v.every(str2);
     parseEmpty = (raw) => raw === void 0 || raw === null || isRecord(raw) ? {} : null;
@@ -43927,7 +44041,10 @@ var init_bridge_parse = __esm({
       "glossary.set": parseGlossarySet,
       inventory: parseInventoryPayload,
       lint: parseLintPayload,
-      build: parseBuildPayload
+      build: parseBuildPayload,
+      "icons.search": parseIconsSearch,
+      "icons.place": parseIconsPlace,
+      "icons.tag": parseIconsTag
     };
   }
 });
@@ -43963,7 +44080,10 @@ var init_bridge_ops = __esm({
       "glossary.set": true,
       inventory: true,
       lint: true,
-      build: true
+      build: true,
+      "icons.search": true,
+      "icons.place": true,
+      "icons.tag": true
     };
     BRIDGE_OPS = Object.keys(
       OP_TABLE
@@ -44054,14 +44174,14 @@ var init_export = __esm({
           description: "Renders nodes of the open Figma file and writes them as files to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes. scale applies to PNG and JPG only. Existing files with the same name are overwritten, so use a fresh outDir.",
           inputSchema
         },
-        async ({ fileKey: fileKey4, nodeIds, format, scale, outDir }) => {
+        async ({ fileKey: fileKey5, nodeIds, format, scale, outDir }) => {
           if (!isAbsolute(outDir))
             return errorResult(
               "outDir must be an absolute path",
               "The tool does not expand ~ or relative paths."
             );
           const ids = [...new Set(nodeIds)];
-          const resolved = ctx2.files.resolve(fileKey4);
+          const resolved = ctx2.files.resolve(fileKey5);
           if ("error" in resolved) return errorResult(resolved.error);
           const { file: file2, note } = resolved;
           try {
@@ -44144,9 +44264,9 @@ var init_history = __esm({
             description: external_exports.string().max(500).optional()
           }
         },
-        async ({ fileKey: fileKey4, title, description }) => {
+        async ({ fileKey: fileKey5, title, description }) => {
           try {
-            const r = ctx2.files.resolve(fileKey4);
+            const r = ctx2.files.resolve(fileKey5);
             if ("error" in r) return errorResult(r.error);
             const payload = description === void 0 ? { title } : { title, description };
             const result = await ctx2.rpc.call(
@@ -44170,9 +44290,9 @@ var init_history = __esm({
           description: UNDO_DESCRIPTION,
           inputSchema: { fileKey: external_exports.string().optional() }
         },
-        async ({ fileKey: fileKey4 }) => {
+        async ({ fileKey: fileKey5 }) => {
           try {
-            const r = ctx2.files.resolve(fileKey4);
+            const r = ctx2.files.resolve(fileKey5);
             if ("error" in r) return errorResult(r.error);
             const { undone } = await ctx2.rpc.call(
               r.file.connectionId,
@@ -44186,6 +44306,134 @@ var init_history = __esm({
           } catch (err) {
             return fromCallError(err);
           }
+        }
+      );
+    };
+  }
+});
+
+// bridge-server/src/tools/icons.ts
+async function callIcons(ctx2, fileKey5, op, payload, timeoutMs) {
+  const r = ctx2.files.resolve(fileKey5);
+  if ("error" in r) return errorResult(r.error);
+  try {
+    const res = await ctx2.rpc.call(
+      r.file.connectionId,
+      op,
+      payload,
+      timeoutMs
+    );
+    return jsonResult(res, r.note);
+  } catch (e) {
+    if (e instanceof BridgeCallError && e.code === "remote" && e.remote?.message.startsWith("unknown op: icons."))
+      return errorResult(e.remote.message, ICONS_OLD_PLUGIN_HINT);
+    return fromCallError(e);
+  }
+}
+var ICONS_SEARCH_TIMEOUT_MS, ICONS_PLACE_TIMEOUT_MS, ICONS_TAG_TIMEOUT_MS, ICONS_OLD_PLUGIN_HINT, NEEDS_FILE, SEARCH_DESCRIPTION, PLACE_DESCRIPTION, TAG_DESCRIPTION, fileKey3, tagList, iconsSearchInputSchema, iconsPlaceInputSchema, iconsTagInputSchema, registerIcons;
+var init_icons = __esm({
+  "bridge-server/src/tools/icons.ts"() {
+    "use strict";
+    init_zod();
+    init_context();
+    init_bridge_icons();
+    init_icon_tags();
+    init_tool_result();
+    ICONS_SEARCH_TIMEOUT_MS = 15e3;
+    ICONS_PLACE_TIMEOUT_MS = 3e4;
+    ICONS_TAG_TIMEOUT_MS = 2e4;
+    ICONS_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use the icon tools";
+    NEEDS_FILE = " Needs a Figma file with the EZG Tools plugin connected (MCP tab).";
+    SEARCH_DESCRIPTION = "Search the shared EZG icon library (hundreds of game UI icons, growing every release) by name and English/Vietnamese tags. Use it whenever a design needs an icon, before drawing one or using a placeholder. Empty query lists libraries. Returns names to pass to icons_place. Ignores case and Vietnamese diacritics. If the result's tags state is not ready, tags are unavailable and only names match." + NEEDS_FILE;
+    PLACE_DESCRIPTION = "Place an icon from the shared EZG icon library (find it with icons_search) at the center of the current viewport, at its native SVG size. Returns the new node id and bounds; move it afterwards with eval or build. tint (hex color or variable token) flattens a multicolor icon to one color; without it the icon keeps its SVG colors." + NEEDS_FILE;
+    TAG_DESCRIPTION = "Add or remove tags on an icon of the shared EZG icon library so later icons_search calls find it. Tags are shared with the whole team: use short words in English and Vietnamese (up to 32 characters, 24 per icon). Returns the icon's tags after the change." + NEEDS_FILE;
+    fileKey3 = external_exports.string().min(1).optional().describe("fileKey or clientId from files. Optional with one file connected.");
+    tagList = external_exports.array(external_exports.string().min(1).max(TAG_MAX_LENGTH)).max(TAGS_PER_ICON_MAX);
+    iconsSearchInputSchema = {
+      fileKey: fileKey3,
+      query: external_exports.string().describe("Words to match; empty lists libraries."),
+      libraryId: external_exports.string().min(1).optional(),
+      limit: external_exports.number().int().min(1).max(ICONS_SEARCH_MAX).optional()
+    };
+    iconsPlaceInputSchema = {
+      fileKey: fileKey3,
+      libraryId: external_exports.string().min(1),
+      name: external_exports.string().min(1),
+      tint: external_exports.object({
+        color: external_exports.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+        token: external_exports.string().min(1).optional()
+      }).refine((t) => t.color === void 0 !== (t.token === void 0), {
+        message: "give exactly one of color or token"
+      }).optional()
+    };
+    iconsTagInputSchema = {
+      fileKey: fileKey3,
+      libraryId: external_exports.string().min(1),
+      name: external_exports.string().min(1),
+      add: tagList.optional(),
+      remove: tagList.optional()
+    };
+    registerIcons = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.iconsSearch,
+        { description: SEARCH_DESCRIPTION, inputSchema: iconsSearchInputSchema },
+        async ({ fileKey: fileKey5, query, libraryId, limit }) => {
+          const payload = {
+            query,
+            ...libraryId ? { libraryId } : {},
+            ...limit !== void 0 ? { limit } : {}
+          };
+          return callIcons(
+            ctx2,
+            fileKey5,
+            "icons.search",
+            payload,
+            ICONS_SEARCH_TIMEOUT_MS
+          );
+        }
+      );
+      server2.registerTool(
+        TOOL_NAMES.iconsPlace,
+        { description: PLACE_DESCRIPTION, inputSchema: iconsPlaceInputSchema },
+        async ({
+          fileKey: fileKey5,
+          libraryId,
+          name,
+          tint
+        }) => {
+          const payload = {
+            libraryId,
+            name,
+            ...tint?.color ? { tint: { color: tint.color } } : tint?.token ? { tint: { token: tint.token } } : {}
+          };
+          return callIcons(
+            ctx2,
+            fileKey5,
+            "icons.place",
+            payload,
+            ICONS_PLACE_TIMEOUT_MS
+          );
+        }
+      );
+      server2.registerTool(
+        TOOL_NAMES.iconsTag,
+        { description: TAG_DESCRIPTION, inputSchema: iconsTagInputSchema },
+        async ({
+          fileKey: fileKey5,
+          libraryId,
+          name,
+          add,
+          remove
+        }) => {
+          if (!add?.length && !remove?.length)
+            return errorResult("give at least one tag in add or remove");
+          const payload = {
+            libraryId,
+            name,
+            add: add ?? [],
+            remove: remove ?? []
+          };
+          return callIcons(ctx2, fileKey5, "icons.tag", payload, ICONS_TAG_TIMEOUT_MS);
         }
       );
     };
@@ -44216,8 +44464,8 @@ var init_inventory = __esm({
       server2.registerTool(
         TOOL_NAMES.inventory,
         { description: DESCRIPTION3, inputSchema: inventoryInputSchema },
-        async ({ fileKey: fileKey4, include, pageIds, name }) => {
-          const r = ctx2.files.resolve(fileKey4);
+        async ({ fileKey: fileKey5, include, pageIds, name }) => {
+          const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
           const payload = {
             include: include ?? [...INVENTORY_SECTIONS],
@@ -44328,8 +44576,8 @@ var init_lint = __esm({
       server2.registerTool(
         TOOL_NAMES.lint,
         { description: DESCRIPTION5, inputSchema: lintInputSchema },
-        async ({ fileKey: fileKey4, ...rest }) => {
-          const r = ctx2.files.resolve(fileKey4);
+        async ({ fileKey: fileKey5, ...rest }) => {
+          const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
           const payload = Object.fromEntries(
             Object.entries(rest).filter(([, v]) => v !== void 0)
@@ -44429,7 +44677,7 @@ async function run(ctx2, target, op, payload) {
     return fromCallError(e);
   }
 }
-var VIEW_TIMEOUT_MS, fileKey3, registerView;
+var VIEW_TIMEOUT_MS, fileKey4, registerView;
 var init_view = __esm({
   "bridge-server/src/tools/view.ts"() {
     "use strict";
@@ -44438,7 +44686,7 @@ var init_view = __esm({
     init_tool_result();
     init_bridge_ops();
     VIEW_TIMEOUT_MS = 1e4;
-    fileKey3 = string2().min(1).optional().describe(
+    fileKey4 = string2().min(1).optional().describe(
       "file key or clientId from `files`; may be omitted when one file is connected"
     );
     registerView = (server2, ctx2) => {
@@ -44446,7 +44694,7 @@ var init_view = __esm({
         TOOL_NAMES.viewGet,
         {
           description: "Read the current page, selection, viewport and user of a connected Figma file. A snapshot: it can change at any time, so do not cache it across a wait. Use `events` to follow selection changes.",
-          inputSchema: { fileKey: fileKey3 },
+          inputSchema: { fileKey: fileKey4 },
           annotations: { readOnlyHint: true }
         },
         ({ fileKey: target }) => run(ctx2, target, "view.get", {})
@@ -44456,7 +44704,7 @@ var init_view = __esm({
         {
           description: "Change what the user sees: select nodes, switch page, zoom to nodes, show a toast. This moves the user's viewport while they may be working, so use it only when the user asked to look at something. `zoom` applies after `focusIds`. Ids come from `eval` results or `view_get`. `notify` shows a Figma toast. `view_set({})` just reads. Returns the resulting state: compare `selection` with your request.",
           inputSchema: {
-            fileKey: fileKey3,
+            fileKey: fileKey4,
             selectionIds: array(string2()).optional().describe("node ids to select; [] clears the selection"),
             pageId: string2().optional().describe("page id to switch to"),
             focusIds: array(string2()).optional().describe("node ids to scroll and zoom into view"),
@@ -44501,6 +44749,7 @@ var init_mcp2 = __esm({
     init_events2();
     init_export();
     init_history();
+    init_icons();
     init_inventory();
     init_journal2();
     init_lint();
@@ -44564,7 +44813,8 @@ var init_mcp2 = __esm({
       registerInventory,
       registerLint,
       registerBuild,
-      registerJournal
+      registerJournal,
+      registerIcons
     ]) {
       register(tools, ctx);
     }
