@@ -1054,6 +1054,35 @@ input[type=range]:focus-visible::-moz-range-thumb {
 .cp-account p {
   margin: 0;
 }
+.cp-account-user {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+.cp-account-names {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.cp-account-names p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cp-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  font-weight: 550;
+  color: var(--figma-color-text-onbrand, #fff);
+  background: var(--figma-color-bg-brand, #0d99ff);
+}
 
 /* plugins/ezg-tools/src/ui/styles/index.css */
 
@@ -1303,7 +1332,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       blocked: "Plugin n\xE0y ch\u01B0a \u0111\u01B0\u1EE3c ph\xE9p k\u1EBFt n\u1ED1i server \u0111\u0103ng nh\u1EADp. H\xE3y ch\u1EA1y l\u1EA1i installer r\u1ED3i kh\u1EDFi \u0111\u1ED9ng l\u1EA1i Figma",
       failed: "\u0110\u0103ng nh\u1EADp th\u1EA5t b\u1EA1i. H\xE3y th\u1EED l\u1EA1i"
     },
-    account: (email) => `\u0110\xE3 \u0111\u0103ng nh\u1EADp: ${email}`,
+    signedIn: "\u0110\xE3 \u0111\u0103ng nh\u1EADp",
     signOut: "\u0110\u0103ng xu\u1EA5t",
     signedOut: "\u0110\xE3 \u0111\u0103ng xu\u1EA5t kh\u1ECFi EZG Figma Tools"
   };
@@ -1330,7 +1359,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.28" : "dev";
+  var BUILD_VERSION = true ? "0.1.29" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -1343,14 +1372,25 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var AUTH_POLL_TIMEOUT_MS = 10 * 60 * 1e3;
   var AUTH_OFFLINE_GRACE_MS = 7 * 24 * 60 * 60 * 1e3;
   var AUTH_REQUIRED = BUILD_VERSION !== "dev";
+  var NAME_MAX = 200;
+  var PICTURE_MAX = 2e5;
+  var PICTURE_PATTERN = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/;
   var nonEmpty = (v) => typeof v === "string" && v.length > 0;
   var authUrl = (path) => `${AUTH_ORIGIN}${path}`;
   var isAuthUrl = (v) => typeof v === "string" && v.startsWith(`${AUTH_ORIGIN}/`);
+  function parseAuthProfile(raw) {
+    if (!isRecord(raw) || !nonEmpty(raw.email)) return null;
+    const profile = { email: raw.email };
+    if (nonEmpty(raw.name) && raw.name.length <= NAME_MAX) profile.name = raw.name;
+    if (nonEmpty(raw.picture) && raw.picture.length <= PICTURE_MAX && PICTURE_PATTERN.test(raw.picture))
+      profile.picture = raw.picture;
+    return profile;
+  }
   function parseAuthSession(raw) {
-    if (!isRecord(raw) || !nonEmpty(raw.token) || !nonEmpty(raw.email))
-      return null;
+    const profile = parseAuthProfile(raw);
+    if (!profile || !isRecord(raw) || !nonEmpty(raw.token)) return null;
     if (!isFiniteNumber(raw.checkedAt)) return null;
-    return { token: raw.token, email: raw.email, checkedAt: raw.checkedAt };
+    return { ...profile, token: raw.token, checkedAt: raw.checkedAt };
   }
   function parseAuthKeys(raw) {
     if (!isRecord(raw) || !nonEmpty(raw.readKey) || !isAuthUrl(raw.loginUrl))
@@ -1360,12 +1400,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
   function parseAuthPoll(raw) {
     if (!isRecord(raw)) return null;
     if (raw.status === "pending") return { status: "pending" };
-    if (raw.status !== "done" || !nonEmpty(raw.token) || !nonEmpty(raw.email))
-      return null;
-    return { status: "done", token: raw.token, email: raw.email };
-  }
-  function parseSessionEmail(raw) {
-    return isRecord(raw) && nonEmpty(raw.email) ? raw.email : null;
+    const profile = parseAuthProfile(raw);
+    if (raw.status !== "done" || !nonEmpty(raw.token) || !profile) return null;
+    return { status: "done", token: raw.token, ...profile };
   }
   var withinOfflineGrace = (session, now) => now - session.checkedAt >= 0 && now - session.checkedAt < AUTH_OFFLINE_GRACE_MS;
 
@@ -1562,6 +1599,23 @@ input[type=range]:focus-visible::-moz-range-thumb {
   };
   var sliders = [el.size, el.sx, el.sy, el.steps];
 
+  // plugins/ezg-tools/src/ui/auth/avatar.ts
+  function initial(profile) {
+    const letter = document.createElement("span");
+    letter.className = "cp-avatar";
+    letter.textContent = (profile.name ?? profile.email).charAt(0).toUpperCase();
+    return letter;
+  }
+  function buildAvatar(profile) {
+    if (!profile.picture) return initial(profile);
+    const img = document.createElement("img");
+    img.className = "cp-avatar";
+    img.alt = "";
+    img.src = profile.picture;
+    img.addEventListener("error", () => img.replaceWith(initial(profile)));
+    return img;
+  }
+
   // plugins/ezg-tools/src/ui/auth/net.ts
   var CSP_SETTLE_MS = 50;
   var blocked = false;
@@ -1601,7 +1655,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var checkSession = (token) => call(
     AUTH_PATHS.session,
     { method: "GET", headers: bearer(token) },
-    parseSessionEmail
+    parseAuthProfile
   );
   var revokeSession = (token) => call(
     AUTH_PATHS.session,
@@ -1610,12 +1664,25 @@ input[type=range]:focus-visible::-moz-range-thumb {
   );
 
   // plugins/ezg-tools/src/ui/auth/account.ts
+  function line(className, text) {
+    const p = document.createElement("p");
+    p.className = className;
+    p.textContent = text;
+    return p;
+  }
+  function buildUser(session) {
+    const names = document.createElement("div");
+    names.className = "cp-account-names";
+    if (session.name) names.append(line("cp-about-name", session.name));
+    names.append(line("cp-about-line", session.email));
+    const user = document.createElement("div");
+    user.className = "cp-account-user";
+    user.append(buildAvatar(session), names);
+    return user;
+  }
   function buildAccount(session) {
     const row = document.createElement("div");
     row.className = "cp-account";
-    const email = document.createElement("p");
-    email.className = "cp-about-line";
-    email.textContent = AUTH_COPY.account(session.email);
     const signOut = document.createElement("button");
     signOut.type = "button";
     signOut.className = "cp-btn secondary";
@@ -1625,7 +1692,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
       await revokeSession(session.token);
       post({ type: "auth-sign-out" });
     });
-    row.append(email, signOut);
+    row.append(
+      line("cp-about-line", AUTH_COPY.signedIn),
+      buildUser(session),
+      signOut
+    );
     el.about.after(row);
   }
 
@@ -1653,8 +1724,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
         const poll = await pollSignIn(keys.value.readKey);
         if (cancelled) return { ok: false, reason: "cancelled" };
         if (poll.ok && poll.value.status === "done") {
-          const { token, email } = poll.value;
-          return { ok: true, session: { token, email, checkedAt: Date.now() } };
+          const { status: _, ...session } = poll.value;
+          return { ok: true, session: { ...session, checkedAt: Date.now() } };
         }
         if (!poll.ok && poll.reason !== "offline") return poll;
       }
@@ -1738,7 +1809,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       view.show({ kind: "busy", text: AUTH_COPY.status.checking });
       const result = await checkSession(session.token);
       if (result.ok)
-        return accept({ ...session, email: result.value, checkedAt: Date.now() });
+        return accept({ ...session, ...result.value, checkedAt: Date.now() });
       if (result.reason === "unauthorized" || result.reason === "gone") {
         stored = null;
         return view.show({ kind: "sign-in", note: AUTH_COPY.status.expired });
@@ -1843,10 +1914,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     ];
     el.about.replaceChildren(
       ...lines.map((text, i) => {
-        const line2 = document.createElement("p");
-        line2.className = i === 0 ? "cp-about-name" : "cp-about-line";
-        line2.textContent = text;
-        return line2;
+        const line3 = document.createElement("p");
+        line3.className = i === 0 ? "cp-about-name" : "cp-about-line";
+        line3.textContent = text;
+        return line3;
       })
     );
   }
@@ -1866,12 +1937,12 @@ input[type=range]:focus-visible::-moz-range-thumb {
   // plugins/ezg-tools/src/ui/dom/icons.ts
   var ATTRS = 'viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
   var ARC = `<path d="M2.5 15C2.5 8 4.5 4.5 8 4.5S13.5 8 13.5 15" />`;
-  var line = (x1, y1, x2, y2) => `<path d="M${x1} ${y1}L${x2} ${y2}" stroke-width="1" />`;
+  var line2 = (x1, y1, x2, y2) => `<path d="M${x1} ${y1}L${x2} ${y2}" stroke-width="1" />`;
   var ICONS = {
     auto: { lines: ARC, nodes: [[10.5, 5.5]] },
     sharp: { lines: `<path d="M3 15 8 3.5 13 15" />`, nodes: [[8, 3.5]] },
     free: {
-      lines: `<path d="M2.5 15C3 10 4.5 6.5 6.5 4.5C9 6.5 11 10 12 15" />` + line(6.5, 4.5, 13, 4.5) + line(6.5, 4.5, 6.5, 11),
+      lines: `<path d="M2.5 15C3 10 4.5 6.5 6.5 4.5C9 6.5 11 10 12 15" />` + line2(6.5, 4.5, 13, 4.5) + line2(6.5, 4.5, 6.5, 11),
       nodes: [
         [6.5, 4.5],
         [13, 4.5],
@@ -1879,7 +1950,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       ]
     },
     aligned: {
-      lines: ARC + line(2.5, 4.5, 13.5, 4.5),
+      lines: ARC + line2(2.5, 4.5, 13.5, 4.5),
       nodes: [
         [2.5, 4.5],
         [8, 4.5],
@@ -3790,10 +3861,10 @@ ${tags.join(", ")}` : hit.name;
     const E = 1 + P;
     const m = (x, y) => `${fmt(x)},${fmt(y)}`;
     let fill;
-    let line2;
+    let line3;
     if (kind === "none") {
       fill = `M${m(0, E)}L${m(0, 0)}L${m(E, 0)}L${m(E, E)}Z`;
-      line2 = `M${m(0, E)}L${m(0, 0)}L${m(E, 0)}`;
+      line3 = `M${m(0, E)}L${m(0, 0)}L${m(E, 0)}`;
     } else {
       const segs = segmentsD(
         path,
@@ -3801,9 +3872,9 @@ ${tags.join(", ")}` : hit.name;
         (y) => y
       );
       fill = `M${m(0, 1)}${segs}L${m(E, 0)}L${m(E, E)}L${m(0, E)}Z`;
-      line2 = `M${m(0, E)}L${m(0, 1)}${segs}L${m(E, 0)}`;
+      line3 = `M${m(0, E)}L${m(0, 1)}${segs}L${m(E, 0)}`;
     }
-    return `<svg viewBox="${-P} ${-P} ${1 + 2 * P} ${1 + 2 * P}" aria-hidden="true"><path class="t-fill" d="${fill}"/><path class="t-line" d="${line2}"/></svg>`;
+    return `<svg viewBox="${-P} ${-P} ${1 + 2 * P} ${1 + 2 * P}" aria-hidden="true"><path class="t-fill" d="${fill}"/><path class="t-line" d="${line3}"/></svg>`;
   }
 
   // plugins/ezg-tools/src/ui/render/presets.ts
