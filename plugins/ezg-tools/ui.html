@@ -903,14 +903,25 @@ input[type=range]:focus-visible::-moz-range-thumb {
   pointer-events: none;
 }
 .ic-tile:hover .ic-face {
-  border-color: var(--figma-color-border-selected, #0d99ff);
+  border-color: #6e6e6e;
+  background: #3a3a3a;
+}
+.ic-tile[aria-pressed=true] .ic-face {
+  background: rgba(13, 153, 255, 0.25);
+  box-shadow: inset 0 -2px 0 #0d99ff;
+}
+.ic-tile[aria-pressed=true]:hover .ic-face {
+  background: rgba(13, 153, 255, 0.35);
+}
+.ic-tile[aria-pressed=true] .ic-label {
+  color: #0d99ff;
 }
 .ic-tile:focus-visible {
   outline: none;
 }
 .ic-tile:focus-visible .ic-face {
-  border-color: var(--figma-color-border-selected, #0d99ff);
-  box-shadow: 0 0 0 1px var(--figma-color-border-selected, #0d99ff);
+  outline: 1px solid #ffffff;
+  outline-offset: 2px;
 }
 .ic-label {
   overflow: hidden;
@@ -1372,7 +1383,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.31" : "dev";
+  var BUILD_VERSION = true ? "0.1.32" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
