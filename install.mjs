@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 // installer/src/install.ts
-import { copyFile, readFile, rm as rm3, writeFile as writeFile4 } from "node:fs/promises";
-import { homedir as homedir2 } from "node:os";
-import { join as join5 } from "node:path";
+import { copyFile as copyFile2, readFile as readFile2, rm as rm3, writeFile as writeFile5 } from "node:fs/promises";
+import { homedir as homedir3 } from "node:os";
+import { join as join6 } from "node:path";
 
 // plugins/_loader/src/shared/version.ts
 function parseVersion(v) {
@@ -464,6 +464,101 @@ function planInstall(settings, plugins, installRoot) {
   };
 }
 
+// installer/src/register-desktop.ts
+import {
+  copyFile,
+  readFile,
+  readdir,
+  rename as rename3,
+  writeFile as writeFile4
+} from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { homedir as homedir2 } from "node:os";
+import { join as join5 } from "node:path";
+
+// installer/src/desktop-config.ts
+var DesktopConfigError = class extends Error {
+};
+var isObject = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+function withBridgeServer(config, spec) {
+  if (!isObject(config)) {
+    throw new DesktopConfigError("claude_desktop_config.json is not an object");
+  }
+  const servers = config.mcpServers ?? {};
+  if (!isObject(servers)) {
+    throw new DesktopConfigError("mcpServers is not an object");
+  }
+  return {
+    ...config,
+    mcpServers: {
+      ...servers,
+      [spec.name]: { command: spec.node, args: [spec.server] }
+    }
+  };
+}
+
+// installer/src/register-desktop.ts
+var CONFIG = "claude_desktop_config.json";
+async function windowsDirs() {
+  const home = homedir2();
+  const appData = process.env.APPDATA ?? join5(home, "AppData", "Roaming");
+  const local = process.env.LOCALAPPDATA ?? join5(home, "AppData", "Local");
+  const dirs = [join5(appData, "Claude")];
+  const packages = join5(local, "Packages");
+  const names = await readdir(packages).catch(() => []);
+  for (const name of names.filter((n) => n.startsWith("Claude_")))
+    dirs.push(join5(packages, name, "LocalCache", "Roaming", "Claude"));
+  return dirs;
+}
+async function configDirs() {
+  const dirs = process.platform === "win32" ? await windowsDirs() : [join5(homedir2(), "Library", "Application Support", "Claude")];
+  return dirs.filter((d) => existsSync(d));
+}
+async function readConfig(path) {
+  let raw;
+  try {
+    raw = await readFile(path, "utf8");
+  } catch {
+    return {};
+  }
+  if (raw.trim() === "") return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new Error(`${path} is not valid JSON; fix it, then re-run`);
+  }
+}
+async function register(dir, server) {
+  const path = join5(dir, CONFIG);
+  const next = withBridgeServer(await readConfig(path), {
+    name: BRIDGE_MCP_NAME,
+    node: process.execPath,
+    server
+  });
+  if (existsSync(path)) await copyFile(path, `${path}.ezg-bak`);
+  await writeFile4(`${path}.tmp`, JSON.stringify(next, null, 2));
+  await rename3(`${path}.tmp`, path);
+}
+async function registerDesktop(server) {
+  const dirs = await configDirs();
+  if (dirs.length === 0) {
+    console.log("  skip Claude Desktop not found");
+    return;
+  }
+  for (const dir of dirs) {
+    try {
+      await register(dir, server);
+      console.log(`  ok Claude Desktop: registered ezg-figma-bridge (${dir})`);
+    } catch (error) {
+      const why = error instanceof Error ? error.message : String(error);
+      console.log(`  warn Claude Desktop: could not register (${why})`);
+    }
+  }
+  console.log(
+    "  Quit Claude Desktop fully and open it again to load the bridge."
+  );
+}
+
 // installer/src/register-mcp.ts
 import { spawnSync as spawnSync2 } from "node:child_process";
 
@@ -551,7 +646,7 @@ function registerMcp(server) {
 async function readSettings(path) {
   let raw;
   try {
-    raw = await readFile(path, "utf8");
+    raw = await readFile2(path, "utf8");
   } catch {
     throw new Error(
       "Figma settings not found. Open Figma desktop once, then run again"
@@ -576,6 +671,7 @@ async function installBridge(home) {
     return;
   }
   registerMcp(server);
+  await registerDesktop(server);
   try {
     await installHub(home, server);
     console.log("  ok bridge hub runs at login");
@@ -585,13 +681,13 @@ async function installBridge(home) {
 }
 async function main() {
   console.log("> Downloading EZG Figma plugins\u2026");
-  const { version, plugins } = await fetchPlugins(homedir2());
+  const { version, plugins } = await fetchPlugins(homedir3());
   for (const plugin of plugins) console.log(`  ok ${plugin.name}`);
   console.log("> Setting up the Claude bridge\u2026");
-  await installBridge(homedir2());
+  await installBridge(homedir3());
   console.log("> Registering in Figma\u2026");
   const path = settingsPath();
-  const installRoot = join5(homedir2(), ...INSTALL_DIR_PARTS);
+  const installRoot = join6(homedir3(), ...INSTALL_DIR_PARTS);
   const plan = planInstall(
     (await readSettings(path)).json,
     plugins,
@@ -607,8 +703,8 @@ async function main() {
   if (isFigmaRunning()) await quitFigma();
   const { raw, json } = await readSettings(path);
   const next = registerPlugins(json, plugins, installRoot);
-  await copyFile(path, `${path}.ezg-bak`);
-  await writeFile4(path, JSON.stringify(next, null, indentOf(raw)));
+  await copyFile2(path, `${path}.ezg-bak`);
+  await writeFile5(path, JSON.stringify(next, null, indentOf(raw)));
   for (const dir of plan.stale) await rm3(dir, { recursive: true, force: true });
   openFigma();
   console.log(`  ok ${plan.missing.length} plugin added (Figma restarted)`);
