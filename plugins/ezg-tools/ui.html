@@ -850,13 +850,39 @@ input[type=range]:focus-visible::-moz-range-thumb {
   padding: 12px 12px 4px;
   background: var(--figma-color-bg, #fff);
 }
-.ic-bar-row {
+.ic-search-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 50px;
   gap: 8px;
 }
-.ic-select.ic-sort {
-  width: auto;
+.ic-sortbox {
+  display: grid;
+  grid-template-columns: 24px 24px;
+  gap: 2px;
+}
+.ic-sortbox[data-mode=default] .ic-sortbtn:first-child {
+  grid-column: 1 / -1;
+}
+.ic-sortbtn {
+  display: grid;
+  place-items: center;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: var(--figma-color-bg-secondary, #f5f5f5);
+  color: var(--figma-color-text, #1e1e1e);
+  cursor: pointer;
+}
+.ic-sortbtn[hidden] {
+  display: none;
+}
+.ic-sortbtn:hover {
+  border-color: var(--figma-color-border, #e6e6e6);
+}
+.ic-sortbtn:focus-visible {
+  outline: 1px solid #ffffff;
+  outline-offset: 1px;
 }
 .ic-select {
   width: 100%;
@@ -964,6 +990,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
   font-size: 10px;
   color: var(--figma-color-text-secondary, #666);
 }
+
+/* plugins/ezg-tools/src/ui/styles/icons-detail.css */
 .ic-detail {
   grid-column: 1 / -1;
   display: grid;
@@ -1443,7 +1471,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.35" : "dev";
+  var BUILD_VERSION = true ? "0.1.36" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -1963,8 +1991,12 @@ input[type=range]:focus-visible::-moz-range-thumb {
     iconLibraryLabel: "Th\u01B0 vi\u1EC7n icon",
     iconAllLibraries: "T\u1EA5t c\u1EA3",
     iconSearch: "T\xECm icon",
-    iconSortLabel: "S\u1EAFp x\u1EBFp icon",
-    iconSort: { default: "M\u1EB7c \u0111\u1ECBnh", name: "T\xEAn A\u2192Z" },
+    iconSort: {
+      default: "Th\u1EE9 t\u1EF1 m\u1EB7c \u0111\u1ECBnh (b\u1EA5m \u0111\u1EC3 x\u1EBFp theo t\xEAn)",
+      name: "X\u1EBFp theo t\xEAn (b\u1EA5m \u0111\u1EC3 v\u1EC1 m\u1EB7c \u0111\u1ECBnh)",
+      asc: "A\u2192Z (b\u1EA5m \u0111\u1EC3 \u0111\u1EA3o Z\u2192A)",
+      desc: "Z\u2192A (b\u1EA5m \u0111\u1EC3 \u0111\u1EA3o A\u2192Z)"
+    },
     iconNoResults: "Kh\xF4ng t\xECm th\u1EA5y icon",
     aboutTagline: "B\u1ED9 c\xF4ng c\u1EE5 Figma c\u1EE7a EZG",
     aboutVersion: (v) => `Phi\xEAn b\u1EA3n ${v}`,
@@ -2234,10 +2266,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     parent2.append(node);
     return node;
   }
-  function button3(className, label, parent2) {
+  function button3(className, label2, parent2) {
     const node = make("button", className, parent2);
     node.type = "button";
-    node.textContent = label;
+    node.textContent = label2;
     return node;
   }
   function buildBridgePanel() {
@@ -2685,6 +2717,51 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
+  // plugins/ezg-tools/src/ui/icons/dom.ts
+  function make2(tag, className, parent2) {
+    const node = document.createElement(tag);
+    node.className = className;
+    parent2.append(node);
+    return node;
+  }
+  function buildIconsDom() {
+    const panel = document.getElementById("tool-icon-library");
+    if (!panel) throw new Error("ui.html is missing #tool-icon-library");
+    const content = make2("main", "cp-content ic-content", panel);
+    const bar = make2("div", "ic-bar", content);
+    const select2 = make2("select", "ic-select", bar);
+    select2.setAttribute("aria-label", UI_TEXT.iconLibraryLabel);
+    const row = make2("div", "ic-search-row", bar);
+    const search = make2("input", "ic-search", row);
+    search.type = "text";
+    search.placeholder = UI_TEXT.iconSearch;
+    search.setAttribute("aria-label", UI_TEXT.iconSearch);
+    const sortBox = make2("div", "ic-sortbox", row);
+    const sortMode = make2("button", "ic-sortbtn", sortBox);
+    sortMode.type = "button";
+    const sortDir = make2("button", "ic-sortbtn", sortBox);
+    sortDir.type = "button";
+    const grid = make2("div", "ic-grid", content);
+    grid.setAttribute("role", "list");
+    const empty = make2("p", "ic-empty", content);
+    empty.hidden = true;
+    const dock = make2("div", "ic-toast-dock", content);
+    const status = make2("p", "ic-status", dock);
+    status.setAttribute("role", "status");
+    return {
+      panel,
+      select: select2,
+      search,
+      sortBox,
+      sortMode,
+      sortDir,
+      status,
+      grid,
+      empty
+    };
+  }
+  var iconsEl = buildIconsDom();
+
   // plugins/ezg-tools/src/shared/icon-rank.ts
   function queryWords(query) {
     const words = foldText(query).split(" ").filter(Boolean);
@@ -2745,59 +2822,29 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/icon-sort.ts
-  var ICON_SORTS = ["default", "name"];
+  var DEFAULT_ICON_SORT = { mode: "default", dir: "asc" };
+  function parseIconSort(raw) {
+    if (!isRecord(raw)) return DEFAULT_ICON_SORT;
+    return {
+      mode: raw.mode === "name" ? "name" : "default",
+      dir: raw.dir === "desc" ? "desc" : "asc"
+    };
+  }
   function sortIcons(icons, sort) {
-    if (sort === "default") return icons;
+    if (sort.mode === "default") return icons;
     const key = (icon) => foldText(iconDisplayName(icon.name));
-    return [...icons].sort(
+    const sorted = [...icons].sort(
       (a, b) => key(a).localeCompare(key(b), "en", { numeric: true })
     );
+    return sort.dir === "desc" ? sorted.reverse() : sorted;
   }
-
-  // plugins/ezg-tools/src/ui/icons/dom.ts
-  function make2(tag, className, parent2) {
-    const node = document.createElement(tag);
-    node.className = className;
-    parent2.append(node);
-    return node;
-  }
-  function buildIconsDom() {
-    const panel = document.getElementById("tool-icon-library");
-    if (!panel) throw new Error("ui.html is missing #tool-icon-library");
-    const content = make2("main", "cp-content ic-content", panel);
-    const bar = make2("div", "ic-bar", content);
-    const row = make2("div", "ic-bar-row", bar);
-    const select2 = make2("select", "ic-select", row);
-    select2.setAttribute("aria-label", UI_TEXT.iconLibraryLabel);
-    const sort = make2("select", "ic-select ic-sort", row);
-    sort.setAttribute("aria-label", UI_TEXT.iconSortLabel);
-    for (const id of ICON_SORTS) {
-      const option = document.createElement("option");
-      option.value = id;
-      option.textContent = UI_TEXT.iconSort[id];
-      sort.append(option);
-    }
-    const search = make2("input", "ic-search", bar);
-    search.type = "text";
-    search.placeholder = UI_TEXT.iconSearch;
-    search.setAttribute("aria-label", UI_TEXT.iconSearch);
-    const grid = make2("div", "ic-grid", content);
-    grid.setAttribute("role", "list");
-    const empty = make2("p", "ic-empty", content);
-    empty.hidden = true;
-    const dock = make2("div", "ic-toast-dock", content);
-    const status = make2("p", "ic-status", dock);
-    status.setAttribute("role", "status");
-    return { panel, select: select2, sort, search, status, grid, empty };
-  }
-  var iconsEl = buildIconsDom();
 
   // plugins/ezg-tools/src/ui/icons/state.ts
   var iconsState = {
     catalog: null,
     libraryId: ALL_LIBRARIES_ID,
     query: "",
-    sort: "default",
+    sort: DEFAULT_ICON_SORT,
     tags: {},
     tagsState: "loading",
     selected: null
@@ -3050,10 +3097,10 @@ ${tags.join(", ")}` : hit.name;
       img.alt = "";
       face.append(img);
     }
-    const label = document.createElement("span");
-    label.className = "ic-label";
-    label.textContent = iconDisplayName(hit.name);
-    tile.append(face, label);
+    const label2 = document.createElement("span");
+    label2.className = "ic-label";
+    label2.textContent = iconDisplayName(hit.name);
+    tile.append(face, label2);
     return tile;
   }
   function tileFor(hit) {
@@ -3120,6 +3167,51 @@ ${tags.join(", ")}` : hit.name;
     iconsState.tags = tags;
     iconsState.tagsState = state2;
     renderGrid();
+  }
+
+  // plugins/ezg-tools/src/ui/icons/sort-buttons.ts
+  var SVG = 'viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+  var ICON = {
+    default: `<svg ${SVG}><path d="M3 4.5h10M3 8h10M3 11.5h10"/></svg>`,
+    name: `<svg ${SVG}><path d="M2 12 4.5 4 7 12M3 9.5h3M9.5 4.5h4.5L9.5 11.5H14"/></svg>`,
+    asc: `<svg ${SVG}><path d="M8 3v10M4.5 9.5 8 13l3.5-3.5"/></svg>`,
+    desc: `<svg ${SVG}><path d="M8 13V3M4.5 6.5 8 3l3.5 3.5"/></svg>`
+  };
+  function label(button4, text) {
+    button4.title = text;
+    button4.setAttribute("aria-label", text);
+  }
+  function renderSortButtons() {
+    const { mode, dir } = iconsState.sort;
+    const { sortBox, sortMode, sortDir } = iconsEl;
+    sortBox.dataset.mode = mode;
+    sortMode.innerHTML = ICON[mode];
+    label(sortMode, UI_TEXT.iconSort[mode]);
+    sortDir.hidden = mode === "default";
+    sortDir.innerHTML = ICON[dir];
+    label(sortDir, UI_TEXT.iconSort[dir]);
+  }
+  function apply(next) {
+    iconsState.sort = next;
+    renderSortButtons();
+    renderGrid();
+    post({ type: "icon-sort-save", sort: next });
+  }
+  function setIconSort(raw) {
+    iconsState.sort = parseIconSort(raw);
+    renderSortButtons();
+    renderGrid();
+  }
+  function installSortButtons() {
+    iconsEl.sortMode.addEventListener("click", () => {
+      const { mode, dir } = iconsState.sort;
+      apply({ mode: mode === "default" ? "name" : "default", dir });
+    });
+    iconsEl.sortDir.addEventListener("click", () => {
+      const { mode, dir } = iconsState.sort;
+      apply({ mode, dir: dir === "asc" ? "desc" : "asc" });
+    });
+    renderSortButtons();
   }
 
   // plugins/ezg-tools/src/ui/icons/detail-motion.ts
@@ -3202,10 +3294,7 @@ ${tags.join(", ")}` : hit.name;
       iconsState.libraryId = iconsEl.select.value;
       renderGrid();
     });
-    iconsEl.sort.addEventListener("change", () => {
-      iconsState.sort = iconsEl.sort.value;
-      renderGrid();
-    });
+    installSortButtons();
     iconsEl.search.addEventListener("input", () => {
       iconsState.query = iconsEl.search.value;
       renderGrid();
@@ -4531,6 +4620,9 @@ ${tags.join(", ")}` : hit.name;
       case "icons-tags":
         setTags(msg.tags, msg.state);
         renderTagEditor();
+        break;
+      case "icon-sort":
+        setIconSort(msg.sort);
         break;
       case "icons-status":
         showIconsStatus(msg.state);
