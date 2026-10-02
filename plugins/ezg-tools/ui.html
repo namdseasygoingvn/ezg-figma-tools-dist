@@ -1392,7 +1392,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var sliders = [el.size, el.sx, el.sy, el.steps];
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.23" : "dev";
+  var BUILD_VERSION = true ? "0.1.24" : "dev";
 
   // plugins/ezg-tools/src/ui/labels.ts
   var CORNER_NAMES = {
@@ -1611,6 +1611,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       blocked: "Plugin n\xE0y ch\u01B0a \u0111\u01B0\u1EE3c ph\xE9p k\u1EBFt n\u1ED1i localhost. H\xE3y c\xE0i l\u1EA1i plugin b\u1EB1ng installer",
       unsupportedProtocol: "Phi\xEAn b\u1EA3n plugin v\xE0 server kh\xF4ng kh\u1EDBp. H\xE3y c\u1EADp nh\u1EADt b\u1EB1ng c\xE1ch c\xE0i l\u1EA1i plugin b\u1EB1ng installer",
       idle: "Ch\u01B0a k\u1EBFt n\u1ED1i",
+      readyNoClient: "\u0110\xE3 k\u1EBFt n\u1ED1i, \u0111ang ch\u1EDD MCP client",
       summaryReady: (sessions) => `\u0110\xE3 k\u1EBFt n\u1ED1i, ${countOf(sessions, "session")}`
     },
     toast: {
@@ -1809,13 +1810,22 @@ input[type=range]:focus-visible::-moz-range-thumb {
     let attempt = 0;
     let timer = null;
     let closed = false;
+    let blocked = false;
+    function onViolation(event) {
+      if (!event.blockedURI.startsWith(`ws://localhost:${options2.port}`)) return;
+      blocked = true;
+      if (timer) clearTimeout(timer);
+      timer = null;
+      setStatus("blocked");
+    }
+    document.addEventListener("securitypolicyviolation", onViolation);
     function setStatus(next) {
       if (closed || status === next) return;
       status = next;
       options2.onStatus(next);
     }
     function scheduleReconnect() {
-      if (closed) return;
+      if (closed || blocked) return;
       const base = Math.min(BACKOFF_MAX_MS, BACKOFF_MIN_MS * 2 ** attempt);
       const delay = base * (1 + JITTER * (Math.random() * 2 - 1));
       attempt += 1;
@@ -1862,6 +1872,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       socket2.onclose = () => {
         if (ws !== socket2 || closed) return;
         ws = null;
+        if (blocked) return;
         setStatus("offline");
         scheduleReconnect();
       };
@@ -1881,6 +1892,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       },
       close() {
         closed = true;
+        document.removeEventListener("securitypolicyviolation", onViolation);
         if (timer) clearTimeout(timer);
         timer = null;
         const socket2 = ws;
@@ -2099,7 +2111,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       case "connecting":
         return STATUS.connecting;
       case "ready":
-        return STATUS.summaryReady(Math.max(1, state2.sessions));
+        return state2.sessions === 0 ? STATUS.readyNoClient : STATUS.summaryReady(state2.sessions);
       case "blocked":
         return STATUS.blocked;
       default:
