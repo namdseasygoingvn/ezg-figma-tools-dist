@@ -835,20 +835,25 @@ input[type=range]:focus-visible::-moz-range-thumb {
 }
 
 /* plugins/ezg-tools/src/ui/styles/icons.css */
+#tool-icon-library:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+}
+#tool-icon-library > .cp-tool-title {
+  flex: none;
+}
 .ic-content {
-  display: grid;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   gap: 8px;
+  min-height: 0;
   padding: 12px;
 }
 .ic-bar {
-  position: sticky;
-  top: var(--cp-title-height);
-  z-index: 1;
+  flex: none;
   display: grid;
   gap: 8px;
-  margin: -12px -12px 0;
-  padding: 12px 12px 4px;
-  background: var(--figma-color-bg, #fff);
 }
 .ic-search-row {
   display: grid;
@@ -910,8 +915,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
   color: var(--figma-color-text-danger, #f24822);
 }
 .ic-toast-dock {
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  flex: none;
   z-index: 2;
   height: 0;
 }
@@ -935,7 +940,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
   opacity: 1;
 }
 .ic-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: grid;
+  align-content: start;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
 }
@@ -1194,6 +1203,32 @@ input[type=range]:focus-visible::-moz-range-thumb {
   font-weight: 550;
   color: var(--figma-color-text-onbrand, #fff);
   background: var(--figma-color-bg-brand, #0d99ff);
+}
+
+/* plugins/ezg-tools/src/ui/styles/resize-handle.css */
+.resize-handle {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  width: 12px;
+  height: 12px;
+  cursor: ns-resize;
+  touch-action: none;
+  background:
+    linear-gradient(
+      135deg,
+      transparent 50%,
+      var(--figma-color-border) 50%,
+      var(--figma-color-border) 60%,
+      transparent 60%,
+      transparent 75%,
+      var(--figma-color-border) 75%,
+      var(--figma-color-border) 85%,
+      transparent 85%);
+}
+.resize-handle:hover {
+  background-color: var(--figma-color-bg-hover);
 }
 
 /* plugins/ezg-tools/src/ui/styles/index.css */
@@ -1471,7 +1506,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.38" : "dev";
+  var BUILD_VERSION = true ? "0.1.39" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -3616,7 +3651,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     sortMode.type = "button";
     const sortDir = make2("button", "ic-sortbtn", sortBox);
     sortDir.type = "button";
-    const grid = make2("div", "ic-grid", content);
+    const grid = make2("div", "ic-grid cp-scroll", content);
     grid.setAttribute("role", "list");
     const empty = make2("p", "ic-empty", content);
     empty.hidden = true;
@@ -5511,28 +5546,58 @@ ${tags.join(", ")}` : hit.name;
     }
   }
 
+  // plugins/ezg-tools/src/shared/panel-size.ts
+  var PANEL_HEIGHT_MIN = 300;
+  var PANEL_HEIGHT_MAX = 1e3;
+  var PANEL_HEIGHT_DEFAULT = 560;
+  function clampPanelHeight(height) {
+    return Math.round(
+      Math.min(PANEL_HEIGHT_MAX, Math.max(PANEL_HEIGHT_MIN, height))
+    );
+  }
+
   // plugins/ezg-tools/src/ui/panel-height.ts
-  function contentHeight(panels) {
+  var maxHeight = PANEL_HEIGHT_DEFAULT;
+  var lastHeight = 0;
+  var panels = [];
+  var SCROLLER = ".cp-scroll";
+  function hiddenOverflow(panel) {
+    let extra = 0;
+    for (const node of Array.from(panel.querySelectorAll(SCROLLER)))
+      extra += node.scrollHeight - node.clientHeight;
+    return extra;
+  }
+  function contentHeight(panels2) {
     let height = el.rail.scrollHeight;
-    for (const panel of panels)
-      if (!panel.hidden) height = Math.max(height, panel.scrollHeight);
+    for (const panel of panels2)
+      if (!panel.hidden)
+        height = Math.max(height, panel.scrollHeight + hiddenOverflow(panel));
     return Math.ceil(height);
   }
+  function publish() {
+    const height = Math.min(contentHeight(panels), maxHeight);
+    if (height === lastHeight) return;
+    lastHeight = height;
+    post({ type: "resize", height });
+  }
+  function getMaxHeight() {
+    return maxHeight;
+  }
+  function setMaxHeight(height) {
+    maxHeight = clampPanelHeight(height);
+    publish();
+  }
   function reportHeight() {
-    const panels = Array.from(el.root.querySelectorAll(".cp-tool"));
-    let lastHeight = 0;
-    const observer2 = new ResizeObserver(() => {
-      const height = contentHeight(panels);
-      if (height !== lastHeight) {
-        lastHeight = height;
-        post({ type: "resize", height });
-      }
-    });
+    panels = Array.from(el.root.querySelectorAll(".cp-tool"));
+    const observer2 = new ResizeObserver(publish);
     observer2.observe(el.rail);
     for (const panel of panels) {
       observer2.observe(panel);
       for (const child2 of Array.from(panel.children)) observer2.observe(child2);
     }
+    const mutations = new MutationObserver(publish);
+    for (const node of Array.from(el.root.querySelectorAll(SCROLLER)))
+      mutations.observe(node, { childList: true });
   }
 
   // plugins/ezg-tools/src/ui/frame.ts
@@ -6014,6 +6079,25 @@ ${tags.join(", ")}` : hit.name;
     });
   }
 
+  // plugins/ezg-tools/src/ui/interact/resize-handle.ts
+  function installResizeHandle() {
+    const handle = document.createElement("div");
+    handle.className = "resize-handle";
+    document.body.appendChild(handle);
+    let startY = 0;
+    let startHeight = 0;
+    handle.addEventListener("pointerdown", (e) => {
+      startY = e.screenY;
+      startHeight = getMaxHeight();
+      handle.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    handle.addEventListener("pointermove", (e) => {
+      if (!handle.hasPointerCapture(e.pointerId)) return;
+      setMaxHeight(startHeight + e.screenY - startY);
+    });
+  }
+
   // plugins/ezg-tools/src/ui/dom/drag-handle.ts
   var THRESHOLD = 3;
   function onHandleDrag(handle, start2, edit, max) {
@@ -6206,6 +6290,7 @@ ${tags.join(", ")}` : hit.name;
     installRadius();
     installCoords();
     installShortcuts();
+    installResizeHandle();
     const bridgeRefs = buildBridgePanel();
     renderBridge(bridgeRefs, bridgeState);
     subscribe(() => renderBridge(bridgeRefs, bridgeState));
