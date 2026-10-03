@@ -39,14 +39,14 @@ The port defaults to 39410. To use another port (39410–39419), set `EZG_FIGMA_
 1. `inventory` once: pages, variables, styles, components with property keys.
 2. `build` for any new tree of nodes. It binds tokens and styles by name, and is atomic.
 3. `eval` with `kit` for edits, instances and anything `build` cannot express.
-4. `lint` the nodes you touched. Fix findings, then lint again.
+4. `lint` the nodes you touched. Use `fix` for the simple findings; fix the rest, then lint again.
 5. `screenshot` (inside `eval`) or `export` to look at the result.
 
 Use `checkpoint` before a large edit, and `journal` to review what a session did.
 
 ## eval
 
-Arguments: `{fileKey, code, description, skillNames?, timeoutMs?, atomic?, pageId?}`.
+Arguments: `{fileKey?, code, description, skillNames?, timeoutMs?, atomic?, pageId?}`.
 
 - `code` is an async function body: top-level `await` and `return` work. It runs in an inner function, so `const set = ...` or `const kit = ...` in your code is legal.
 - Return node ids, not nodes. Nodes serialize to `{id, type, name}`.
@@ -149,7 +149,7 @@ It is atomic by default: on failure the created nodes are removed. Pass `lint` (
 
 ## lint
 
-`{fileKey?, nodeIds?, pageIds?, rules?, options?, includeInstances?, limit?}`. With no `rules`, it runs the neutral defaults plus any rule that has `options`.
+`{fileKey?, nodeIds?, pageIds?, rules?, options?, includeInstances?, limit?, fix?}`. With no `rules`, it runs the neutral defaults plus any rule that has `options`.
 
 - Default rules: `generic-name`, `unbound-color`, `text-no-style`, `missing-font`, `variant-conflict`.
 - Opt-in rules (name them in `rules` or pass `options`):
@@ -164,7 +164,17 @@ It is atomic by default: on failure the created nodes are removed. Pass `lint` (
 | `overflow`       | `{tolerance?}`                                           |
 | `reuse`          | `{min?}`                                                 |
 
-The report has `checked`, `counts`, `findings` (`rule`, `nodeId`, `path`, `detail`) and `truncated`. Project rules belong in your call arguments; the bridge knows none.
+The report has `checked`, `counts`, `findings` (`rule`, `nodeId`, `path`, `detail`) and `truncated`.
+
+`fix` applies safe fixes in the same call (one undo step), then lints again. The report adds `fixes` (`fixed`, `skipped` with a reason).
+
+| fix              | effect                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------ |
+| `clip: true`     | sets `clipsContent` false on `clip` findings                                                     |
+| `styles: true`   | binds `unbound-color` and `text-no-style` nodes to the one local style with exactly equal values |
+| `rename: {a: b}` | renames `generic-name` and `name-pattern` findings named exactly `a` to `b`                      |
+
+Several matching styles, mixed values or several paints are skipped, not guessed. Project rules belong in your call arguments; the bridge knows none.
 
 ## journal
 

@@ -42871,7 +42871,8 @@ function isObject2(v) {
   return typeof v === "object" && v !== null;
 }
 function isNodeLike(v) {
-  if (!isObject2(v)) return false;
+  if (!isObject2(v) || typeof read(v, "getPluginData") !== "function")
+    return false;
   const parts = [read(v, "id"), read(v, "type"), read(v, "name")];
   return parts.every((p) => typeof p === "string") && parts.some((p) => p !== UNREADABLE);
 }
@@ -43168,7 +43169,60 @@ var init_authoring = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/lint-fix.ts
+function parseLintFix(raw) {
+  if (!isRec(raw)) return null;
+  const out = {};
+  for (const key of Object.keys(raw)) {
+    const v = raw[key];
+    if (key === "clip" || key === "styles") {
+      if (typeof v !== "boolean") return null;
+      out[key] = v;
+    } else if (key === "rename") {
+      if (!isRec(v)) return null;
+      const map2 = Object.entries(v);
+      if (!map2.every(([, to]) => typeof to === "string" && to !== ""))
+        return null;
+      out.rename = Object.fromEntries(map2);
+    } else {
+      return null;
+    }
+  }
+  return out;
+}
+var COLOR_EPSILON, isRec;
+var init_lint_fix = __esm({
+  "plugins/ezg-tools/src/shared/lint-fix.ts"() {
+    "use strict";
+    COLOR_EPSILON = 0.5 / 255;
+    isRec = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+  }
+});
+
 // plugins/ezg-tools/src/shared/lint-types.ts
+var LINT_RULE_IDS, LINT_LIMIT_MAX;
+var init_lint_types = __esm({
+  "plugins/ezg-tools/src/shared/lint-types.ts"() {
+    "use strict";
+    LINT_RULE_IDS = [
+      "generic-name",
+      "unbound-color",
+      "text-no-style",
+      "missing-font",
+      "variant-conflict",
+      "name-pattern",
+      "clip",
+      "safe-zone",
+      "grid-style",
+      "unbound-number",
+      "overflow",
+      "reuse"
+    ];
+    LINT_LIMIT_MAX = 5e3;
+  }
+});
+
+// plugins/ezg-tools/src/shared/lint-parse.ts
 function strings(v) {
   if (!Array.isArray(v) || !v.every((s) => typeof s === "string")) return null;
   return v;
@@ -43183,7 +43237,7 @@ function regexOk(src, flags) {
   }
 }
 function size(v) {
-  if (!isRec(v) || !num(v.width) || !num(v.height)) return null;
+  if (!isRec2(v) || !num(v.width) || !num(v.height)) return null;
   if (v.width <= 0 || v.height <= 0) return null;
   return { width: v.width, height: v.height };
 }
@@ -43201,10 +43255,10 @@ function pick2(raw, shape, required2 = []) {
   return out;
 }
 function parseOptions(raw) {
-  if (!isRec(raw)) return null;
+  if (!isRec2(raw)) return null;
   const out = {};
   for (const key of Object.keys(raw)) {
-    if (!isRuleId(key) || !isRec(raw[key])) return null;
+    if (!isRuleId(key) || !isRec2(raw[key])) return null;
     const shape = OPTION_SHAPES[key];
     const parsed = shape ? pick2(raw[key], shape, key === "name-pattern" ? ["pattern"] : []) : {};
     if (!parsed) return null;
@@ -43215,7 +43269,7 @@ function parseOptions(raw) {
   return out;
 }
 function parseLintPayload(raw) {
-  if (!isRec(raw)) return null;
+  if (!isRec2(raw)) return null;
   const out = {};
   for (const key of ["nodeIds", "pageIds"]) {
     if (raw[key] === void 0) continue;
@@ -43240,28 +43294,20 @@ function parseLintPayload(raw) {
     if (!posInt(raw.limit) || raw.limit > LINT_LIMIT_MAX) return null;
     out.limit = raw.limit;
   }
+  if (raw.fix !== void 0) {
+    const fix = parseLintFix(raw.fix);
+    if (!fix) return null;
+    out.fix = fix;
+  }
   return out;
 }
-var LINT_RULE_IDS, LINT_LIMIT_MAX, isRec, isRuleId, num, posInt, asNum, asStr, asRegex, OPTION_SHAPES;
-var init_lint_types = __esm({
-  "plugins/ezg-tools/src/shared/lint-types.ts"() {
+var isRec2, isRuleId, num, posInt, asNum, asStr, asRegex, OPTION_SHAPES;
+var init_lint_parse = __esm({
+  "plugins/ezg-tools/src/shared/lint-parse.ts"() {
     "use strict";
-    LINT_RULE_IDS = [
-      "generic-name",
-      "unbound-color",
-      "text-no-style",
-      "missing-font",
-      "variant-conflict",
-      "name-pattern",
-      "clip",
-      "safe-zone",
-      "grid-style",
-      "unbound-number",
-      "overflow",
-      "reuse"
-    ];
-    LINT_LIMIT_MAX = 5e3;
-    isRec = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+    init_lint_fix();
+    init_lint_types();
+    isRec2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
     isRuleId = (v) => typeof v === "string" && LINT_RULE_IDS.includes(v);
     num = (v) => typeof v === "number" && Number.isFinite(v);
     posInt = (v) => typeof v === "number" && Number.isInteger(v) && v > 0;
@@ -43301,11 +43347,11 @@ var init_lint_types = __esm({
 function isJson(v, depth = 0) {
   if (depth > 20) return false;
   if (Array.isArray(v)) return v.every((x) => isJson(x, depth + 1));
-  if (isRec2(v)) return Object.values(v).every((x) => isJson(x, depth + 1));
+  if (isRec3(v)) return Object.values(v).every((x) => isJson(x, depth + 1));
   return v === null || ["string", "boolean"].includes(typeof v) || num2(v);
 }
 function layoutErrors(l, at) {
-  if (!isRec2(l)) return [`${at}: layout must be an object`];
+  if (!isRec3(l)) return [`${at}: layout must be an object`];
   const out = [];
   const bad = (m) => out.push(`${at}: layout.${m}`);
   for (const key of Object.keys(l))
@@ -43342,7 +43388,7 @@ function nodeErrors(n, at) {
     bad("ref must be a non-empty string");
   else if (isStr(n.ref) && /^nodes\[\d+\]/.test(n.ref))
     bad(`ref "${n.ref}" looks like a node path`);
-  if (n.props !== void 0 && !(isRec2(n.props) && isJson(n.props)))
+  if (n.props !== void 0 && !(isRec3(n.props) && isJson(n.props)))
     bad("props must be a JSON object");
   if (n.layout !== void 0) {
     if (LAYOUT_TYPES.includes(type)) out.push(...layoutErrors(n.layout, at));
@@ -43352,7 +43398,7 @@ function nodeErrors(n, at) {
     bad("bind values must be strings");
   if (!only("text", "TEXT")) {
     const t = n.text;
-    if (!isRec2(t) || !isStr(t.chars)) bad("text.chars must be a string");
+    if (!isRec3(t) || !isStr(t.chars)) bad("text.chars must be a string");
     else if (t.style !== void 0 && !isStr(t.style))
       bad("text.style must be a string");
   }
@@ -43363,8 +43409,8 @@ function nodeErrors(n, at) {
     bad("setProps values must be strings or booleans");
   if (!only("variants", "COMPONENT_SET")) {
     const v = n.variants;
-    const cols = isRec2(v) ? v.cols : void 0;
-    if (!isRec2(v)) bad("variants must be an object");
+    const cols = isRec3(v) ? v.cols : void 0;
+    if (!isRec3(v)) bad("variants must be an object");
     else {
       if (cols !== void 0 && !(Number.isInteger(cols) && cols > 0))
         bad("variants.cols must be a positive integer");
@@ -43376,7 +43422,7 @@ function nodeErrors(n, at) {
   return out;
 }
 function buildErrors(raw) {
-  if (!isRec2(raw)) return ["payload must be an object"];
+  if (!isRec3(raw)) return ["payload must be an object"];
   const errors = [];
   for (const k of ["parentId", "pageId"])
     if (raw[k] !== void 0 && !isStr(raw[k]))
@@ -43384,7 +43430,7 @@ function buildErrors(raw) {
   if (raw.atomic !== void 0 && typeof raw.atomic !== "boolean")
     errors.push("atomic must be a boolean");
   const l = raw.lint;
-  if (l !== void 0 && (!isRec2(l) || "nodeIds" in l || "pageIds" in l || !parseLintPayload(l)))
+  if (l !== void 0 && (!isRec3(l) || "nodeIds" in l || "pageIds" in l || !parseLintPayload(l)))
     errors.push("lint must be valid lint options without nodeIds and pageIds");
   if (!Array.isArray(raw.nodes) || raw.nodes.length === 0)
     return [...errors, "nodes must be a non-empty array"];
@@ -43395,7 +43441,7 @@ function buildErrors(raw) {
     if (count > BUILD_NODE_CAP) return;
     if (++count > BUILD_NODE_CAP)
       return bad(`more than ${BUILD_NODE_CAP} nodes`);
-    if (!isRec2(n)) return bad("node must be an object");
+    if (!isRec3(n)) return bad("node must be an object");
     errors.push(...nodeErrors(n, at));
     if (isStr(n.ref) && n.ref !== "") {
       if (refs.has(n.ref)) bad(`duplicate ref "${n.ref}"`);
@@ -43413,7 +43459,7 @@ function buildErrors(raw) {
       return bad(`deeper than ${BUILD_DEPTH_CAP} levels`);
     kids.forEach((c, i) => {
       const cat = `${at}.children[${i}]`;
-      if (set2 && isRec2(c) && c.type !== "COMPONENT")
+      if (set2 && isRec3(c) && c.type !== "COMPONENT")
         errors.push(`${cat}: COMPONENT_SET children must be COMPONENT`);
       walk2(c, cat, depth + 1);
     });
@@ -43433,11 +43479,11 @@ function parseBuildPayload(raw) {
   if (r.lint !== void 0) out.lint = parseLintPayload(r.lint) ?? void 0;
   return out;
 }
-var BUILD_TYPES, BUILD_NODE_CAP, BUILD_DEPTH_CAP, isRec2, num2, LEAF_TYPES, LAYOUT_TYPES, LAYOUT_ENUMS, LAYOUT_KEYS, allOf, isStr, isStrOrBool;
+var BUILD_TYPES, BUILD_NODE_CAP, BUILD_DEPTH_CAP, isRec3, num2, LEAF_TYPES, LAYOUT_TYPES, LAYOUT_ENUMS, LAYOUT_KEYS, allOf, isStr, isStrOrBool;
 var init_bridge_build = __esm({
   "plugins/ezg-tools/src/shared/bridge-build.ts"() {
     "use strict";
-    init_lint_types();
+    init_lint_parse();
     BUILD_TYPES = [
       "FRAME",
       "COMPONENT",
@@ -43453,7 +43499,7 @@ var init_bridge_build = __esm({
     ];
     BUILD_NODE_CAP = 2e3;
     BUILD_DEPTH_CAP = 32;
-    isRec2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+    isRec3 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
     num2 = (v) => typeof v === "number" && Number.isFinite(v);
     LEAF_TYPES = [
       "RECTANGLE",
@@ -43479,7 +43525,7 @@ var init_bridge_build = __esm({
       "wrap",
       ...Object.keys(LAYOUT_ENUMS)
     ];
-    allOf = (v, ok) => isRec2(v) && Object.values(v).every(ok);
+    allOf = (v, ok) => isRec3(v) && Object.values(v).every(ok);
     isStr = (x) => typeof x === "string";
     isStrOrBool = (x) => isStr(x) || typeof x === "boolean";
   }
@@ -43614,7 +43660,9 @@ var init_eval = __esm({
     PROTOTYPES_NOTE = "node.query(), node.matches(), node.set() and node.screenshot() are not available in this file; call query(node, selector), matches(node, selector), set(node, props) and screenshot(node) instead";
     DESCRIPTION2 = "Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot, and the kit object (tokens, text, components, variants, auto layout), are passed as parameters; user code runs in an inner function, so it may declare its own names. One call is one undo step. Not atomic by default: a failed run may leave partial changes. Pass atomic: true to remove the nodes the call created when it fails (edits to existing nodes stay). Pass pageId to put new top-level nodes on that page. The result reports elapsed time, queue time and created node ids. Load the ezg-figma-bridge skill first.";
     evalInputSchema = {
-      fileKey: external_exports.string().min(1),
+      fileKey: external_exports.string().min(1).optional().describe(
+        "fileKey or clientId from files. Optional with one file connected."
+      ),
       code: external_exports.string().max(5e4),
       description: external_exports.string().max(2e3),
       skillNames: external_exports.string().optional(),
@@ -44019,7 +44067,7 @@ var init_bridge_parse = __esm({
     init_codegen_data();
     init_bridge_eval();
     init_bridge_inventory();
-    init_lint_types();
+    init_lint_parse();
     init_bridge_build();
     init_bridge_icons();
     init_values();
@@ -44572,8 +44620,8 @@ var init_lint = __esm({
     init_tool_result();
     LINT_TIMEOUT_MS = 12e4;
     LINT_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use lint";
-    LINT_INVALID_HINT = 'options shapes: "name-pattern" {pattern, flags?, types?}; clip {allow?}; "safe-zone" {top?, bottom?, left?, right?, frame?{width,height}, types?, names?}; "grid-style" {styleId?, frame?{width,height}}; "unbound-number" {fields?}; overflow {tolerance?}; reuse {min?}';
-    DESCRIPTION5 = "Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more.";
+    LINT_INVALID_HINT = 'options shapes: "name-pattern" {pattern, flags?, types?}; clip {allow?}; "safe-zone" {top?, bottom?, left?, right?, frame?{width,height}, types?, names?}; "grid-style" {styleId?, frame?{width,height}}; "unbound-number" {fields?}; overflow {tolerance?}; reuse {min?}; fix {clip?, styles?, rename?}';
+    DESCRIPTION5 = "Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more. fix applies safe fixes to the findings in the same call (one undo step), then lints again: clip true unclips clip findings; styles true binds unbound-color and text-no-style nodes to the one local paint or text style with exactly the same values; rename {old: new} renames generic-name and name-pattern findings by exact name. The report then has fixes {fixed, skipped}.";
     lintInputSchema = {
       fileKey: external_exports.string().optional(),
       nodeIds: external_exports.array(external_exports.string()).optional(),
@@ -44581,7 +44629,12 @@ var init_lint = __esm({
       rules: external_exports.array(external_exports.enum(LINT_RULE_IDS)).optional(),
       options: external_exports.record(external_exports.string(), external_exports.unknown()).optional(),
       includeInstances: external_exports.boolean().optional(),
-      limit: external_exports.number().int().min(1).max(5e3).optional()
+      limit: external_exports.number().int().min(1).max(5e3).optional(),
+      fix: external_exports.object({
+        clip: external_exports.boolean().optional(),
+        styles: external_exports.boolean().optional(),
+        rename: external_exports.record(external_exports.string(), external_exports.string().min(1)).optional()
+      }).strict().optional()
     };
     registerLint = (server2, ctx2) => {
       server2.registerTool(
@@ -44601,7 +44654,8 @@ var init_lint = __esm({
               LINT_TIMEOUT_MS
             );
             const n = report.findings.length;
-            const summary = `${n} findings (rules: ${report.rules.join(", ")})`;
+            const fixed = report.fixes ? `; fixed ${report.fixes.fixed.length}, skipped ${report.fixes.skipped.length}` : "";
+            const summary = `${n} findings (rules: ${report.rules.join(", ")})${fixed}`;
             const out = jsonResult(report, r.note);
             out.content.unshift({ type: "text", text: summary });
             return out;

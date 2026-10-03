@@ -1506,7 +1506,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.39" : "dev";
+  var BUILD_VERSION = true ? "0.1.40" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -2462,6 +2462,30 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return out;
   }
 
+  // plugins/ezg-tools/src/shared/lint-fix.ts
+  var COLOR_EPSILON = 0.5 / 255;
+  var isRec = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+  function parseLintFix(raw) {
+    if (!isRec(raw)) return null;
+    const out = {};
+    for (const key of Object.keys(raw)) {
+      const v = raw[key];
+      if (key === "clip" || key === "styles") {
+        if (typeof v !== "boolean") return null;
+        out[key] = v;
+      } else if (key === "rename") {
+        if (!isRec(v)) return null;
+        const map = Object.entries(v);
+        if (!map.every(([, to]) => typeof to === "string" && to !== ""))
+          return null;
+        out.rename = Object.fromEntries(map);
+      } else {
+        return null;
+      }
+    }
+    return out;
+  }
+
   // plugins/ezg-tools/src/shared/lint-types.ts
   var LINT_RULE_IDS = [
     "generic-name",
@@ -2478,7 +2502,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "reuse"
   ];
   var LINT_LIMIT_MAX = 5e3;
-  var isRec = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+
+  // plugins/ezg-tools/src/shared/lint-parse.ts
+  var isRec2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
   var isRuleId = (v) => typeof v === "string" && LINT_RULE_IDS.includes(v);
   function strings(v) {
     if (!Array.isArray(v) || !v.every((s) => typeof s === "string")) return null;
@@ -2496,7 +2522,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var num = (v) => typeof v === "number" && Number.isFinite(v);
   var posInt = (v) => typeof v === "number" && Number.isInteger(v) && v > 0;
   function size(v) {
-    if (!isRec(v) || !num(v.width) || !num(v.height)) return null;
+    if (!isRec2(v) || !num(v.width) || !num(v.height)) return null;
     if (v.width <= 0 || v.height <= 0) return null;
     return { width: v.width, height: v.height };
   }
@@ -2543,10 +2569,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     reuse: { min: (v) => posInt(v) ? v : null }
   };
   function parseOptions(raw) {
-    if (!isRec(raw)) return null;
+    if (!isRec2(raw)) return null;
     const out = {};
     for (const key of Object.keys(raw)) {
-      if (!isRuleId(key) || !isRec(raw[key])) return null;
+      if (!isRuleId(key) || !isRec2(raw[key])) return null;
       const shape = OPTION_SHAPES[key];
       const parsed = shape ? pick(raw[key], shape, key === "name-pattern" ? ["pattern"] : []) : {};
       if (!parsed) return null;
@@ -2557,7 +2583,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return out;
   }
   function parseLintPayload(raw) {
-    if (!isRec(raw)) return null;
+    if (!isRec2(raw)) return null;
     const out = {};
     for (const key of ["nodeIds", "pageIds"]) {
       if (raw[key] === void 0) continue;
@@ -2582,6 +2608,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
       if (!posInt(raw.limit) || raw.limit > LINT_LIMIT_MAX) return null;
       out.limit = raw.limit;
     }
+    if (raw.fix !== void 0) {
+      const fix = parseLintFix(raw.fix);
+      if (!fix) return null;
+      out.fix = fix;
+    }
     return out;
   }
 
@@ -2601,7 +2632,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   ];
   var BUILD_NODE_CAP = 2e3;
   var BUILD_DEPTH_CAP = 32;
-  var isRec2 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+  var isRec3 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
   var num2 = (v) => typeof v === "number" && Number.isFinite(v);
   var LEAF_TYPES = [
     "RECTANGLE",
@@ -2630,14 +2661,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
   function isJson(v, depth = 0) {
     if (depth > 20) return false;
     if (Array.isArray(v)) return v.every((x) => isJson(x, depth + 1));
-    if (isRec2(v)) return Object.values(v).every((x) => isJson(x, depth + 1));
+    if (isRec3(v)) return Object.values(v).every((x) => isJson(x, depth + 1));
     return v === null || ["string", "boolean"].includes(typeof v) || num2(v);
   }
-  var allOf = (v, ok) => isRec2(v) && Object.values(v).every(ok);
+  var allOf = (v, ok) => isRec3(v) && Object.values(v).every(ok);
   var isStr = (x) => typeof x === "string";
   var isStrOrBool = (x) => isStr(x) || typeof x === "boolean";
   function layoutErrors(l, at) {
-    if (!isRec2(l)) return [`${at}: layout must be an object`];
+    if (!isRec3(l)) return [`${at}: layout must be an object`];
     const out = [];
     const bad = (m) => out.push(`${at}: layout.${m}`);
     for (const key of Object.keys(l))
@@ -2674,7 +2705,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       bad("ref must be a non-empty string");
     else if (isStr(n.ref) && /^nodes\[\d+\]/.test(n.ref))
       bad(`ref "${n.ref}" looks like a node path`);
-    if (n.props !== void 0 && !(isRec2(n.props) && isJson(n.props)))
+    if (n.props !== void 0 && !(isRec3(n.props) && isJson(n.props)))
       bad("props must be a JSON object");
     if (n.layout !== void 0) {
       if (LAYOUT_TYPES.includes(type)) out.push(...layoutErrors(n.layout, at));
@@ -2684,7 +2715,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       bad("bind values must be strings");
     if (!only("text", "TEXT")) {
       const t = n.text;
-      if (!isRec2(t) || !isStr(t.chars)) bad("text.chars must be a string");
+      if (!isRec3(t) || !isStr(t.chars)) bad("text.chars must be a string");
       else if (t.style !== void 0 && !isStr(t.style))
         bad("text.style must be a string");
     }
@@ -2695,8 +2726,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
       bad("setProps values must be strings or booleans");
     if (!only("variants", "COMPONENT_SET")) {
       const v = n.variants;
-      const cols = isRec2(v) ? v.cols : void 0;
-      if (!isRec2(v)) bad("variants must be an object");
+      const cols = isRec3(v) ? v.cols : void 0;
+      if (!isRec3(v)) bad("variants must be an object");
       else {
         if (cols !== void 0 && !(Number.isInteger(cols) && cols > 0))
           bad("variants.cols must be a positive integer");
@@ -2708,7 +2739,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return out;
   }
   function buildErrors(raw) {
-    if (!isRec2(raw)) return ["payload must be an object"];
+    if (!isRec3(raw)) return ["payload must be an object"];
     const errors = [];
     for (const k of ["parentId", "pageId"])
       if (raw[k] !== void 0 && !isStr(raw[k]))
@@ -2716,7 +2747,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     if (raw.atomic !== void 0 && typeof raw.atomic !== "boolean")
       errors.push("atomic must be a boolean");
     const l = raw.lint;
-    if (l !== void 0 && (!isRec2(l) || "nodeIds" in l || "pageIds" in l || !parseLintPayload(l)))
+    if (l !== void 0 && (!isRec3(l) || "nodeIds" in l || "pageIds" in l || !parseLintPayload(l)))
       errors.push("lint must be valid lint options without nodeIds and pageIds");
     if (!Array.isArray(raw.nodes) || raw.nodes.length === 0)
       return [...errors, "nodes must be a non-empty array"];
@@ -2727,7 +2758,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
       if (count > BUILD_NODE_CAP) return;
       if (++count > BUILD_NODE_CAP)
         return bad(`more than ${BUILD_NODE_CAP} nodes`);
-      if (!isRec2(n)) return bad("node must be an object");
+      if (!isRec3(n)) return bad("node must be an object");
       errors.push(...nodeErrors(n, at));
       if (isStr(n.ref) && n.ref !== "") {
         if (refs.has(n.ref)) bad(`duplicate ref "${n.ref}"`);
@@ -2745,7 +2776,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
         return bad(`deeper than ${BUILD_DEPTH_CAP} levels`);
       kids.forEach((c, i) => {
         const cat = `${at}.children[${i}]`;
-        if (set && isRec2(c) && c.type !== "COMPONENT")
+        if (set && isRec3(c) && c.type !== "COMPONENT")
           errors.push(`${cat}: COMPONENT_SET children must be COMPONENT`);
         walk2(c, cat, depth + 1);
       });
@@ -3170,7 +3201,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return typeof v === "object" && v !== null;
   }
   function isNodeLike(v) {
-    if (!isObject(v)) return false;
+    if (!isObject(v) || typeof read(v, "getPluginData") !== "function")
+      return false;
     const parts2 = [read(v, "id"), read(v, "type"), read(v, "name")];
     return parts2.every((p) => typeof p === "string") && parts2.some((p) => p !== UNREADABLE);
   }
