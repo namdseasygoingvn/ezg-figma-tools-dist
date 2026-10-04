@@ -3829,14 +3829,19 @@ function decode(raw) {
   }
   return isRecord(value) ? value : null;
 }
+function toQueue(v) {
+  if (!isRecord(v) || !isFiniteNumber(v.depth) || !isFiniteNumber(v.waitMs))
+    return void 0;
+  return { depth: v.depth, waitMs: v.waitMs };
+}
 function toReply(f) {
   if (!isString(f.id)) return null;
-  if (f.ok === true) {
-    return { kind: "reply", id: f.id, ok: true, result: f.result ?? null };
-  }
+  const queue = toQueue(f.queue);
+  const head = queue ? { kind: "reply", id: f.id, queue } : { kind: "reply", id: f.id };
+  if (f.ok === true) return { ...head, ok: true, result: f.result ?? null };
   if (f.ok !== false) return null;
   const error62 = toBridgeError(f.error);
-  return error62 ? { kind: "reply", id: f.id, ok: false, error: error62 } : null;
+  return error62 ? { ...head, ok: false, error: error62 } : null;
 }
 function toProgress(f) {
   if (!isString(f.id) || !isFiniteNumber(f.extendMs) || f.extendMs < 0)
@@ -3931,6 +3936,20 @@ var init_bridge_wire = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/bridge-scope.ts
+function splitScopedId(id) {
+  const i = id.indexOf("/");
+  if (i <= 0 || i === id.length - 1) return null;
+  return { agentId: id.slice(0, i), id: id.slice(i + 1) };
+}
+var scopedId;
+var init_bridge_scope = __esm({
+  "plugins/ezg-tools/src/shared/bridge-scope.ts"() {
+    "use strict";
+    scopedId = (agentId, id) => `${agentId}/${id}`;
+  }
+});
+
 // bridge-server/src/peer-wire.ts
 function decode2(raw) {
   let value = raw;
@@ -3985,20 +4004,15 @@ function parseHubFrame(raw) {
       return null;
   }
 }
-function splitScopedId(id) {
-  const i = id.indexOf("/");
-  if (i <= 0 || i === id.length - 1) return null;
-  return { agentId: id.slice(0, i), id: id.slice(i + 1) };
-}
-var AGENT_PATH, PEER_PROTOCOL, isString2, scopedId;
+var AGENT_PATH, PEER_PROTOCOL, isString2;
 var init_peer_wire = __esm({
   "bridge-server/src/peer-wire.ts"() {
     "use strict";
     init_bridge_wire();
+    init_bridge_scope();
     AGENT_PATH = "/agent";
     PEER_PROTOCOL = 1;
     isString2 = (v) => typeof v === "string";
-    scopedId = (agentId, id) => `${agentId}/${id}`;
   }
 });
 
@@ -42647,7 +42661,8 @@ var init_context = __esm({
       iconsSearch: "icons_search",
       iconsPlace: "icons_place",
       iconsTag: "icons_tag",
-      uiScreenshot: "ui_screenshot"
+      uiScreenshot: "ui_screenshot",
+      status: "status"
     };
     BridgeCallError = class extends Error {
       code;
@@ -42669,7 +42684,22 @@ function createRpc(send) {
   function arm(id, entry, delayMs) {
     entry.timer = setTimeout(() => {
       pending.delete(id);
-      entry.reject(new BridgeCallError("timeout", "Figma call timed out"));
+      const secs = ((Date.now() - entry.startedAt) / 1e3).toFixed(1);
+      entry.reject(
+        new BridgeCallError(
+          "timeout",
+          `Figma ${entry.op} call timed out after ${secs} s with no reply or progress; a cancel was sent`
+        )
+      );
+      try {
+        send(entry.connectionId, {
+          kind: "request",
+          id: `${id}.cancel`,
+          op: "cancel",
+          payload: { id }
+        });
+      } catch {
+      }
     }, delayMs);
     entry.timer.unref();
   }
@@ -42683,6 +42713,8 @@ function createRpc(send) {
         const id = String(++counter);
         const entry = {
           connectionId,
+          op,
+          startedAt: Date.now(),
           resolve: resolve2,
           reject: reject2,
           timer: void 0,
@@ -43037,7 +43069,7 @@ var init_tool_result = __esm({
     init_bridge_result();
     init_context();
     HINTS = {
-      timeout: "The plugin may still be running the request. Check with view_get or events before you retry.",
+      timeout: "The plugin may still be running the request. Call status until busy is false before you retry.",
       closed: "The Figma file disconnected. Ask the user to press Connect in the MCP tab, then call files."
     };
   }
@@ -43627,23 +43659,34 @@ function parseEvalOptions(raw) {
 function isEvalFailureData(v) {
   return isRecord3(v) && v.kind === "eval-failure" && isRecord3(v.stats);
 }
+var EVAL_CANCEL_GRACE_MS, EVAL_ARGS_MAX_CHARS;
 var init_bridge_eval = __esm({
   "plugins/ezg-tools/src/shared/bridge-eval.ts"() {
     "use strict";
+    EVAL_CANCEL_GRACE_MS = 1e4;
+    EVAL_ARGS_MAX_CHARS = 8e6;
   }
 });
 
 // bridge-server/src/tools/eval.ts
 function statsNote(s) {
-  return `stats: ${s.elapsedMs} ms (queue ${s.queueMs} ms), created ${s.createdCount} on page ${s.pageId}`;
+  const queue = `queue ${s.queueMs} ms behind ${s.queueDepth ?? 0} calls`;
+  const late2 = s.lateMs ? `; finished ${s.lateMs} ms after the timeout` : "";
+  const fonts = s.slowFonts?.length ? `; slow font loads: ${s.slowFonts.map((f) => `${f.font} ${f.ms} ms`).join(", ")}` : "";
+  return `stats: ${s.elapsedMs} ms (${queue}), created ${s.createdCount} on page ${s.pageId}${late2}${fonts}`;
 }
 function failureNotes2(d) {
   const at = d.line === void 0 ? "" : `at line ${d.line}${d.column === void 0 ? "" : ":" + d.column}`;
+  if (d.timeout?.running)
+    return [
+      `still running after the timeout; created so far: ${d.kept.length}`,
+      EVAL_STILL_RUNNING_HINT
+    ];
   if (d.rolledBack) return [at, `rolled back ${d.removed} created nodes`];
   const kept = d.kept.length ? "kept: " + d.kept.slice(0, EVAL_KEPT_MAX).join(", ") + (d.kept.length > EVAL_KEPT_MAX ? ` (+${d.kept.length - EVAL_KEPT_MAX} more)` : "") : "";
   return [at, kept, EVAL_PARTIAL_HINT];
 }
-var EVAL_TIMEOUT_DEFAULT_MS, EVAL_TIMEOUT_MIN_MS, EVAL_TIMEOUT_MAX_MS, EVAL_RPC_MARGIN_MS, EVAL_PARTIAL_HINT, EVAL_KEPT_MAX, PROTOTYPES_NOTE, DESCRIPTION2, evalInputSchema, registerEval;
+var EVAL_TIMEOUT_DEFAULT_MS, EVAL_TIMEOUT_MIN_MS, EVAL_TIMEOUT_MAX_MS, EVAL_RPC_MARGIN_MS, EVAL_PARTIAL_HINT, EVAL_KEPT_MAX, EVAL_STILL_RUNNING_HINT, PROTOTYPES_NOTE, DESCRIPTION2, evalInputSchema, registerEval;
 var init_eval = __esm({
   "bridge-server/src/tools/eval.ts"() {
     "use strict";
@@ -43657,8 +43700,9 @@ var init_eval = __esm({
     EVAL_RPC_MARGIN_MS = 5e3;
     EVAL_PARTIAL_HINT = "partial changes may remain; inspect before retry";
     EVAL_KEPT_MAX = 20;
+    EVAL_STILL_RUNNING_HINT = "call status until busy is false, then check recent for its outcome before you retry";
     PROTOTYPES_NOTE = "node.query(), node.matches(), node.set() and node.screenshot() are not available in this file; call query(node, selector), matches(node, selector), set(node, props) and screenshot(node) instead";
-    DESCRIPTION2 = "Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot, and the kit object (tokens, text, components, variants, auto layout), are passed as parameters; user code runs in an inner function, so it may declare its own names. One call is one undo step. Not atomic by default: a failed run may leave partial changes. Pass atomic: true to remove the nodes the call created when it fails (edits to existing nodes stay). Pass pageId to put new top-level nodes on that page. The result reports elapsed time, queue time and created node ids. Load the ezg-figma-bridge skill first.";
+    DESCRIPTION2 = `Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot, and the kit object (tokens, text, components, variants, auto layout), are passed as parameters; user code runs in an inner function, so it may declare its own names. args (any JSON, up to ${EVAL_ARGS_MAX_CHARS} characters, separate from the code cap) is passed to the code as the args parameter, so data never has to be pasted into code. One call is one undo step. Not atomic by default: a failed run may leave partial changes. Pass atomic: true to remove the nodes the call created when it fails (edits to existing nodes stay). Pass pageId to put new top-level nodes on that page. On timeoutMs the call is cancelled: the code stops at its next figma, kit or helper call (signal.cancelled and signal.throwIfCancelled() let long loops check), atomic removes what it created, and the error says where it was. If it does not stop within ${EVAL_CANCEL_GRACE_MS / 1e3} s, the error says it is still running; call status until busy is false before you retry. The result reports elapsed time, queue time and depth, slow font loads and created node ids. Load the ezg-figma-bridge skill first.`;
     evalInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -43668,15 +43712,22 @@ var init_eval = __esm({
       skillNames: external_exports.string().optional(),
       timeoutMs: external_exports.number().int().min(EVAL_TIMEOUT_MIN_MS).max(EVAL_TIMEOUT_MAX_MS).default(EVAL_TIMEOUT_DEFAULT_MS),
       atomic: external_exports.boolean().optional(),
-      pageId: external_exports.string().min(1).optional()
+      pageId: external_exports.string().min(1).optional(),
+      args: external_exports.unknown().optional()
     };
     registerEval = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.eval,
         { description: DESCRIPTION2, inputSchema: evalInputSchema },
-        async ({ fileKey: fileKey5, code, description, timeoutMs, atomic, pageId }) => {
+        async ({ fileKey: fileKey5, code, description, timeoutMs, atomic, pageId, args }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
+          const argsChars = args === void 0 ? 0 : JSON.stringify(args).length;
+          if (argsChars > EVAL_ARGS_MAX_CHARS)
+            return errorResult(
+              `args is ${argsChars} characters; the limit is ${EVAL_ARGS_MAX_CHARS}.`,
+              "Split the data over several calls."
+            );
           try {
             const res = await ctx2.rpc.call(
               r.file.connectionId,
@@ -43686,7 +43737,8 @@ var init_eval = __esm({
                 description,
                 timeoutMs,
                 ...atomic === void 0 ? {} : { atomic },
-                ...pageId === void 0 ? {} : { pageId }
+                ...pageId === void 0 ? {} : { pageId },
+                ...args === void 0 ? {} : { args }
               },
               timeoutMs + EVAL_RPC_MARGIN_MS
             );
@@ -43989,7 +44041,8 @@ function parseEval(raw) {
     return null;
   const options = parseEvalOptions(raw);
   if (!options) return null;
-  return { code, description, timeoutMs, ...options };
+  const out = { code, description, timeoutMs, ...options };
+  return raw.args === void 0 ? out : { ...out, args: raw.args };
 }
 function parseViewSet(raw) {
   if (!isRecord(raw)) return null;
@@ -44059,7 +44112,7 @@ function parseUiScreenshot(raw) {
   if (!positive(raw.scale) || raw.scale > UI_SCREENSHOT_MAX_SCALE) return null;
   return { scale: raw.scale };
 }
-var EXPORT_FORMATS, FORMAT_SET, str2, nonEmptyStr2, positive, strArray, parseEmpty, UI_SCREENSHOT_MAX_SCALE, PARSERS;
+var EXPORT_FORMATS, EXPORT_MAX_NODES, FORMAT_SET, str2, nonEmptyStr2, positive, strArray, parseEmpty, UI_SCREENSHOT_MAX_SCALE, PARSERS;
 var init_bridge_parse = __esm({
   "plugins/ezg-tools/src/shared/bridge-parse.ts"() {
     "use strict";
@@ -44078,6 +44131,7 @@ var init_bridge_parse = __esm({
       "PDF",
       "JSON"
     ];
+    EXPORT_MAX_NODES = 50;
     FORMAT_SET = new Set(EXPORT_FORMATS);
     str2 = (v) => typeof v === "string";
     nonEmptyStr2 = (v) => str2(v) && v.trim() !== "";
@@ -44102,7 +44156,9 @@ var init_bridge_parse = __esm({
       "icons.search": parseIconsSearch,
       "icons.place": parseIconsPlace,
       "icons.tag": parseIconsTag,
-      "ui.screenshot": parseUiScreenshot
+      "ui.screenshot": parseUiScreenshot,
+      status: parseEmpty,
+      cancel: (raw) => isRecord(raw) && nonEmptyStr2(raw.id) ? { id: raw.id } : null
     };
   }
 });
@@ -44142,7 +44198,9 @@ var init_bridge_ops = __esm({
       "icons.search": true,
       "icons.place": true,
       "icons.tag": true,
-      "ui.screenshot": true
+      "ui.screenshot": true,
+      status: true,
+      cancel: true
     };
     BRIDGE_OPS = Object.keys(
       OP_TABLE
@@ -44175,7 +44233,8 @@ function failure2(nodeId, error62) {
   return { failed: { nodeId, error: error62 } };
 }
 async function writeExported(outDir, file2) {
-  if (file2.error) return failure2(file2.nodeId, file2.error);
+  const legacyError = file2.error;
+  if (legacyError) return failure2(file2.nodeId, legacyError);
   let data;
   if (file2.base64) data = Buffer.from(file2.base64, "base64");
   else if (file2.text) data = Buffer.from(file2.text, "utf8");
@@ -44199,10 +44258,10 @@ var init_export = __esm({
     "use strict";
     init_zod();
     init_bridge_ops();
+    init_bridge_parse();
     init_context();
     init_tool_result();
     EXPORT_LIMITS = {
-      maxNodes: 50,
       minScale: 0.1,
       maxScale: 4,
       callTimeoutMs: 6e4
@@ -44220,7 +44279,7 @@ var init_export = __esm({
     RASTER = ["PNG", "JPG"];
     inputSchema = {
       fileKey: external_exports.string().optional(),
-      nodeIds: external_exports.array(external_exports.string()).min(1).max(EXPORT_LIMITS.maxNodes),
+      nodeIds: external_exports.array(external_exports.string()).min(1).max(EXPORT_MAX_NODES),
       format: external_exports.enum(EXPORT_FORMATS),
       scale: external_exports.number().min(EXPORT_LIMITS.minScale).max(EXPORT_LIMITS.maxScale).optional(),
       outDir: external_exports.string()
@@ -44230,7 +44289,7 @@ var init_export = __esm({
         TOOL_NAMES.export,
         {
           title: "Export nodes to disk",
-          description: "Renders nodes of the open Figma file and writes them as files to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes. scale applies to PNG and JPG only. Existing files with the same name are overwritten, so use a fresh outDir.",
+          description: `Renders nodes of the open Figma file and writes them as files to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes, and per-node failures in failed. At most ${EXPORT_MAX_NODES} nodeIds per call. scale applies to PNG and JPG only. Existing files with the same name are overwritten, so use a fresh outDir.`,
           inputSchema
         },
         async ({ fileKey: fileKey5, nodeIds, format, scale, outDir }) => {
@@ -44263,7 +44322,9 @@ var init_export = __esm({
                 { nodeIds: [id], format, ...payloadScale },
                 EXPORT_LIMITS.callTimeoutMs
               );
-              if (!res.files.length)
+              const reported = res.failed ?? [];
+              failed.push(...reported);
+              if (!res.files.length && !reported.length)
                 failed.push({ nodeId: id, error: "plugin returned no file" });
               for (const f of res.files) {
                 const out = await writeExported(outDir, f);
@@ -44716,6 +44777,53 @@ var init_session = __esm({
   }
 });
 
+// bridge-server/src/tools/status.ts
+var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION6, statusInputSchema, registerStatus;
+var init_status = __esm({
+  "bridge-server/src/tools/status.ts"() {
+    "use strict";
+    init_zod();
+    init_context();
+    init_tool_result();
+    STATUS_TIMEOUT_MS = 5e3;
+    STATUS_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use status";
+    DESCRIPTION6 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
+    statusInputSchema = {
+      fileKey: external_exports.string().min(1).optional().describe(
+        "fileKey or clientId from files. Optional with one file connected."
+      )
+    };
+    registerStatus = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.status,
+        { description: DESCRIPTION6, inputSchema: statusInputSchema },
+        async ({ fileKey: fileKey5 }) => {
+          const r = ctx2.files.resolve(fileKey5);
+          if ("error" in r) return errorResult(r.error);
+          try {
+            const res = await ctx2.rpc.call(
+              r.file.connectionId,
+              "status",
+              {},
+              STATUS_TIMEOUT_MS
+            );
+            return jsonResult(res, r.note);
+          } catch (e) {
+            if (e instanceof BridgeCallError && e.code === "remote" && e.remote?.message.startsWith("unknown op: status"))
+              return errorResult(e.remote.message, STATUS_OLD_PLUGIN_HINT);
+            if (e instanceof BridgeCallError && e.code === "timeout")
+              return errorResult(
+                `The plugin did not answer status within ${STATUS_TIMEOUT_MS / 1e3} s.`,
+                "Its sandbox is blocked by a long synchronous step. Wait, then call status again."
+              );
+            return fromCallError(e);
+          }
+        }
+      );
+    };
+  }
+});
+
 // bridge-server/src/tools/ui-screenshot.ts
 import { mkdir as mkdir2, writeFile as writeFile2 } from "node:fs/promises";
 import { dirname as dirname2, isAbsolute as isAbsolute2 } from "node:path";
@@ -44905,6 +45013,7 @@ var init_mcp2 = __esm({
     init_journal2();
     init_lint();
     init_session();
+    init_status();
     init_ui_screenshot();
     init_view();
     SERVER_VERSION = "1.0.0";
@@ -44967,7 +45076,8 @@ var init_mcp2 = __esm({
       registerLint,
       registerBuild,
       registerJournal,
-      registerIcons
+      registerIcons,
+      registerStatus
     ]) {
       register(tools, ctx);
     }

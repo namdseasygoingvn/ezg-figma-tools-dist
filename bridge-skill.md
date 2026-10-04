@@ -46,11 +46,20 @@ Use `checkpoint` before a large edit, and `journal` to review what a session did
 
 ## eval
 
-Arguments: `{fileKey?, code, description, skillNames?, timeoutMs?, atomic?, pageId?}`.
+Arguments: `{fileKey?, code, description, skillNames?, timeoutMs?, atomic?, pageId?, args?}`.
 
 - `code` is an async function body: top-level `await` and `return` work. It runs in an inner function, so `const set = ...` or `const kit = ...` in your code is legal.
-- Return node ids, not nodes. Nodes serialize to `{id, type, name}`.
+- `args` is any JSON value, up to 8,000,000 characters, separate from the 50,000-character code cap. The code reads it as `args`. Pass build specs, ids and base64 images there, not in `code`; `figma.createImage(figma.base64Decode(args.png))` turns a base64 PNG into an image.
+- Return node ids, not nodes. Nodes serialize to `{id, type, name}`; plain objects keep every field.
 - The result text is capped at 200,000 characters.
+
+### Timeout and cancel
+
+- At `timeoutMs` the call is cancelled. Every `figma`, `kit` and helper call checks for this, so the code stops at its next such call. A long loop with no such call can check `signal.cancelled` or call `signal.throwIfCancelled()`.
+- If the code stops within 10 s, `atomic: true` removes what it created, and the error gives the elapsed time, the last `figma`, `kit` or helper call and the created count. If it finishes within those 10 s, the result comes back with `lateMs` in its stats.
+- If it does not stop within 10 s, the error says it is still running. Call `status` until `busy` is false, then read its outcome in `recent` before you retry.
+- If the plugin sends no reply or progress at all, the server times out the call and sends a cancel itself.
+- Stats give `queueMs` and `queueDepth` (calls ahead of this one, from every session) and `slowFonts` (font loads over 3 s).
 
 ### Differences from use_figma
 
@@ -82,12 +91,15 @@ One `kit` per `eval`. Every node it creates is tracked for `atomic` and stats.
 | `style(kind, nameOrId)`                        | text, paint, effect or grid style                                                                                     |
 | `text({chars, style?, parent?, name?, fill?})` | create text; loads the style's font first                                                                             |
 | `setText(node, chars)`                         | loads every font in the node, then sets characters                                                                    |
+| `loadFonts([{family, style}])`                 | preload fonts in one call                                                                                             |
 | `component(nameOrId)`                          | component or set, current page first; throws with candidates                                                          |
 | `instance(target, {props?, parent?, name?})`   | instance of a set's default variant, then `props`                                                                     |
 | `props(instance, map)`                         | set component properties by friendly name; `"Child/Prop"` targets a nested instance                                   |
 | `main(instance)`                               | main component via `getMainComponentAsync`                                                                            |
 | `variants(components, opts?)`                  | combine into a set, grid layout (`cols`, `gap`, `padding`), `strip` clears set fills and strokes                      |
 | `autoLayout(dir?, props?)`                     | auto layout frame, like `createAutoLayout`                                                                            |
+
+Fonts load once per plugin session, so `kit.text`, `kit.setText`, text properties in `kit.props` and `figma.loadFontAsync` in `eval` all share one cache.
 
 ```js
 const card = kit.autoLayout("VERTICAL", { name: "Card", itemSpacing: 8 })
@@ -180,6 +192,12 @@ Several matching styles, mixed values or several paints are skipped, not guessed
 
 `{session?, since?, tool?, limit?}`. `session` is `current` (default), `all` or a session id. The journal lists time, tool, file, label, duration, ok, error head, byte sizes and stats of past calls. It never stores code or results. Set `EZG_FIGMA_BRIDGE_JOURNAL` to a path, or `off`.
 
+## status
+
+`{fileKey?}`. Answers at once, outside the plugin queue. `busy` is true while any call from any session is queued or running. `queueDepth` counts them. `jobs` lists each one with `op`, `state` (`queued`, `running`, `cancelling`), `waitMs`, `runMs`, `created` and `last` (the last `figma`, `kit` or helper call); `mine` marks this session's calls. `recent` lists the last 20 finished calls with `outcome` (`ok`, `late`, `failed`, `cancelled`, `rolled-back`) and created ids.
+
+Raw WebSocket clients also get `queue: {depth, waitMs}` on every reply frame, and can send op `cancel` with `{id}` (their own request id).
+
 ## icons
 
 `icons_search`, `icons_place` and `icons_tag` use the shared EZG icon library. Their tool descriptions are the full guide.
@@ -189,13 +207,13 @@ Several matching styles, mixed values or several paints are skipped, not guessed
 - Call `checkpoint` before a large edit.
 - One `eval` is one undo step. `undo` reverts to the last commit point, so it also undoes the user's own edit if they edited by hand after the `eval`.
 - Keep evals small.
-- Never write a synchronous infinite loop. A timeout only stops the wait; the plugin stays frozen.
+- Never write a synchronous infinite loop. Cancel only acts at a `figma`, `kit` or helper call, so a loop with none freezes the plugin.
 - `eval` runs at once, so write a clear `description`.
 
 ## Gotchas
 
 - Call `await page.loadAsync()` before reading a non-current page's children.
-- Use `getMainComponentAsync()`; the sync `mainComponent` throws.
+- Use `getMainComponentAsync()`; the sync `mainComponent` throws. `query` selectors and `values()` reject `mainComponent`.
 - Style ids can end with `,`. Pass them through as given.
 - For a rotated node, `x` and `y` are the pre-rotation origin.
 - `figma.createText()` defaults to Inter; load the font before setting `characters`, or use `kit.text`.
@@ -211,11 +229,14 @@ Several matching styles, mixed values or several paints are skipped, not guessed
 
 ## Export
 
-`export` takes `nodeIds`, `format` (PNG, JPG, SVG, PDF, JSON), optional `scale` (PNG and JPG only) and `outDir`.
+`export` takes `nodeIds` (at most 50 per call), `format` (PNG, JPG, SVG, PDF, JSON), optional `scale` (PNG and JPG only) and `outDir`.
 
 - `outDir` is an absolute path. Use a fresh folder: files with the same name are overwritten.
-- The server writes the files and returns their paths and any per-node failures.
+- The server writes the files and returns `{outDir, written: [{nodeId, path, bytes}], failed: [{nodeId, error}]}`.
+- A node that cannot be exported is in `failed`, not `written`. The call still succeeds if at least one node was written.
+- More than 50 `nodeIds` is rejected. Split the call.
 - Bytes never enter the chat.
+- The raw plugin op `export` (WebSocket) has no `outDir` and writes no files. It returns `{files: [{nodeId, name, format, base64 | text}], failed: [{nodeId, error}]}`: `base64` for PNG, JPG and PDF, `text` for SVG and JSON. Every row in `files` has data; every error is in `failed`.
 
 ## Watch mode
 
