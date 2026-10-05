@@ -1408,11 +1408,11 @@ var require_receiver = __commonJS({
        * @return {(Error|RangeError)} The error
        * @private
        */
-      createError(ErrorCtor, message, prefix, statusCode, errorCode) {
+      createError(ErrorCtor, message2, prefix, statusCode, errorCode) {
         this._loop = false;
         this._errored = true;
         const err = new ErrorCtor(
-          prefix ? `Invalid WebSocket frame: ${message}` : message
+          prefix ? `Invalid WebSocket frame: ${message2}` : message2
         );
         Error.captureStackTrace(err, this.createError);
         err.code = errorCode;
@@ -2078,10 +2078,10 @@ var require_event_target = __commonJS({
             callListener(handler, this, event);
           };
         } else if (type === "close") {
-          wrapper = function onClose(code, message) {
+          wrapper = function onClose(code, message2) {
             const event = new CloseEvent("close", {
               code,
-              reason: message.toString(),
+              reason: message2.toString(),
               wasClean: this._closeFrameReceived && this._closeFrameSent
             });
             event[kTarget] = this;
@@ -3013,29 +3013,29 @@ var require_websocket = __commonJS({
         const secWebSocketExtensions = res.headers["sec-websocket-extensions"];
         if (secWebSocketExtensions !== void 0) {
           if (!perMessageDeflate) {
-            const message = "Server sent a Sec-WebSocket-Extensions header but no extension was requested";
-            abortHandshake(websocket, socket, message);
+            const message2 = "Server sent a Sec-WebSocket-Extensions header but no extension was requested";
+            abortHandshake(websocket, socket, message2);
             return;
           }
           let extensions;
           try {
             extensions = parse3(secWebSocketExtensions);
           } catch (err) {
-            const message = "Invalid Sec-WebSocket-Extensions header";
-            abortHandshake(websocket, socket, message);
+            const message2 = "Invalid Sec-WebSocket-Extensions header";
+            abortHandshake(websocket, socket, message2);
             return;
           }
           const extensionNames = Object.keys(extensions);
           if (extensionNames.length !== 1 || extensionNames[0] !== PerMessageDeflate2.extensionName) {
-            const message = "Server indicated an extension that was not requested";
-            abortHandshake(websocket, socket, message);
+            const message2 = "Server indicated an extension that was not requested";
+            abortHandshake(websocket, socket, message2);
             return;
           }
           try {
             perMessageDeflate.accept(extensions[PerMessageDeflate2.extensionName]);
           } catch (err) {
-            const message = "Invalid Sec-WebSocket-Extensions header";
-            abortHandshake(websocket, socket, message);
+            const message2 = "Invalid Sec-WebSocket-Extensions header";
+            abortHandshake(websocket, socket, message2);
             return;
           }
           websocket._extensions[PerMessageDeflate2.extensionName] = perMessageDeflate;
@@ -3072,9 +3072,9 @@ var require_websocket = __commonJS({
       }
       return tls.connect(options);
     }
-    function abortHandshake(websocket, stream, message) {
+    function abortHandshake(websocket, stream, message2) {
       websocket._readyState = WebSocket3.CLOSING;
-      const err = new Error(message);
+      const err = new Error(message2);
       Error.captureStackTrace(err, abortHandshake);
       if (stream.setHeader) {
         stream[kAborted] = true;
@@ -3238,7 +3238,7 @@ var require_stream = __commonJS({
         objectMode: false,
         writableObjectMode: false
       });
-      ws.on("message", function message(msg, isBinary) {
+      ws.on("message", function message2(msg, isBinary) {
         const data = !isBinary && duplex._readableState.objectMode ? msg.toString() : msg;
         if (!duplex.push(data)) ws.pause();
       });
@@ -3561,23 +3561,23 @@ var require_websocket_server = __commonJS({
         const upgrade = req.headers.upgrade;
         const version2 = +req.headers["sec-websocket-version"];
         if (req.method !== "GET") {
-          const message = "Invalid HTTP method";
-          abortHandshakeOrEmitwsClientError(this, req, socket, 405, message);
+          const message2 = "Invalid HTTP method";
+          abortHandshakeOrEmitwsClientError(this, req, socket, 405, message2);
           return;
         }
         if (upgrade === void 0 || upgrade.toLowerCase() !== "websocket") {
-          const message = "Invalid Upgrade header";
-          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message);
+          const message2 = "Invalid Upgrade header";
+          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2);
           return;
         }
         if (key === void 0 || !keyRegex.test(key)) {
-          const message = "Missing or invalid Sec-WebSocket-Key header";
-          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message);
+          const message2 = "Missing or invalid Sec-WebSocket-Key header";
+          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2);
           return;
         }
         if (version2 !== 13 && version2 !== 8) {
-          const message = "Missing or invalid Sec-WebSocket-Version header";
-          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message, {
+          const message2 = "Missing or invalid Sec-WebSocket-Version header";
+          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2, {
             "Sec-WebSocket-Version": "13, 8"
           });
           return;
@@ -3592,8 +3592,8 @@ var require_websocket_server = __commonJS({
           try {
             protocols = subprotocol2.parse(secWebSocketProtocol);
           } catch (err) {
-            const message = "Invalid Sec-WebSocket-Protocol header";
-            abortHandshakeOrEmitwsClientError(this, req, socket, 400, message);
+            const message2 = "Invalid Sec-WebSocket-Protocol header";
+            abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2);
             return;
           }
         }
@@ -3612,8 +3612,8 @@ var require_websocket_server = __commonJS({
               extensions[PerMessageDeflate2.extensionName] = perMessageDeflate;
             }
           } catch (err) {
-            const message = "Invalid or unacceptable Sec-WebSocket-Extensions header";
-            abortHandshakeOrEmitwsClientError(this, req, socket, 400, message);
+            const message2 = "Invalid or unacceptable Sec-WebSocket-Extensions header";
+            abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2);
             return;
           }
         }
@@ -3624,9 +3624,9 @@ var require_websocket_server = __commonJS({
             req
           };
           if (this.options.verifyClient.length === 2) {
-            this.options.verifyClient(info, (verified, code, message, headers) => {
+            this.options.verifyClient(info, (verified, code, message2, headers) => {
               if (!verified) {
-                return abortHandshake(socket, code || 401, message, headers);
+                return abortHandshake(socket, code || 401, message2, headers);
               }
               this.completeUpgrade(
                 extensions,
@@ -3726,27 +3726,27 @@ var require_websocket_server = __commonJS({
     function socketOnError() {
       this.destroy();
     }
-    function abortHandshake(socket, code, message, headers) {
-      message = message || http.STATUS_CODES[code];
+    function abortHandshake(socket, code, message2, headers) {
+      message2 = message2 || http.STATUS_CODES[code];
       headers = {
         Connection: "close",
         "Content-Type": "text/html",
-        "Content-Length": Buffer.byteLength(message),
+        "Content-Length": Buffer.byteLength(message2),
         ...headers
       };
       socket.once("finish", socket.destroy);
       socket.end(
         `HTTP/1.1 ${code} ${http.STATUS_CODES[code]}\r
-` + Object.keys(headers).map((h) => `${h}: ${headers[h]}`).join("\r\n") + "\r\n\r\n" + message
+` + Object.keys(headers).map((h) => `${h}: ${headers[h]}`).join("\r\n") + "\r\n\r\n" + message2
       );
     }
-    function abortHandshakeOrEmitwsClientError(server2, req, socket, code, message, headers) {
+    function abortHandshakeOrEmitwsClientError(server2, req, socket, code, message2, headers) {
       if (server2.listenerCount("wsClientError")) {
-        const err = new Error(message);
+        const err = new Error(message2);
         Error.captureStackTrace(err, abortHandshakeOrEmitwsClientError);
         server2.emit("wsClientError", err, socket, req);
       } else {
-        abortHandshake(socket, code, message, headers);
+        abortHandshake(socket, code, message2, headers);
       }
     }
   }
@@ -3936,6 +3936,98 @@ var init_bridge_wire = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/bridge-chunk.ts
+function newId() {
+  let id = "";
+  while (id.length < 8) id += Math.random().toString(36).slice(2);
+  return id.slice(0, 8);
+}
+function splitFrame(text2, max) {
+  if (text2.length <= SPLIT_ABOVE_CHARS) return [text2];
+  max ??= CHUNK_CHARS;
+  const total = Math.ceil(text2.length / max);
+  const id = newId();
+  const out = [];
+  for (let seq = 0; seq < total; seq++) {
+    const part = {
+      kind: "part",
+      id,
+      seq,
+      total,
+      data: text2.slice(seq * max, (seq + 1) * max)
+    };
+    out.push(JSON.stringify(part));
+  }
+  return out;
+}
+function parsePart(text2) {
+  let v;
+  try {
+    v = JSON.parse(text2);
+  } catch {
+    return null;
+  }
+  const p = v;
+  if (!p || p.kind !== "part" || typeof p.id !== "string" || typeof p.data !== "string" || !Number.isInteger(p.seq) || !Number.isInteger(p.total))
+    return null;
+  if (p.total < 1 || p.seq < 0 || p.seq >= p.total) return null;
+  return p;
+}
+function createAssembler(now = Date.now) {
+  const sets = /* @__PURE__ */ new Map();
+  const dropped = /* @__PURE__ */ new Map();
+  function sweep(t) {
+    for (const [id, s] of sets) if (t - s.at > PART_TTL_MS) sets.delete(id);
+    for (const [id, at] of dropped) if (t - at > PART_TTL_MS) dropped.delete(id);
+  }
+  function drop(id, t) {
+    sets.delete(id);
+    dropped.set(id, t);
+  }
+  return {
+    accept(text2) {
+      const t = now();
+      sweep(t);
+      if (!text2.startsWith(PART_PREFIX)) return text2;
+      const p = parsePart(text2);
+      if (!p) return text2;
+      if (dropped.has(p.id)) return null;
+      let s = sets.get(p.id);
+      if (!s) {
+        s = { total: p.total, parts: /* @__PURE__ */ new Map(), chars: 0, at: t };
+        sets.set(p.id, s);
+      }
+      if (s.total !== p.total) {
+        drop(p.id, t);
+        return null;
+      }
+      s.chars += p.data.length - (s.parts.get(p.seq)?.length ?? 0);
+      s.parts.set(p.seq, p.data);
+      if (s.chars > ASSEMBLED_MAX_CHARS) {
+        drop(p.id, t);
+        return null;
+      }
+      if (s.parts.size < s.total) return null;
+      sets.delete(p.id);
+      let out = "";
+      for (let i = 0; i < s.total; i++) out += s.parts.get(i);
+      return out;
+    }
+  };
+}
+var CHUNK_CHARS, SPLIT_ABOVE_CHARS, ASSEMBLED_MAX_CHARS, PART_TTL_MS, PART_PREFIX;
+var init_bridge_chunk = __esm({
+  "plugins/ezg-tools/src/shared/bridge-chunk.ts"() {
+    "use strict";
+    init_bridge_wire();
+    CHUNK_CHARS = 4 * 1024 * 1024;
+    SPLIT_ABOVE_CHARS = BRIDGE_MAX_FRAME_BYTES - 1024 * 1024;
+    ASSEMBLED_MAX_CHARS = 256 * 1024 * 1024;
+    PART_TTL_MS = 6e4;
+    PART_PREFIX = '{"kind":"part"';
+  }
+});
+
 // plugins/ezg-tools/src/shared/bridge-scope.ts
 function splitScopedId(id) {
   const i = id.indexOf("/");
@@ -4020,7 +4112,10 @@ var init_peer_wire = __esm({
 function connectAgent(port, handlers2, options = {}) {
   const handshakeMs = options.handshakeMs ?? DEFAULT_HANDSHAKE_MS;
   return new Promise((resolve2) => {
-    const ws = new import_websocket.default(`ws://127.0.0.1:${port}${AGENT_PATH}`);
+    const ws = new import_websocket.default(`ws://127.0.0.1:${port}${AGENT_PATH}`, {
+      maxPayload: BRIDGE_MAX_FRAME_BYTES
+    });
+    const assembler = createAssembler();
     const known = /* @__PURE__ */ new Set();
     let welcomed = false;
     let ended = false;
@@ -4028,7 +4123,11 @@ function connectAgent(port, handlers2, options = {}) {
     };
     const closed = new Promise((r) => resolveClosed = r);
     const write = (frame) => {
-      if (ws.readyState === import_websocket.default.OPEN) ws.send(JSON.stringify(frame));
+      if (ws.readyState !== import_websocket.default.OPEN) return;
+      for (const text2 of splitFrame(JSON.stringify(frame))) {
+        if (ws.readyState !== import_websocket.default.OPEN) return;
+        ws.send(text2);
+      }
     };
     const link3 = {
       send: (connectionId, frame) => write({ kind: "send", connectionId, frame }),
@@ -4059,7 +4158,9 @@ function connectAgent(port, handlers2, options = {}) {
     ws.on("error", end);
     ws.on("close", end);
     ws.on("message", (data) => {
-      const frame = parseHubFrame(data.toString());
+      const text2 = assembler.accept(data.toString());
+      if (text2 === null) return;
+      const frame = parseHubFrame(text2);
       if (!frame) return;
       if (!welcomed) {
         if (frame.kind === "agent-welcome") {
@@ -4092,6 +4193,8 @@ var init_agent_link = __esm({
   "bridge-server/src/agent-link.ts"() {
     "use strict";
     init_wrapper();
+    init_bridge_wire();
+    init_bridge_chunk();
     init_peer_wire();
     DEFAULT_HANDSHAKE_MS = 2e3;
   }
@@ -4118,6 +4221,7 @@ function createPluginConns(options) {
     accept(ws) {
       const connectionId = randomUUID();
       const conn = { ws, helloSeen: false, missed: 0 };
+      const assembler = createAssembler();
       conns.set(connectionId, conn);
       conn.helloTimer = setTimeout(() => {
         sendFrame(ws, { kind: "bye", reason: BYE_REASONS.helloTimeout });
@@ -4139,9 +4243,11 @@ function createPluginConns(options) {
           ws.close(1003);
           return;
         }
+        const text2 = assembler.accept(data.toString());
+        if (text2 === null) return;
         let frame = null;
         try {
-          frame = parsePluginFrame(JSON.parse(data.toString()));
+          frame = parsePluginFrame(JSON.parse(text2));
         } catch {
           frame = null;
         }
@@ -4191,11 +4297,13 @@ var init_plugin_conns = __esm({
   "bridge-server/src/plugin-conns.ts"() {
     "use strict";
     init_wrapper();
+    init_bridge_chunk();
     init_bridge_wire();
     HEARTBEAT_MS = 15e3;
     HEARTBEAT_MAX_MISSED = 2;
     sendFrame = (ws, frame) => {
-      if (ws.readyState === import_websocket.default.OPEN) ws.send(JSON.stringify(frame));
+      if (ws.readyState !== import_websocket.default.OPEN) return;
+      for (const text2 of splitFrame(JSON.stringify(frame))) ws.send(text2);
     };
   }
 });
@@ -4226,6 +4334,7 @@ function createAgentConns(options) {
     accept(ws) {
       const agentId = randomUUID2();
       const agent = { ws, helloSeen: false, missed: 0 };
+      const assembler = createAssembler();
       agents.set(agentId, agent);
       agent.helloTimer = setTimeout(() => {
         sendHub(ws, { kind: "bye", reason: BYE_REASONS.helloTimeout });
@@ -4259,7 +4368,9 @@ function createAgentConns(options) {
           ws.close(1003);
           return;
         }
-        const frame = parseAgentFrame(data.toString());
+        const text2 = assembler.accept(data.toString());
+        if (text2 === null) return;
+        const frame = parseAgentFrame(text2);
         if (!frame) {
           ws.close(1008);
           return;
@@ -4320,10 +4431,12 @@ var init_agent_conns = __esm({
     "use strict";
     init_wrapper();
     init_bridge_wire();
+    init_bridge_chunk();
     init_plugin_conns();
     init_peer_wire();
     sendHub = (ws, frame) => {
-      if (ws.readyState === import_websocket.default.OPEN) ws.send(JSON.stringify(frame));
+      if (ws.readyState !== import_websocket.default.OPEN) return;
+      for (const part of splitFrame(JSON.stringify(frame))) ws.send(part);
     };
   }
 });
@@ -4344,8 +4457,8 @@ function pagePatch(event) {
 function createFileRegistry(linkError = () => null) {
   const entries = /* @__PURE__ */ new Map();
   const list = () => [...entries.values()].map((f) => ({ ...f })).sort((a, b) => a.connectedAt - b.connectedAt);
-  const fail = (message) => ({
-    error: `${message}
+  const fail = (message2) => ({
+    error: `${message2}
 ${describeFiles(list())}`
   });
   function resolve2(target) {
@@ -5012,104 +5125,104 @@ var init_en = __esm({
     init_ZodError();
     init_util();
     errorMap = (issue2, _ctx) => {
-      let message;
+      let message2;
       switch (issue2.code) {
         case ZodIssueCode.invalid_type:
           if (issue2.received === ZodParsedType.undefined) {
-            message = "Required";
+            message2 = "Required";
           } else {
-            message = `Expected ${issue2.expected}, received ${issue2.received}`;
+            message2 = `Expected ${issue2.expected}, received ${issue2.received}`;
           }
           break;
         case ZodIssueCode.invalid_literal:
-          message = `Invalid literal value, expected ${JSON.stringify(issue2.expected, util.jsonStringifyReplacer)}`;
+          message2 = `Invalid literal value, expected ${JSON.stringify(issue2.expected, util.jsonStringifyReplacer)}`;
           break;
         case ZodIssueCode.unrecognized_keys:
-          message = `Unrecognized key(s) in object: ${util.joinValues(issue2.keys, ", ")}`;
+          message2 = `Unrecognized key(s) in object: ${util.joinValues(issue2.keys, ", ")}`;
           break;
         case ZodIssueCode.invalid_union:
-          message = `Invalid input`;
+          message2 = `Invalid input`;
           break;
         case ZodIssueCode.invalid_union_discriminator:
-          message = `Invalid discriminator value. Expected ${util.joinValues(issue2.options)}`;
+          message2 = `Invalid discriminator value. Expected ${util.joinValues(issue2.options)}`;
           break;
         case ZodIssueCode.invalid_enum_value:
-          message = `Invalid enum value. Expected ${util.joinValues(issue2.options)}, received '${issue2.received}'`;
+          message2 = `Invalid enum value. Expected ${util.joinValues(issue2.options)}, received '${issue2.received}'`;
           break;
         case ZodIssueCode.invalid_arguments:
-          message = `Invalid function arguments`;
+          message2 = `Invalid function arguments`;
           break;
         case ZodIssueCode.invalid_return_type:
-          message = `Invalid function return type`;
+          message2 = `Invalid function return type`;
           break;
         case ZodIssueCode.invalid_date:
-          message = `Invalid date`;
+          message2 = `Invalid date`;
           break;
         case ZodIssueCode.invalid_string:
           if (typeof issue2.validation === "object") {
             if ("includes" in issue2.validation) {
-              message = `Invalid input: must include "${issue2.validation.includes}"`;
+              message2 = `Invalid input: must include "${issue2.validation.includes}"`;
               if (typeof issue2.validation.position === "number") {
-                message = `${message} at one or more positions greater than or equal to ${issue2.validation.position}`;
+                message2 = `${message2} at one or more positions greater than or equal to ${issue2.validation.position}`;
               }
             } else if ("startsWith" in issue2.validation) {
-              message = `Invalid input: must start with "${issue2.validation.startsWith}"`;
+              message2 = `Invalid input: must start with "${issue2.validation.startsWith}"`;
             } else if ("endsWith" in issue2.validation) {
-              message = `Invalid input: must end with "${issue2.validation.endsWith}"`;
+              message2 = `Invalid input: must end with "${issue2.validation.endsWith}"`;
             } else {
               util.assertNever(issue2.validation);
             }
           } else if (issue2.validation !== "regex") {
-            message = `Invalid ${issue2.validation}`;
+            message2 = `Invalid ${issue2.validation}`;
           } else {
-            message = "Invalid";
+            message2 = "Invalid";
           }
           break;
         case ZodIssueCode.too_small:
           if (issue2.type === "array")
-            message = `Array must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `more than`} ${issue2.minimum} element(s)`;
+            message2 = `Array must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `more than`} ${issue2.minimum} element(s)`;
           else if (issue2.type === "string")
-            message = `String must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `over`} ${issue2.minimum} character(s)`;
+            message2 = `String must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `over`} ${issue2.minimum} character(s)`;
           else if (issue2.type === "number")
-            message = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
+            message2 = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
           else if (issue2.type === "bigint")
-            message = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
+            message2 = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
           else if (issue2.type === "date")
-            message = `Date must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${new Date(Number(issue2.minimum))}`;
+            message2 = `Date must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${new Date(Number(issue2.minimum))}`;
           else
-            message = "Invalid input";
+            message2 = "Invalid input";
           break;
         case ZodIssueCode.too_big:
           if (issue2.type === "array")
-            message = `Array must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `less than`} ${issue2.maximum} element(s)`;
+            message2 = `Array must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `less than`} ${issue2.maximum} element(s)`;
           else if (issue2.type === "string")
-            message = `String must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `under`} ${issue2.maximum} character(s)`;
+            message2 = `String must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `under`} ${issue2.maximum} character(s)`;
           else if (issue2.type === "number")
-            message = `Number must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
+            message2 = `Number must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
           else if (issue2.type === "bigint")
-            message = `BigInt must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
+            message2 = `BigInt must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
           else if (issue2.type === "date")
-            message = `Date must be ${issue2.exact ? `exactly` : issue2.inclusive ? `smaller than or equal to` : `smaller than`} ${new Date(Number(issue2.maximum))}`;
+            message2 = `Date must be ${issue2.exact ? `exactly` : issue2.inclusive ? `smaller than or equal to` : `smaller than`} ${new Date(Number(issue2.maximum))}`;
           else
-            message = "Invalid input";
+            message2 = "Invalid input";
           break;
         case ZodIssueCode.custom:
-          message = `Invalid input`;
+          message2 = `Invalid input`;
           break;
         case ZodIssueCode.invalid_intersection_types:
-          message = `Intersection results could not be merged`;
+          message2 = `Intersection results could not be merged`;
           break;
         case ZodIssueCode.not_multiple_of:
-          message = `Number must be a multiple of ${issue2.multipleOf}`;
+          message2 = `Number must be a multiple of ${issue2.multipleOf}`;
           break;
         case ZodIssueCode.not_finite:
-          message = "Number must be finite";
+          message2 = "Number must be finite";
           break;
         default:
-          message = _ctx.defaultError;
+          message2 = _ctx.defaultError;
           util.assertNever(issue2);
       }
-      return { message };
+      return { message: message2 };
     };
     en_default = errorMap;
   }
@@ -5254,8 +5367,8 @@ var errorUtil;
 var init_errorUtil = __esm({
   "node_modules/zod/v3/helpers/errorUtil.js"() {
     (function(errorUtil2) {
-      errorUtil2.errToObj = (message) => typeof message === "string" ? { message } : message || {};
-      errorUtil2.toString = (message) => typeof message === "string" ? message : message?.message;
+      errorUtil2.errToObj = (message2) => typeof message2 === "string" ? { message: message2 } : message2 || {};
+      errorUtil2.toString = (message2) => typeof message2 === "string" ? message2 : message2?.message;
     })(errorUtil || (errorUtil = {}));
   }
 });
@@ -5271,16 +5384,16 @@ function processCreateParams(params) {
   if (errorMap2)
     return { errorMap: errorMap2, description };
   const customMap = (iss, ctx2) => {
-    const { message } = params;
+    const { message: message2 } = params;
     if (iss.code === "invalid_enum_value") {
-      return { message: message ?? ctx2.defaultError };
+      return { message: message2 ?? ctx2.defaultError };
     }
     if (typeof ctx2.data === "undefined") {
-      return { message: message ?? required_error ?? ctx2.defaultError };
+      return { message: message2 ?? required_error ?? ctx2.defaultError };
     }
     if (iss.code !== "invalid_type")
       return { message: ctx2.defaultError };
-    return { message: message ?? invalid_type_error ?? ctx2.defaultError };
+    return { message: message2 ?? invalid_type_error ?? ctx2.defaultError };
   };
   return { errorMap: customMap, description };
 }
@@ -5597,14 +5710,14 @@ var init_types = __esm({
         const result = await (isAsync(maybeAsyncResult) ? maybeAsyncResult : Promise.resolve(maybeAsyncResult));
         return handleResult(ctx2, result);
       }
-      refine(check2, message) {
+      refine(check2, message2) {
         const getIssueProperties = (val) => {
-          if (typeof message === "string" || typeof message === "undefined") {
-            return { message };
-          } else if (typeof message === "function") {
-            return message(val);
+          if (typeof message2 === "string" || typeof message2 === "undefined") {
+            return { message: message2 };
+          } else if (typeof message2 === "function") {
+            return message2(val);
           } else {
-            return message;
+            return message2;
           }
         };
         return this._refinement((val, ctx2) => {
@@ -6077,11 +6190,11 @@ var init_types = __esm({
         }
         return { status: status.value, value: input2.data };
       }
-      _regex(regex, validation, message) {
+      _regex(regex, validation, message2) {
         return this.refinement((data) => regex.test(data), {
           validation,
           code: ZodIssueCode.invalid_string,
-          ...errorUtil.errToObj(message)
+          ...errorUtil.errToObj(message2)
         });
       }
       _addCheck(check2) {
@@ -6090,37 +6203,37 @@ var init_types = __esm({
           checks: [...this._def.checks, check2]
         });
       }
-      email(message) {
-        return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
+      email(message2) {
+        return this._addCheck({ kind: "email", ...errorUtil.errToObj(message2) });
       }
-      url(message) {
-        return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
+      url(message2) {
+        return this._addCheck({ kind: "url", ...errorUtil.errToObj(message2) });
       }
-      emoji(message) {
-        return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message) });
+      emoji(message2) {
+        return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message2) });
       }
-      uuid(message) {
-        return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
+      uuid(message2) {
+        return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message2) });
       }
-      nanoid(message) {
-        return this._addCheck({ kind: "nanoid", ...errorUtil.errToObj(message) });
+      nanoid(message2) {
+        return this._addCheck({ kind: "nanoid", ...errorUtil.errToObj(message2) });
       }
-      cuid(message) {
-        return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
+      cuid(message2) {
+        return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message2) });
       }
-      cuid2(message) {
-        return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
+      cuid2(message2) {
+        return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message2) });
       }
-      ulid(message) {
-        return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(message) });
+      ulid(message2) {
+        return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(message2) });
       }
-      base64(message) {
-        return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
+      base64(message2) {
+        return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message2) });
       }
-      base64url(message) {
+      base64url(message2) {
         return this._addCheck({
           kind: "base64url",
-          ...errorUtil.errToObj(message)
+          ...errorUtil.errToObj(message2)
         });
       }
       jwt(options) {
@@ -6150,8 +6263,8 @@ var init_types = __esm({
           ...errorUtil.errToObj(options?.message)
         });
       }
-      date(message) {
-        return this._addCheck({ kind: "date", message });
+      date(message2) {
+        return this._addCheck({ kind: "date", message: message2 });
       }
       time(options) {
         if (typeof options === "string") {
@@ -6167,14 +6280,14 @@ var init_types = __esm({
           ...errorUtil.errToObj(options?.message)
         });
       }
-      duration(message) {
-        return this._addCheck({ kind: "duration", ...errorUtil.errToObj(message) });
+      duration(message2) {
+        return this._addCheck({ kind: "duration", ...errorUtil.errToObj(message2) });
       }
-      regex(regex, message) {
+      regex(regex, message2) {
         return this._addCheck({
           kind: "regex",
           regex,
-          ...errorUtil.errToObj(message)
+          ...errorUtil.errToObj(message2)
         });
       }
       includes(value, options) {
@@ -6185,46 +6298,46 @@ var init_types = __esm({
           ...errorUtil.errToObj(options?.message)
         });
       }
-      startsWith(value, message) {
+      startsWith(value, message2) {
         return this._addCheck({
           kind: "startsWith",
           value,
-          ...errorUtil.errToObj(message)
+          ...errorUtil.errToObj(message2)
         });
       }
-      endsWith(value, message) {
+      endsWith(value, message2) {
         return this._addCheck({
           kind: "endsWith",
           value,
-          ...errorUtil.errToObj(message)
+          ...errorUtil.errToObj(message2)
         });
       }
-      min(minLength, message) {
+      min(minLength, message2) {
         return this._addCheck({
           kind: "min",
           value: minLength,
-          ...errorUtil.errToObj(message)
+          ...errorUtil.errToObj(message2)
         });
       }
-      max(maxLength, message) {
+      max(maxLength, message2) {
         return this._addCheck({
           kind: "max",
           value: maxLength,
-          ...errorUtil.errToObj(message)
+          ...errorUtil.errToObj(message2)
         });
       }
-      length(len, message) {
+      length(len, message2) {
         return this._addCheck({
           kind: "length",
           value: len,
-          ...errorUtil.errToObj(message)
+          ...errorUtil.errToObj(message2)
         });
       }
       /**
        * Equivalent to `.min(1)`
        */
-      nonempty(message) {
-        return this.min(1, errorUtil.errToObj(message));
+      nonempty(message2) {
+        return this.min(1, errorUtil.errToObj(message2));
       }
       trim() {
         return new _ZodString2({
@@ -6409,19 +6522,19 @@ var init_types = __esm({
         }
         return { status: status.value, value: input2.data };
       }
-      gte(value, message) {
-        return this.setLimit("min", value, true, errorUtil.toString(message));
+      gte(value, message2) {
+        return this.setLimit("min", value, true, errorUtil.toString(message2));
       }
-      gt(value, message) {
-        return this.setLimit("min", value, false, errorUtil.toString(message));
+      gt(value, message2) {
+        return this.setLimit("min", value, false, errorUtil.toString(message2));
       }
-      lte(value, message) {
-        return this.setLimit("max", value, true, errorUtil.toString(message));
+      lte(value, message2) {
+        return this.setLimit("max", value, true, errorUtil.toString(message2));
       }
-      lt(value, message) {
-        return this.setLimit("max", value, false, errorUtil.toString(message));
+      lt(value, message2) {
+        return this.setLimit("max", value, false, errorUtil.toString(message2));
       }
-      setLimit(kind, value, inclusive, message) {
+      setLimit(kind, value, inclusive, message2) {
         return new _ZodNumber({
           ...this._def,
           checks: [
@@ -6430,7 +6543,7 @@ var init_types = __esm({
               kind,
               value,
               inclusive,
-              message: errorUtil.toString(message)
+              message: errorUtil.toString(message2)
             }
           ]
         });
@@ -6441,68 +6554,68 @@ var init_types = __esm({
           checks: [...this._def.checks, check2]
         });
       }
-      int(message) {
+      int(message2) {
         return this._addCheck({
           kind: "int",
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      positive(message) {
+      positive(message2) {
         return this._addCheck({
           kind: "min",
           value: 0,
           inclusive: false,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      negative(message) {
+      negative(message2) {
         return this._addCheck({
           kind: "max",
           value: 0,
           inclusive: false,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      nonpositive(message) {
+      nonpositive(message2) {
         return this._addCheck({
           kind: "max",
           value: 0,
           inclusive: true,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      nonnegative(message) {
+      nonnegative(message2) {
         return this._addCheck({
           kind: "min",
           value: 0,
           inclusive: true,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      multipleOf(value, message) {
+      multipleOf(value, message2) {
         return this._addCheck({
           kind: "multipleOf",
           value,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      finite(message) {
+      finite(message2) {
         return this._addCheck({
           kind: "finite",
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      safe(message) {
+      safe(message2) {
         return this._addCheck({
           kind: "min",
           inclusive: true,
           value: Number.MIN_SAFE_INTEGER,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         })._addCheck({
           kind: "max",
           inclusive: true,
           value: Number.MAX_SAFE_INTEGER,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
       get minValue() {
@@ -6625,19 +6738,19 @@ var init_types = __esm({
         });
         return INVALID;
       }
-      gte(value, message) {
-        return this.setLimit("min", value, true, errorUtil.toString(message));
+      gte(value, message2) {
+        return this.setLimit("min", value, true, errorUtil.toString(message2));
       }
-      gt(value, message) {
-        return this.setLimit("min", value, false, errorUtil.toString(message));
+      gt(value, message2) {
+        return this.setLimit("min", value, false, errorUtil.toString(message2));
       }
-      lte(value, message) {
-        return this.setLimit("max", value, true, errorUtil.toString(message));
+      lte(value, message2) {
+        return this.setLimit("max", value, true, errorUtil.toString(message2));
       }
-      lt(value, message) {
-        return this.setLimit("max", value, false, errorUtil.toString(message));
+      lt(value, message2) {
+        return this.setLimit("max", value, false, errorUtil.toString(message2));
       }
-      setLimit(kind, value, inclusive, message) {
+      setLimit(kind, value, inclusive, message2) {
         return new _ZodBigInt({
           ...this._def,
           checks: [
@@ -6646,7 +6759,7 @@ var init_types = __esm({
               kind,
               value,
               inclusive,
-              message: errorUtil.toString(message)
+              message: errorUtil.toString(message2)
             }
           ]
         });
@@ -6657,43 +6770,43 @@ var init_types = __esm({
           checks: [...this._def.checks, check2]
         });
       }
-      positive(message) {
+      positive(message2) {
         return this._addCheck({
           kind: "min",
           value: BigInt(0),
           inclusive: false,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      negative(message) {
+      negative(message2) {
         return this._addCheck({
           kind: "max",
           value: BigInt(0),
           inclusive: false,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      nonpositive(message) {
+      nonpositive(message2) {
         return this._addCheck({
           kind: "max",
           value: BigInt(0),
           inclusive: true,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      nonnegative(message) {
+      nonnegative(message2) {
         return this._addCheck({
           kind: "min",
           value: BigInt(0),
           inclusive: true,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      multipleOf(value, message) {
+      multipleOf(value, message2) {
         return this._addCheck({
           kind: "multipleOf",
           value,
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
       get minValue() {
@@ -6816,18 +6929,18 @@ var init_types = __esm({
           checks: [...this._def.checks, check2]
         });
       }
-      min(minDate, message) {
+      min(minDate, message2) {
         return this._addCheck({
           kind: "min",
           value: minDate.getTime(),
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
-      max(maxDate, message) {
+      max(maxDate, message2) {
         return this._addCheck({
           kind: "max",
           value: maxDate.getTime(),
-          message: errorUtil.toString(message)
+          message: errorUtil.toString(message2)
         });
       }
       get minDate() {
@@ -7059,26 +7172,26 @@ var init_types = __esm({
       get element() {
         return this._def.type;
       }
-      min(minLength, message) {
+      min(minLength, message2) {
         return new _ZodArray({
           ...this._def,
-          minLength: { value: minLength, message: errorUtil.toString(message) }
+          minLength: { value: minLength, message: errorUtil.toString(message2) }
         });
       }
-      max(maxLength, message) {
+      max(maxLength, message2) {
         return new _ZodArray({
           ...this._def,
-          maxLength: { value: maxLength, message: errorUtil.toString(message) }
+          maxLength: { value: maxLength, message: errorUtil.toString(message2) }
         });
       }
-      length(len, message) {
+      length(len, message2) {
         return new _ZodArray({
           ...this._def,
-          exactLength: { value: len, message: errorUtil.toString(message) }
+          exactLength: { value: len, message: errorUtil.toString(message2) }
         });
       }
-      nonempty(message) {
-        return this.min(1, message);
+      nonempty(message2) {
+        return this.min(1, message2);
       }
     };
     ZodArray.create = (schema, params) => {
@@ -7195,17 +7308,17 @@ var init_types = __esm({
       get shape() {
         return this._def.shape();
       }
-      strict(message) {
+      strict(message2) {
         errorUtil.errToObj;
         return new _ZodObject({
           ...this._def,
           unknownKeys: "strict",
-          ...message !== void 0 ? {
+          ...message2 !== void 0 ? {
             errorMap: (issue2, ctx2) => {
               const defaultError = this._def.errorMap?.(issue2, ctx2).message ?? ctx2.defaultError;
               if (issue2.code === "unrecognized_keys")
                 return {
-                  message: errorUtil.errToObj(message).message ?? defaultError
+                  message: errorUtil.errToObj(message2).message ?? defaultError
                 };
               return {
                 message: defaultError
@@ -7923,23 +8036,23 @@ var init_types = __esm({
           return finalizeSet(elements);
         }
       }
-      min(minSize, message) {
+      min(minSize, message2) {
         return new _ZodSet({
           ...this._def,
-          minSize: { value: minSize, message: errorUtil.toString(message) }
+          minSize: { value: minSize, message: errorUtil.toString(message2) }
         });
       }
-      max(maxSize, message) {
+      max(maxSize, message2) {
         return new _ZodSet({
           ...this._def,
-          maxSize: { value: maxSize, message: errorUtil.toString(message) }
+          maxSize: { value: maxSize, message: errorUtil.toString(message2) }
         });
       }
-      size(size2, message) {
-        return this.min(size2, message).max(size2, message);
+      size(size2, message2) {
+        return this.min(size2, message2).max(size2, message2);
       }
-      nonempty(message) {
-        return this.min(1, message);
+      nonempty(message2) {
+        return this.min(1, message2);
       }
     };
     ZodSet.create = (valueType, params) => {
@@ -9185,8 +9298,8 @@ function prefixIssues(path, issues) {
     return iss;
   });
 }
-function unwrapMessage(message) {
-  return typeof message === "string" ? message : message?.message;
+function unwrapMessage(message2) {
+  return typeof message2 === "string" ? message2 : message2?.message;
 }
 function attachSchema(issues, start, inst) {
   var _a3;
@@ -9204,7 +9317,7 @@ function finalizeIssue(iss, ctx2, config2) {
       iss.schema = iss.inst;
   }
   const schemaError = iss.schema !== iss.inst ? iss.schema?._zod.def?.error : void 0;
-  const message = iss.message ? iss.message : unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(schemaError?.(iss)) ?? unwrapMessage(ctx2?.error?.(iss)) ?? unwrapMessage(config2.customError?.(iss)) ?? unwrapMessage(config2.localeError?.(iss)) ?? "Invalid input";
+  const message2 = iss.message ? iss.message : unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(schemaError?.(iss)) ?? unwrapMessage(ctx2?.error?.(iss)) ?? unwrapMessage(config2.customError?.(iss)) ?? unwrapMessage(config2.localeError?.(iss)) ?? "Invalid input";
   const full = {};
   for (const k of Object.keys(iss)) {
     if (k === "inst" || k === "schema" || k === "continue" || k === "input" || k === "__proto__")
@@ -9212,7 +9325,7 @@ function finalizeIssue(iss, ctx2, config2) {
     full[k] = iss[k];
   }
   full.path ?? (full.path = []);
-  full.message = message;
+  full.message = message2;
   if (ctx2?.reportInput) {
     full.input = iss.input;
   }
@@ -11150,7 +11263,7 @@ function handleIntersectionResults(result, left, right) {
   const unrecKeys = /* @__PURE__ */ new Map();
   let unrecIssue;
   const keyIssues = /* @__PURE__ */ new Map();
-  const collect = (iss, side) => {
+  const collect2 = (iss, side) => {
     let keys;
     if (iss.code === "unrecognized_keys" && !iss.path?.length) {
       unrecIssue ?? (unrecIssue = iss);
@@ -11171,11 +11284,11 @@ function handleIntersectionResults(result, left, right) {
     return true;
   };
   for (const iss of left.issues) {
-    if (!collect(iss, "l"))
+    if (!collect2(iss, "l"))
       result.issues.push(iss);
   }
   for (const iss of right.issues) {
-    if (!collect(iss, "r"))
+    if (!collect2(iss, "r"))
       result.issues.push(iss);
   }
   const bothKeys = [...unrecKeys].filter(([, f]) => f.l && f.r).map(([k]) => k);
@@ -23093,8 +23206,8 @@ var init_compile = __esm({
     INVALID2 = /* @__PURE__ */ Symbol.for("zod.compile.invalid");
     FALLBACK_FLAG = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
     ZodCompileAsyncError = class extends Error {
-      constructor(message = "z.compile does not support async refinements, transforms, or checks") {
-        super(message);
+      constructor(message2 = "z.compile does not support async refinements, transforms, or checks") {
+        super(message2);
         this.name = "ZodCompileAsyncError";
       }
     };
@@ -24246,12 +24359,12 @@ function initializeContext(params) {
     external: params?.external ?? void 0
   };
 }
-function handleUnrepresentable(schema, ctx2, json2, params, message) {
-  const result = typeof ctx2.unrepresentable === "function" ? ctx2.unrepresentable({ zodSchema: schema, path: params.path, message }) : ctx2.unrepresentable;
+function handleUnrepresentable(schema, ctx2, json2, params, message2) {
+  const result = typeof ctx2.unrepresentable === "function" ? ctx2.unrepresentable({ zodSchema: schema, path: params.path, message: message2 }) : ctx2.unrepresentable;
   if (result === "any")
     return false;
   if (result === void 0 || result === "throw")
-    throw new Error(message);
+    throw new Error(message2);
   Object.assign(json2, result);
   return true;
 }
@@ -24831,12 +24944,12 @@ function rewriteKeyNames(ctx2) {
   const rewrites = /* @__PURE__ */ new Map();
   for (const record2 of pendingRecords.get(ctx2) ?? []) {
     const seen = ctx2.seen.get(record2);
-    const names = (seen?.def ?? seen?.schema)?.propertyNames;
-    if (!names || names === true || rewrites.has(names))
+    const names2 = (seen?.def ?? seen?.schema)?.propertyNames;
+    if (!names2 || names2 === true || rewrites.has(names2))
       continue;
-    const rewritten = stringifyKeyNames(bySchema, names, /* @__PURE__ */ new Set());
-    if (rewritten !== names)
-      rewrites.set(names, rewritten);
+    const rewritten = stringifyKeyNames(bySchema, names2, /* @__PURE__ */ new Set());
+    if (rewritten !== names2)
+      rewrites.set(names2, rewritten);
   }
   if (!rewrites.size)
     return;
@@ -24863,21 +24976,21 @@ function serializeDefaultValue(value, schema, ctx2, json2, params) {
 }
 function toJSONSchema(input2, params) {
   if ("_idmap" in input2) {
-    const registry2 = input2;
+    const registry3 = input2;
     const ctx3 = initializeContext({ ...params, processors: allProcessors });
     const defs = {};
-    for (const entry of registry2._idmap.entries()) {
+    for (const entry of registry3._idmap.entries()) {
       const [_, schema] = entry;
       processSchema(schema, ctx3);
     }
     const schemas = {};
     const external = {
-      registry: registry2,
+      registry: registry3,
       uri: params?.uri,
       defs
     };
     ctx3.external = external;
-    for (const entry of registry2._idmap.entries()) {
+    for (const entry of registry3._idmap.entries()) {
       const [key, schema] = entry;
       extractDefs(ctx3, schema);
       assignProp(schemas, key, finalize(ctx3, schema));
@@ -30849,8 +30962,8 @@ var init_types2 = __esm({
       CreateTaskResultSchema
     ]);
     McpError = class _McpError extends Error {
-      constructor(code, message, data) {
-        super(`MCP error ${code}: ${message}`);
+      constructor(code, message2, data) {
+        super(`MCP error ${code}: ${message2}`);
         this.code = code;
         this.data = data;
         this.name = "McpError";
@@ -30858,19 +30971,19 @@ var init_types2 = __esm({
       /**
        * Factory method to create the appropriate error type based on the error code and data
        */
-      static fromError(code, message, data) {
+      static fromError(code, message2, data) {
         if (code === ErrorCode.UrlElicitationRequired && data) {
           const errorData = data;
           if (errorData.elicitations) {
-            return new UrlElicitationRequiredError(errorData.elicitations, message);
+            return new UrlElicitationRequiredError(errorData.elicitations, message2);
           }
         }
-        return new _McpError(code, message, data);
+        return new _McpError(code, message2, data);
       }
     };
     UrlElicitationRequiredError = class extends McpError {
-      constructor(elicitations, message = `URL elicitation${elicitations.length > 1 ? "s" : ""} required`) {
-        super(ErrorCode.UrlElicitationRequired, message, {
+      constructor(elicitations, message2 = `URL elicitation${elicitations.length > 1 ? "s" : ""} required`) {
+        super(ErrorCode.UrlElicitationRequired, message2, {
           elicitations
         });
       }
@@ -31443,7 +31556,7 @@ function escapeNonAlphaNumeric(source) {
   }
   return result;
 }
-function addFormat(schema, value, message, refs) {
+function addFormat(schema, value, message2, refs) {
   if (schema.format || schema.anyOf?.some((x) => x.format)) {
     if (!schema.anyOf) {
       schema.anyOf = [];
@@ -31465,13 +31578,13 @@ function addFormat(schema, value, message, refs) {
     }
     schema.anyOf.push({
       format: value,
-      ...message && refs.errorMessages && { errorMessage: { format: message } }
+      ...message2 && refs.errorMessages && { errorMessage: { format: message2 } }
     });
   } else {
-    setResponseValueAndErrors(schema, "format", value, message, refs);
+    setResponseValueAndErrors(schema, "format", value, message2, refs);
   }
 }
-function addPattern2(schema, regex, message, refs) {
+function addPattern2(schema, regex, message2, refs) {
   if (schema.pattern || schema.allOf?.some((x) => x.pattern)) {
     if (!schema.allOf) {
       schema.allOf = [];
@@ -31493,10 +31606,10 @@ function addPattern2(schema, regex, message, refs) {
     }
     schema.allOf.push({
       pattern: stringifyRegExpWithFlags(regex, refs),
-      ...message && refs.errorMessages && { errorMessage: { pattern: message } }
+      ...message2 && refs.errorMessages && { errorMessage: { pattern: message2 } }
     });
   } else {
-    setResponseValueAndErrors(schema, "pattern", stringifyRegExpWithFlags(regex, refs), message, refs);
+    setResponseValueAndErrors(schema, "pattern", stringifyRegExpWithFlags(regex, refs), message2, refs);
   }
 }
 function stringifyRegExpWithFlags(regex, refs) {
@@ -32583,15 +32696,15 @@ var init_protocol = __esm({
                 let queuedMessage;
                 while (queuedMessage = await this._taskMessageQueue.dequeue(taskId, extra.sessionId)) {
                   if (queuedMessage.type === "response" || queuedMessage.type === "error") {
-                    const message = queuedMessage.message;
-                    const requestId = message.id;
+                    const message2 = queuedMessage.message;
+                    const requestId = message2.id;
                     const resolver = this._requestResolvers.get(requestId);
                     if (resolver) {
                       this._requestResolvers.delete(requestId);
                       if (queuedMessage.type === "response") {
-                        resolver(message);
+                        resolver(message2);
                       } else {
-                        const errorMessage = message;
+                        const errorMessage = message2;
                         const error62 = new McpError(errorMessage.error.code, errorMessage.error.message, errorMessage.error.data);
                         resolver(error62);
                       }
@@ -32730,16 +32843,16 @@ var init_protocol = __esm({
           this._onerror(error62);
         };
         const _onmessage = this._transport?.onmessage;
-        this._transport.onmessage = (message, extra) => {
-          _onmessage?.(message, extra);
-          if (isJSONRPCResultResponse(message) || isJSONRPCErrorResponse(message)) {
-            this._onresponse(message);
-          } else if (isJSONRPCRequest(message)) {
-            this._onrequest(message, extra);
-          } else if (isJSONRPCNotification(message)) {
-            this._onnotification(message);
+        this._transport.onmessage = (message2, extra) => {
+          _onmessage?.(message2, extra);
+          if (isJSONRPCResultResponse(message2) || isJSONRPCErrorResponse(message2)) {
+            this._onresponse(message2);
+          } else if (isJSONRPCRequest(message2)) {
+            this._onrequest(message2, extra);
+          } else if (isJSONRPCNotification(message2)) {
+            this._onnotification(message2);
           } else {
-            this._onerror(new Error(`Unknown message type: ${JSON.stringify(message)}`));
+            this._onerror(new Error(`Unknown message type: ${JSON.stringify(message2)}`));
           }
         };
         await this._transport.start();
@@ -33349,12 +33462,12 @@ var init_protocol = __esm({
        * the error appropriately (e.g., by failing the task, logging, etc.). The Protocol layer
        * simply propagates the error.
        */
-      async _enqueueTaskMessage(taskId, message, sessionId) {
+      async _enqueueTaskMessage(taskId, message2, sessionId) {
         if (!this._taskStore || !this._taskMessageQueue) {
           throw new Error("Cannot enqueue task message: taskStore and taskMessageQueue are not configured");
         }
         const maxQueueSize = this._options?.maxTaskQueueSize;
-        await this._taskMessageQueue.enqueue(taskId, message, sessionId, maxQueueSize);
+        await this._taskMessageQueue.enqueue(taskId, message2, sessionId, maxQueueSize);
       }
       /**
        * Clears the message queue for a task and rejects any pending request resolvers.
@@ -33364,9 +33477,9 @@ var init_protocol = __esm({
       async _clearTaskQueue(taskId, sessionId) {
         if (this._taskMessageQueue) {
           const messages = await this._taskMessageQueue.dequeueAll(taskId, sessionId);
-          for (const message of messages) {
-            if (message.type === "request" && isJSONRPCRequest(message.message)) {
-              const requestId = message.message.id;
+          for (const message2 of messages) {
+            if (message2.type === "request" && isJSONRPCRequest(message2.message)) {
+              const requestId = message2.message.id;
               const resolver = this._requestResolvers.get(requestId);
               if (resolver) {
                 resolver(new McpError(ErrorCode.InternalError, "Task cancelled or completed"));
@@ -33523,10 +33636,10 @@ var require_code = __commonJS({
       }
       get names() {
         var _a3;
-        return (_a3 = this._names) !== null && _a3 !== void 0 ? _a3 : this._names = this._items.reduce((names, c) => {
+        return (_a3 = this._names) !== null && _a3 !== void 0 ? _a3 : this._names = this._items.reduce((names2, c) => {
           if (c instanceof Name)
-            names[c.str] = (names[c.str] || 0) + 1;
-          return names;
+            names2[c.str] = (names2[c.str] || 0) + 1;
+          return names2;
         }, {});
       }
     };
@@ -33852,11 +33965,11 @@ var require_codegen = __commonJS({
         const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
         return `${varKind} ${this.name}${rhs};` + _n;
       }
-      optimizeNames(names, constants) {
-        if (!names[this.name.str])
+      optimizeNames(names2, constants) {
+        if (!names2[this.name.str])
           return;
         if (this.rhs)
-          this.rhs = optimizeExpr(this.rhs, names, constants);
+          this.rhs = optimizeExpr(this.rhs, names2, constants);
         return this;
       }
       get names() {
@@ -33873,15 +33986,15 @@ var require_codegen = __commonJS({
       render({ _n }) {
         return `${this.lhs} = ${this.rhs};` + _n;
       }
-      optimizeNames(names, constants) {
-        if (this.lhs instanceof code_1.Name && !names[this.lhs.str] && !this.sideEffects)
+      optimizeNames(names2, constants) {
+        if (this.lhs instanceof code_1.Name && !names2[this.lhs.str] && !this.sideEffects)
           return;
-        this.rhs = optimizeExpr(this.rhs, names, constants);
+        this.rhs = optimizeExpr(this.rhs, names2, constants);
         return this;
       }
       get names() {
-        const names = this.lhs instanceof code_1.Name ? {} : { ...this.lhs.names };
-        return addExprNames(names, this.rhs);
+        const names2 = this.lhs instanceof code_1.Name ? {} : { ...this.lhs.names };
+        return addExprNames(names2, this.rhs);
       }
     };
     var AssignOp = class extends Assign {
@@ -33937,8 +34050,8 @@ var require_codegen = __commonJS({
       optimizeNodes() {
         return `${this.code}` ? this : void 0;
       }
-      optimizeNames(names, constants) {
-        this.code = optimizeExpr(this.code, names, constants);
+      optimizeNames(names2, constants) {
+        this.code = optimizeExpr(this.code, names2, constants);
         return this;
       }
       get names() {
@@ -33967,20 +34080,20 @@ var require_codegen = __commonJS({
         }
         return nodes.length > 0 ? this : void 0;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names2, constants) {
         const { nodes } = this;
         let i = nodes.length;
         while (i--) {
           const n = nodes[i];
-          if (n.optimizeNames(names, constants))
+          if (n.optimizeNames(names2, constants))
             continue;
-          subtractNames(names, n.names);
+          subtractNames(names2, n.names);
           nodes.splice(i, 1);
         }
         return nodes.length > 0 ? this : void 0;
       }
       get names() {
-        return this.nodes.reduce((names, n) => addNames(names, n.names), {});
+        return this.nodes.reduce((names2, n) => addNames(names2, n.names), {});
       }
     };
     var BlockNode = class extends ParentNode {
@@ -34025,20 +34138,20 @@ var require_codegen = __commonJS({
           return void 0;
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names2, constants) {
         var _a3;
-        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants);
-        if (!(super.optimizeNames(names, constants) || this.else))
+        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names2, constants);
+        if (!(super.optimizeNames(names2, constants) || this.else))
           return;
-        this.condition = optimizeExpr(this.condition, names, constants);
+        this.condition = optimizeExpr(this.condition, names2, constants);
         return this;
       }
       get names() {
-        const names = super.names;
-        addExprNames(names, this.condition);
+        const names2 = super.names;
+        addExprNames(names2, this.condition);
         if (this.else)
-          addNames(names, this.else.names);
-        return names;
+          addNames(names2, this.else.names);
+        return names2;
       }
     };
     If.kind = "if";
@@ -34053,10 +34166,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.iteration})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names2, constants) {
+        if (!super.optimizeNames(names2, constants))
           return;
-        this.iteration = optimizeExpr(this.iteration, names, constants);
+        this.iteration = optimizeExpr(this.iteration, names2, constants);
         return this;
       }
       get names() {
@@ -34077,8 +34190,8 @@ var require_codegen = __commonJS({
         return `for(${varKind} ${name}=${from}; ${name}<${to}; ${name}++)` + super.render(opts);
       }
       get names() {
-        const names = addExprNames(super.names, this.from);
-        return addExprNames(names, this.to);
+        const names2 = addExprNames(super.names, this.from);
+        return addExprNames(names2, this.to);
       }
     };
     var ForIter = class extends For {
@@ -34092,10 +34205,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names2, constants) {
+        if (!super.optimizeNames(names2, constants))
           return;
-        this.iterable = optimizeExpr(this.iterable, names, constants);
+        this.iterable = optimizeExpr(this.iterable, names2, constants);
         return this;
       }
       get names() {
@@ -34137,20 +34250,20 @@ var require_codegen = __commonJS({
         (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNodes();
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names2, constants) {
         var _a3, _b;
-        super.optimizeNames(names, constants);
-        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants);
-        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants);
+        super.optimizeNames(names2, constants);
+        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names2, constants);
+        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names2, constants);
         return this;
       }
       get names() {
-        const names = super.names;
+        const names2 = super.names;
         if (this.catch)
-          addNames(names, this.catch.names);
+          addNames(names2, this.catch.names);
         if (this.finally)
-          addNames(names, this.finally.names);
-        return names;
+          addNames(names2, this.finally.names);
+        return names2;
       }
     };
     var Catch = class extends BlockNode {
@@ -34434,15 +34547,15 @@ var require_codegen = __commonJS({
       }
     };
     exports.CodeGen = CodeGen;
-    function addNames(names, from) {
+    function addNames(names2, from) {
       for (const n in from)
-        names[n] = (names[n] || 0) + (from[n] || 0);
-      return names;
+        names2[n] = (names2[n] || 0) + (from[n] || 0);
+      return names2;
     }
-    function addExprNames(names, from) {
-      return from instanceof code_1._CodeOrName ? addNames(names, from.names) : names;
+    function addExprNames(names2, from) {
+      return from instanceof code_1._CodeOrName ? addNames(names2, from.names) : names2;
     }
-    function optimizeExpr(expr, names, constants) {
+    function optimizeExpr(expr, names2, constants) {
       if (expr instanceof code_1.Name)
         return replaceName(expr);
       if (!canOptimize(expr))
@@ -34458,18 +34571,18 @@ var require_codegen = __commonJS({
       }, []));
       function replaceName(n) {
         const c = constants[n.str];
-        if (c === void 0 || names[n.str] !== 1)
+        if (c === void 0 || names2[n.str] !== 1)
           return n;
-        delete names[n.str];
+        delete names2[n.str];
         return c;
       }
       function canOptimize(e) {
-        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants[c.str] !== void 0);
+        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names2[c.str] === 1 && constants[c.str] !== void 0);
       }
     }
-    function subtractNames(names, from) {
+    function subtractNames(names2, from) {
       for (const n in from)
-        names[n] = (names[n] || 0) - (from[n] || 0);
+        names2[n] = (names2[n] || 0) - (from[n] || 0);
     }
     function not(x) {
       return typeof x == "boolean" || typeof x == "number" || x === null ? !x : (0, code_1._)`!${par(x)}`;
@@ -34667,7 +34780,7 @@ var require_names = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
-    var names = {
+    var names2 = {
       // validation function arguments
       data: new codegen_1.Name("data"),
       // data passed to validation function
@@ -34696,7 +34809,7 @@ var require_names = __commonJS({
       jsonLen: new codegen_1.Name("jsonLen"),
       jsonPart: new codegen_1.Name("jsonPart")
     };
-    exports.default = names;
+    exports.default = names2;
   }
 });
 
@@ -34806,12 +34919,12 @@ var require_errors = __commonJS({
       }
       return [E.schemaPath, schPath];
     }
-    function extraErrorProps(cxt, { params, message }, keyValues) {
+    function extraErrorProps(cxt, { params, message: message2 }, keyValues) {
       const { keyword, data, schemaValue, it } = cxt;
       const { opts, propertyName, topSchemaRef, schemaPath } = it;
       keyValues.push([E.keyword, keyword], [E.params, typeof params == "function" ? params(cxt) : params || (0, codegen_1._)`{}`]);
       if (opts.messages) {
-        keyValues.push([E.message, typeof message == "function" ? message(cxt) : message]);
+        keyValues.push([E.message, typeof message2 == "function" ? message2(cxt) : message2]);
       }
       if (opts.verbose) {
         keyValues.push([E.schema, schemaValue], [E.parentSchema, (0, codegen_1._)`${topSchemaRef}${schemaPath}`], [names_1.default.data, data]);
@@ -37941,11 +38054,11 @@ var require_core = __commonJS({
         }
         const valid = this.validate($schema, schema);
         if (!valid && throwOrLogError) {
-          const message = "schema is invalid: " + this.errorsText();
+          const message2 = "schema is invalid: " + this.errorsText();
           if (this.opts.validateSchema === "log")
-            this.logger.error(message);
+            this.logger.error(message2);
           else
-            throw new Error(message);
+            throw new Error(message2);
         }
         return valid;
       }
@@ -41891,9 +42004,9 @@ var init_mcp = __esm({
             return resource.readCallback(uri, extra);
           }
           for (const template of Object.values(this._registeredResourceTemplates)) {
-            const variables = template.resourceTemplate.uriTemplate.match(uri.toString());
-            if (variables) {
-              return template.readCallback(uri, variables, extra);
+            const variables2 = template.resourceTemplate.uriTemplate.match(uri.toString());
+            if (variables2) {
+              return template.readCallback(uri, variables2, extra);
             }
           }
           throw new McpError(ErrorCode.InvalidParams, `Resource ${uri} not found`);
@@ -42100,12 +42213,12 @@ var init_mcp = __esm({
         }
         return registeredPrompt;
       }
-      _createRegisteredTool(name, title, description, inputSchema3, outputSchema, annotations, execution, _meta, handler) {
+      _createRegisteredTool(name, title, description, inputSchema4, outputSchema, annotations, execution, _meta, handler) {
         validateAndWarnToolName(name);
         const registeredTool = {
           title,
           description,
-          inputSchema: getZodSchemaObject(inputSchema3),
+          inputSchema: getZodSchemaObject(inputSchema4),
           outputSchema: getZodSchemaObject(outputSchema),
           annotations,
           execution,
@@ -42156,7 +42269,7 @@ var init_mcp = __esm({
           throw new Error(`Tool ${name} is already registered`);
         }
         let description;
-        let inputSchema3;
+        let inputSchema4;
         let outputSchema;
         let annotations;
         if (typeof rest[0] === "string") {
@@ -42165,7 +42278,7 @@ var init_mcp = __esm({
         if (rest.length > 1) {
           const firstArg = rest[0];
           if (isZodRawShapeCompat(firstArg)) {
-            inputSchema3 = rest.shift();
+            inputSchema4 = rest.shift();
             if (rest.length > 1 && typeof rest[0] === "object" && rest[0] !== null && !isZodRawShapeCompat(rest[0])) {
               annotations = rest.shift();
             }
@@ -42177,7 +42290,7 @@ var init_mcp = __esm({
           }
         }
         const callback = rest[0];
-        return this._createRegisteredTool(name, void 0, description, inputSchema3, outputSchema, annotations, { taskSupport: "forbidden" }, void 0, callback);
+        return this._createRegisteredTool(name, void 0, description, inputSchema4, outputSchema, annotations, { taskSupport: "forbidden" }, void 0, callback);
       }
       /**
        * Registers a tool with a config object and callback.
@@ -42186,8 +42299,8 @@ var init_mcp = __esm({
         if (this._registeredTools[name]) {
           throw new Error(`Tool ${name} is already registered`);
         }
-        const { title, description, inputSchema: inputSchema3, outputSchema, annotations, _meta } = config2;
-        return this._createRegisteredTool(name, title, description, inputSchema3, outputSchema, annotations, { taskSupport: "forbidden" }, _meta, cb);
+        const { title, description, inputSchema: inputSchema4, outputSchema, annotations, _meta } = config2;
+        return this._createRegisteredTool(name, title, description, inputSchema4, outputSchema, annotations, { taskSupport: "forbidden" }, _meta, cb);
       }
       prompt(name, ...rest) {
         if (this._registeredPrompts[name]) {
@@ -42279,8 +42392,8 @@ var init_mcp = __esm({
 function deserializeMessage(line) {
   return JSONRPCMessageSchema.parse(JSON.parse(line));
 }
-function serializeMessage(message) {
-  return JSON.stringify(message) + "\n";
+function serializeMessage(message2) {
+  return JSON.stringify(message2) + "\n";
 }
 var STDIO_DEFAULT_MAX_BUFFER_SIZE, ReadBuffer;
 var init_stdio = __esm({
@@ -42358,11 +42471,11 @@ var init_stdio2 = __esm({
       processReadBuffer() {
         while (true) {
           try {
-            const message = this._readBuffer.readMessage();
-            if (message === null) {
+            const message2 = this._readBuffer.readMessage();
+            if (message2 === null) {
               break;
             }
-            this.onmessage?.(message);
+            this.onmessage?.(message2);
           } catch (error62) {
             this.onerror?.(error62);
           }
@@ -42378,9 +42491,9 @@ var init_stdio2 = __esm({
         this._readBuffer.clear();
         this.onclose?.();
       }
-      send(message) {
+      send(message2) {
         return new Promise((resolve2) => {
-          const json2 = serializeMessage(message);
+          const json2 = serializeMessage(message2);
           if (this._stdout.write(json2)) {
             resolve2();
           } else {
@@ -42460,7 +42573,7 @@ var INSTRUCTIONS;
 var init_instructions = __esm({
   "bridge-server/src/instructions.ts"() {
     "use strict";
-    INSTRUCTIONS = 'Runs Plugin API code in the Figma file whose MCP tab in EZG Tools is connected, and reads or controls its selection, viewport, events, history and exports. If `files` shows none, ask the user to press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server" in the MCP tab. Any number of Claude sessions can use the same file at once. Start with `inventory`, and prefer `build` and `kit` over hand-written node code. Load the ezg-figma-bridge skill first. A shared EZG icon library is free for any task: before you draw or fake an icon, call `icons_search`, then `icons_place`.';
+    INSTRUCTIONS = 'Runs Plugin API code in the Figma file whose MCP tab in EZG Tools is connected, and reads or controls its selection, viewport, events, history and exports. If `files` shows none, ask the user to press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server" in the MCP tab. Start with `inventory`, and prefer `build` and `kit` over hand-written node code. `run` batches steps; `upload` adds files and URLs without bytes in chat. Many agents: `claim`, `describe`. Load the ezg-figma-bridge skill first. A shared EZG icon library is free for any task: before you draw or fake an icon, call `icons_search`, then `icons_place`.';
   }
 });
 
@@ -42550,6 +42663,12 @@ var init_journal = __esm({
 });
 
 // bridge-server/src/journal-tools.ts
+function withoutCreated(stats) {
+  if (typeof stats !== "object" || stats === null || Array.isArray(stats))
+    return stats;
+  const { created: _created, ...rest } = stats;
+  return rest;
+}
 function sizeOf2(args) {
   try {
     return JSON.stringify(args)?.length ?? 0;
@@ -42607,7 +42726,7 @@ function withJournal(server2, journal2, session2) {
       ...error62 !== void 0 && { error: error62 },
       outBytes: outSize(res),
       ...res?._meta?.ezgStats !== void 0 && {
-        stats: res._meta.ezgStats
+        stats: withoutCreated(res._meta.ezgStats)
       }
     });
     return res;
@@ -42662,13 +42781,19 @@ var init_context = __esm({
       iconsPlace: "icons_place",
       iconsTag: "icons_tag",
       uiScreenshot: "ui_screenshot",
-      status: "status"
+      status: "status",
+      upload: "upload",
+      run: "run",
+      claim: "claim",
+      describe: "describe",
+      fontsCheck: "fonts_check",
+      jobWait: "job_wait"
     };
     BridgeCallError = class extends Error {
       code;
       remote;
-      constructor(code, message, remote) {
-        super(message);
+      constructor(code, message2, remote) {
+        super(message2);
         this.name = "BridgeCallError";
         this.code = code;
         this.remote = remote;
@@ -42703,7 +42828,7 @@ function createRpc(send) {
     }, delayMs);
     entry.timer.unref();
   }
-  function lookup(connectionId, id) {
+  function lookup2(connectionId, id) {
     const entry = pending.get(id);
     return entry && entry.connectionId === connectionId ? entry : void 0;
   }
@@ -42737,7 +42862,7 @@ function createRpc(send) {
       });
     },
     onReply(connectionId, frame) {
-      const entry = lookup(connectionId, frame.id);
+      const entry = lookup2(connectionId, frame.id);
       if (!entry) return;
       clearTimeout(entry.timer);
       pending.delete(frame.id);
@@ -42748,7 +42873,7 @@ function createRpc(send) {
         );
     },
     onProgress(connectionId, frame) {
-      const entry = lookup(connectionId, frame.id);
+      const entry = lookup2(connectionId, frame.id);
       if (!entry) return;
       const extend2 = Number.isNaN(frame.extendMs) ? 0 : frame.extendMs;
       const now = Date.now();
@@ -42776,110 +42901,6 @@ var init_rpc = __esm({
     "use strict";
     init_context();
     init_bridge_wire();
-  }
-});
-
-// plugins/ezg-tools/src/shared/codegen-data.ts
-function isRecord2(v) {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-function normalizeSnippets(raw) {
-  if (!Array.isArray(raw)) return [];
-  const kept = [];
-  let total = 0;
-  for (const item of raw) {
-    if (!isRecord2(item)) continue;
-    const { title, language, code } = item;
-    if (typeof title !== "string" || title.trim() === "") continue;
-    if (typeof language !== "string" || !LANGUAGE_SET.has(language)) continue;
-    if (typeof code !== "string" || code === "") continue;
-    const trimmed = title.trim();
-    const size2 = trimmed.length + code.length;
-    if (total + size2 > MAX_SNIPPET_CHARS) break;
-    kept.push({ title: trimmed, language, code });
-    total += size2;
-    if (kept.length >= MAX_SNIPPETS) break;
-  }
-  return kept;
-}
-function decodeSnippets(raw) {
-  try {
-    return normalizeSnippets(JSON.parse(raw));
-  } catch {
-    return [];
-  }
-}
-var MAX_SNIPPETS, MAX_SNIPPET_CHARS, CODEGEN_LANGUAGES, LANGUAGE_SET;
-var init_codegen_data = __esm({
-  "plugins/ezg-tools/src/shared/codegen-data.ts"() {
-    "use strict";
-    MAX_SNIPPETS = 8;
-    MAX_SNIPPET_CHARS = 6e4;
-    CODEGEN_LANGUAGES = [
-      "TYPESCRIPT",
-      "CPP",
-      "RUBY",
-      "CSS",
-      "JAVASCRIPT",
-      "HTML",
-      "JSON",
-      "GRAPHQL",
-      "PYTHON",
-      "GO",
-      "SQL",
-      "SWIFT",
-      "KOTLIN",
-      "RUST",
-      "BASH",
-      "PLAINTEXT"
-    ];
-    LANGUAGE_SET = new Set(CODEGEN_LANGUAGES);
-  }
-});
-
-// plugins/ezg-tools/src/shared/glossary.ts
-function sanitizeSuggestions(raw) {
-  if (!Array.isArray(raw)) return [];
-  const seen = /* @__PURE__ */ new Set();
-  for (const item of raw) {
-    if (seen.size >= MAX_SUGGESTIONS) break;
-    if (typeof item === "string" && item.length >= 1 && item.length <= MAX_SUGGESTION_CHARS) {
-      seen.add(item);
-    }
-  }
-  return Array.from(seen);
-}
-function sanitizeRule(raw) {
-  if (!isRecord(raw)) return null;
-  const { find, note } = raw;
-  if (typeof find !== "string" || find.trim() === "") return null;
-  if (find.length > MAX_FIND_CHARS) return null;
-  const rule = { find, replace: sanitizeSuggestions(raw.replace) };
-  if (typeof note === "string") rule.note = note.slice(0, MAX_NOTE_CHARS);
-  if (raw.caseSensitive === true) rule.caseSensitive = true;
-  if (raw.wholeWord === true) rule.wholeWord = true;
-  return rule;
-}
-function sanitizeRules(raw) {
-  const rules = [];
-  if (!Array.isArray(raw)) return rules;
-  for (const item of raw) {
-    if (rules.length >= MAX_GLOSSARY_RULES) break;
-    const rule = sanitizeRule(item);
-    if (rule) rules.push(rule);
-  }
-  return rules;
-}
-var MAX_GLOSSARY_RULES, MAX_FIND_CHARS, MAX_SUGGESTIONS, MAX_SUGGESTION_CHARS, MAX_NOTE_CHARS;
-var init_glossary = __esm({
-  "plugins/ezg-tools/src/shared/glossary.ts"() {
-    "use strict";
-    init_values();
-    MAX_GLOSSARY_RULES = 500;
-    MAX_FIND_CHARS = 100;
-    MAX_SUGGESTIONS = 10;
-    MAX_SUGGESTION_CHARS = 100;
-    MAX_NOTE_CHARS = 200;
   }
 });
 
@@ -42999,15 +43020,41 @@ function truncateJson(text2, max = MAX_RESULT_CHARS) {
 \u2026[truncated ${total - keep} of ${total} chars]`;
   return (text2.slice(0, keep) + marker).slice(0, max);
 }
-var MAX_RESULT_CHARS, MAX_DEPTH, UNREADABLE, CHUNK_CHARS, DROP;
+var MAX_RESULT_CHARS, MAX_DEPTH, UNREADABLE, DROP;
 var init_bridge_result = __esm({
   "plugins/ezg-tools/src/shared/bridge-result.ts"() {
     "use strict";
     MAX_RESULT_CHARS = 2e5;
     MAX_DEPTH = 20;
     UNREADABLE = "[Unreadable]";
-    CHUNK_CHARS = 12 * 1024;
     DROP = /* @__PURE__ */ Symbol("drop");
+  }
+});
+
+// plugins/ezg-tools/src/shared/bridge-error-codes.ts
+function codeOf(data) {
+  if (typeof data !== "object" || data === null) return null;
+  const code = data.code;
+  if (typeof code !== "string") return null;
+  return Object.prototype.hasOwnProperty.call(ERROR_FIXES, code) ? code : null;
+}
+var ERROR_FIXES;
+var init_bridge_error_codes = __esm({
+  "plugins/ezg-tools/src/shared/bridge-error-codes.ts"() {
+    "use strict";
+    ERROR_FIXES = {
+      TOKEN_NOT_FOUND: "Use a name from inventory variables; see close names.",
+      TOKEN_AMBIGUOUS: "Pass the collection: kit.token(name, collection).",
+      STYLE_NOT_FOUND: "Use a style name from inventory styles.",
+      COMPONENT_NOT_FOUND: "Use a component name from inventory components.",
+      PROP_NOT_FOUND: "Use a property from inventory components props.",
+      FONT_LOAD_FAILED: "The font is not installed for this user; pick another or ask the user to install it.",
+      EXPORT_STUCK: "Ask the user to close and reopen the EZG Tools plugin; do not retry exports.",
+      BUILD_SPEC_INVALID: "Fix every listed problem, then call build again.",
+      UPLOAD_UNSUPPORTED: "Use PNG, JPG, GIF or SVG.",
+      CLAIMED: "Another agent holds this part of the file; work in your own claimed frame or wait.",
+      FONT_MISSING: "Install the font or choose an available one (fonts_check lists them)."
+    };
   }
 });
 
@@ -43022,9 +43069,7 @@ function textResult(t) {
   return { content: [text(t)] };
 }
 function jsonResult(value, note) {
-  const content = [
-    text(cap(JSON.stringify(value, null, 2) ?? "null"))
-  ];
+  const content = [text(cap(JSON.stringify(value) ?? "null"))];
   if (note) content.push(text(note));
   return { content };
 }
@@ -43037,12 +43082,15 @@ function imageBlocks(images) {
   }
   return out;
 }
-function errorResult(message, hint) {
-  const joined = hint ? message + "\nHint: " + hint : message;
+function errorResult(message2, hint) {
+  const joined = hint ? message2 + "\nHint: " + hint : message2;
   return { isError: true, content: [text(cap(joined))] };
 }
 function fromBridgeError(e, hint) {
-  return errorResult(e.stack ? e.message + "\n" + e.stack : e.message, hint);
+  const code = codeOf(e.data);
+  const head = code ? `[${code}] ${e.message}` : e.message;
+  const body = e.stack ? head + "\n" + e.stack : head;
+  return errorResult(code ? body + "\nFix: " + ERROR_FIXES[code] : body, hint);
 }
 function fromCallError(e) {
   if (e instanceof BridgeCallError) {
@@ -43055,8 +43103,8 @@ function fromCallError(e) {
         return fromBridgeError(e.remote ?? { message: e.message });
     }
   }
-  const message = e instanceof Error ? e.message : String(e);
-  return errorResult("Unexpected error: " + message);
+  const message2 = e instanceof Error ? e.message : String(e);
+  return errorResult("Unexpected error: " + message2);
 }
 function withNotes(result, notes) {
   const extra = notes.filter(Boolean).map(text);
@@ -43067,11 +43115,282 @@ var init_tool_result = __esm({
   "bridge-server/src/tool-result.ts"() {
     "use strict";
     init_bridge_result();
+    init_bridge_error_codes();
     init_context();
     HINTS = {
       timeout: "The plugin may still be running the request. Call status until busy is false before you retry.",
       closed: "The Figma file disconnected. Ask the user to press Connect in the MCP tab, then call files."
     };
+  }
+});
+
+// bridge-server/src/job-store.ts
+function createJobStore(now = Date.now) {
+  const jobs = /* @__PURE__ */ new Map();
+  const done = /* @__PURE__ */ new Map();
+  let counter = 0;
+  function prune() {
+    const t = now();
+    for (const [id, job] of jobs) {
+      if (job.endedAt !== void 0 && t - job.endedAt >= JOB_TTL_MS) {
+        jobs.delete(id);
+        done.delete(id);
+      }
+    }
+    for (const [id, job] of jobs) {
+      if (jobs.size <= JOB_MAX) break;
+      if (job.endedAt === void 0) continue;
+      jobs.delete(id);
+      done.delete(id);
+    }
+  }
+  function start(tool, run2) {
+    prune();
+    const id = `j${++counter}`;
+    const entry = { id, tool, startedAt: now() };
+    jobs.set(id, entry);
+    let running;
+    try {
+      running = run2();
+    } catch (e) {
+      running = Promise.reject(e);
+    }
+    done.set(
+      id,
+      running.catch(fromCallError).then((result) => {
+        entry.result = result;
+        entry.endedAt = now();
+      })
+    );
+    return id;
+  }
+  function get(id) {
+    prune();
+    return jobs.get(id) ?? null;
+  }
+  async function wait(id, timeoutMs) {
+    const entry = get(id);
+    if (!entry || entry.endedAt !== void 0) return entry;
+    let timer;
+    const timeout = new Promise((resolve2) => {
+      timer = setTimeout(resolve2, Math.max(0, timeoutMs));
+    });
+    try {
+      await Promise.race([done.get(id), timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
+    return entry;
+  }
+  function list() {
+    prune();
+    return [...jobs.values()];
+  }
+  return { start, get, wait, list };
+}
+var JOB_TTL_MS, JOB_MAX;
+var init_job_store = __esm({
+  "bridge-server/src/job-store.ts"() {
+    "use strict";
+    init_tool_result();
+    JOB_TTL_MS = 30 * 6e4;
+    JOB_MAX = 50;
+  }
+});
+
+// bridge-server/src/tool-registry.ts
+function toSchema(input2) {
+  if (input2 === void 0 || input2 === null) return void 0;
+  if (input2 instanceof ZodType2) return input2;
+  return object2(input2);
+}
+function isAsyncTool(name) {
+  return ASYNC_TOOLS.includes(name);
+}
+function withAsyncField(input2) {
+  if (input2 === void 0 || input2 === null) return input2;
+  if (input2 instanceof ZodObject2) return input2.extend({ async: asyncField });
+  if (input2 instanceof ZodType2) return input2;
+  return { ...input2, async: asyncField };
+}
+function withoutAsync(args) {
+  const { async: _async, ...rest } = args;
+  return rest;
+}
+function createToolRegistry(server2, jobs = createJobStore()) {
+  const entries = /* @__PURE__ */ new Map();
+  const proxy = new Proxy(server2, {
+    get(target, prop) {
+      if (prop === "registerTool") {
+        return (name, config2, cb) => {
+          entries.set(name, {
+            handler: cb,
+            schema: toSchema(config2?.inputSchema)
+          });
+          if (!isAsyncTool(name) || config2?.inputSchema == null) {
+            return target.registerTool.call(
+              target,
+              name,
+              config2,
+              cb
+            );
+          }
+          const wrapped = (args, ...extra) => {
+            const input2 = args;
+            if (!input2?.async) return cb(withoutAsync(input2 ?? {}), ...extra);
+            const jobId = jobs.start(
+              name,
+              async () => cb(withoutAsync(input2), ...extra)
+            );
+            return jsonResult({ jobId, tool: name }, ASYNC_NOTE);
+          };
+          return target.registerTool.call(
+            target,
+            name,
+            { ...config2, inputSchema: withAsyncField(config2?.inputSchema) },
+            wrapped
+          );
+        };
+      }
+      const v = Reflect.get(target, prop, target);
+      return typeof v === "function" ? v.bind(target) : v;
+    }
+  });
+  return {
+    server: proxy,
+    jobs,
+    has: (name) => entries.has(name),
+    async call(name, args) {
+      const entry = entries.get(name);
+      if (!entry) return errorResult(`unknown tool: ${name}`);
+      if (!entry.schema) return entry.handler({});
+      const parsed = await entry.schema.safeParseAsync(
+        isAsyncTool(name) ? withoutAsync(args) : args
+      );
+      if (!parsed.success) {
+        const issues = parsed.error.issues.map((i) => `${i.path.join(".") || "args"}: ${i.message}`).join("; ");
+        return errorResult(`Invalid arguments for ${name}: ${issues}`);
+      }
+      return entry.handler(parsed.data, {});
+    }
+  };
+}
+var ASYNC_TOOLS, ASYNC_NOTE, asyncField;
+var init_tool_registry = __esm({
+  "bridge-server/src/tool-registry.ts"() {
+    "use strict";
+    init_zod();
+    init_job_store();
+    init_tool_result();
+    ASYNC_TOOLS = ["eval", "build", "export", "upload", "run"];
+    ASYNC_NOTE = "call job_wait with this jobId";
+    asyncField = boolean2().optional().describe(
+      "Return {jobId} at once and keep working; fetch the result with job_wait."
+    );
+  }
+});
+
+// plugins/ezg-tools/src/shared/codegen-data.ts
+function isRecord2(v) {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+function normalizeSnippets(raw) {
+  if (!Array.isArray(raw)) return [];
+  const kept = [];
+  let total = 0;
+  for (const item of raw) {
+    if (!isRecord2(item)) continue;
+    const { title, language, code } = item;
+    if (typeof title !== "string" || title.trim() === "") continue;
+    if (typeof language !== "string" || !LANGUAGE_SET.has(language)) continue;
+    if (typeof code !== "string" || code === "") continue;
+    const trimmed = title.trim();
+    const size2 = trimmed.length + code.length;
+    if (total + size2 > MAX_SNIPPET_CHARS) break;
+    kept.push({ title: trimmed, language, code });
+    total += size2;
+    if (kept.length >= MAX_SNIPPETS) break;
+  }
+  return kept;
+}
+function decodeSnippets(raw) {
+  try {
+    return normalizeSnippets(JSON.parse(raw));
+  } catch {
+    return [];
+  }
+}
+var MAX_SNIPPETS, MAX_SNIPPET_CHARS, CODEGEN_LANGUAGES, LANGUAGE_SET;
+var init_codegen_data = __esm({
+  "plugins/ezg-tools/src/shared/codegen-data.ts"() {
+    "use strict";
+    MAX_SNIPPETS = 8;
+    MAX_SNIPPET_CHARS = 6e4;
+    CODEGEN_LANGUAGES = [
+      "TYPESCRIPT",
+      "CPP",
+      "RUBY",
+      "CSS",
+      "JAVASCRIPT",
+      "HTML",
+      "JSON",
+      "GRAPHQL",
+      "PYTHON",
+      "GO",
+      "SQL",
+      "SWIFT",
+      "KOTLIN",
+      "RUST",
+      "BASH",
+      "PLAINTEXT"
+    ];
+    LANGUAGE_SET = new Set(CODEGEN_LANGUAGES);
+  }
+});
+
+// plugins/ezg-tools/src/shared/glossary.ts
+function sanitizeSuggestions(raw) {
+  if (!Array.isArray(raw)) return [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of raw) {
+    if (seen.size >= MAX_SUGGESTIONS) break;
+    if (typeof item === "string" && item.length >= 1 && item.length <= MAX_SUGGESTION_CHARS) {
+      seen.add(item);
+    }
+  }
+  return Array.from(seen);
+}
+function sanitizeRule(raw) {
+  if (!isRecord(raw)) return null;
+  const { find, note } = raw;
+  if (typeof find !== "string" || find.trim() === "") return null;
+  if (find.length > MAX_FIND_CHARS) return null;
+  const rule = { find, replace: sanitizeSuggestions(raw.replace) };
+  if (typeof note === "string") rule.note = note.slice(0, MAX_NOTE_CHARS);
+  if (raw.caseSensitive === true) rule.caseSensitive = true;
+  if (raw.wholeWord === true) rule.wholeWord = true;
+  return rule;
+}
+function sanitizeRules(raw) {
+  const rules = [];
+  if (!Array.isArray(raw)) return rules;
+  for (const item of raw) {
+    if (rules.length >= MAX_GLOSSARY_RULES) break;
+    const rule = sanitizeRule(item);
+    if (rule) rules.push(rule);
+  }
+  return rules;
+}
+var MAX_GLOSSARY_RULES, MAX_FIND_CHARS, MAX_SUGGESTIONS, MAX_SUGGESTION_CHARS, MAX_NOTE_CHARS;
+var init_glossary = __esm({
+  "plugins/ezg-tools/src/shared/glossary.ts"() {
+    "use strict";
+    init_values();
+    MAX_GLOSSARY_RULES = 500;
+    MAX_FIND_CHARS = 100;
+    MAX_SUGGESTIONS = 10;
+    MAX_SUGGESTION_CHARS = 100;
+    MAX_NOTE_CHARS = 200;
   }
 });
 
@@ -43198,6 +43517,48 @@ var init_authoring = __esm({
         }
       );
     };
+  }
+});
+
+// plugins/ezg-tools/src/shared/bridge-build-expect.ts
+function expectErrors(raw) {
+  const out = [];
+  const e = raw.expect;
+  if (e !== void 0) {
+    const names2 = Object.keys(BUILD_EXPECT_RULES).join(", ");
+    if (!Array.isArray(e)) out.push(`expect must be an array of ${names2}`);
+    else
+      for (const c of e)
+        if (!isBuildExpect(c))
+          out.push(`unknown expect check ${JSON.stringify(c)} (use ${names2})`);
+  }
+  if (raw.thumbnail !== void 0 && typeof raw.thumbnail !== "boolean")
+    out.push("thumbnail must be a boolean");
+  const o = raw.owner;
+  if (o !== void 0 && !(typeof o === "string" && o.length >= 1 && o.length <= BUILD_OWNER_MAX))
+    out.push(`owner must be a string of 1..${BUILD_OWNER_MAX} chars`);
+  return out;
+}
+function parseExpect(raw) {
+  const out = {};
+  if (Array.isArray(raw.expect))
+    out.expect = [...new Set(raw.expect.filter(isBuildExpect))];
+  if (typeof raw.thumbnail === "boolean") out.thumbnail = raw.thumbnail;
+  if (typeof raw.owner === "string") out.owner = raw.owner;
+  return out;
+}
+var BUILD_EXPECT_RULES, BUILD_OWNER_MAX, isBuildExpect;
+var init_bridge_build_expect = __esm({
+  "plugins/ezg-tools/src/shared/bridge-build-expect.ts"() {
+    "use strict";
+    BUILD_EXPECT_RULES = {
+      "no-overflow": "overflow",
+      fonts: "missing-font",
+      "bound-colors": "unbound-color",
+      "text-styles": "text-no-style"
+    };
+    BUILD_OWNER_MAX = 64;
+    isBuildExpect = (v) => typeof v === "string" && Object.prototype.hasOwnProperty.call(BUILD_EXPECT_RULES, v);
   }
 });
 
@@ -43375,7 +43736,7 @@ var init_lint_parse = __esm({
   }
 });
 
-// plugins/ezg-tools/src/shared/bridge-build.ts
+// plugins/ezg-tools/src/shared/bridge-build-parse.ts
 function isJson(v, depth = 0) {
   if (depth > 20) return false;
   if (Array.isArray(v)) return v.every((x) => isJson(x, depth + 1));
@@ -43461,6 +43822,9 @@ function buildErrors(raw) {
       errors.push(`${k} must be a string`);
   if (raw.atomic !== void 0 && typeof raw.atomic !== "boolean")
     errors.push("atomic must be a boolean");
+  if (raw.ids !== void 0 && !BUILD_IDS_MODES.includes(raw.ids))
+    errors.push(`ids must be one of ${BUILD_IDS_MODES.join(", ")}`);
+  errors.push(...expectErrors(raw));
   const l = raw.lint;
   if (l !== void 0 && (!isRec3(l) || "nodeIds" in l || "pageIds" in l || !parseLintPayload(l)))
     errors.push("lint must be valid lint options without nodeIds and pageIds");
@@ -43504,33 +43868,22 @@ function parseBuildPayload(raw) {
   const r = raw;
   const out = {
     nodes: r.nodes,
-    atomic: r.atomic !== false
+    atomic: r.atomic !== false,
+    ids: r.ids ?? "refs"
   };
   if (typeof r.parentId === "string") out.parentId = r.parentId;
   if (typeof r.pageId === "string") out.pageId = r.pageId;
   if (r.lint !== void 0) out.lint = parseLintPayload(r.lint) ?? void 0;
+  Object.assign(out, parseExpect(r));
   return out;
 }
-var BUILD_TYPES, BUILD_NODE_CAP, BUILD_DEPTH_CAP, isRec3, num2, LEAF_TYPES, LAYOUT_TYPES, LAYOUT_ENUMS, LAYOUT_KEYS, allOf, isStr, isStrOrBool;
-var init_bridge_build = __esm({
-  "plugins/ezg-tools/src/shared/bridge-build.ts"() {
+var isRec3, num2, LEAF_TYPES, LAYOUT_TYPES, LAYOUT_ENUMS, LAYOUT_KEYS, allOf, isStr, isStrOrBool;
+var init_bridge_build_parse = __esm({
+  "plugins/ezg-tools/src/shared/bridge-build-parse.ts"() {
     "use strict";
+    init_bridge_build();
+    init_bridge_build_expect();
     init_lint_parse();
-    BUILD_TYPES = [
-      "FRAME",
-      "COMPONENT",
-      "COMPONENT_SET",
-      "SECTION",
-      "RECTANGLE",
-      "ELLIPSE",
-      "POLYGON",
-      "STAR",
-      "LINE",
-      "TEXT",
-      "INSTANCE"
-    ];
-    BUILD_NODE_CAP = 2e3;
-    BUILD_DEPTH_CAP = 32;
     isRec3 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
     num2 = (v) => typeof v === "number" && Number.isFinite(v);
     LEAF_TYPES = [
@@ -43563,17 +43916,112 @@ var init_bridge_build = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/bridge-build.ts
+var BUILD_TYPES, BUILD_IDS_MODES, BUILD_NODE_CAP, BUILD_DEPTH_CAP;
+var init_bridge_build = __esm({
+  "plugins/ezg-tools/src/shared/bridge-build.ts"() {
+    "use strict";
+    init_bridge_build_parse();
+    BUILD_TYPES = [
+      "FRAME",
+      "COMPONENT",
+      "COMPONENT_SET",
+      "SECTION",
+      "RECTANGLE",
+      "ELLIPSE",
+      "POLYGON",
+      "STAR",
+      "LINE",
+      "TEXT",
+      "INSTANCE"
+    ];
+    BUILD_IDS_MODES = ["refs", "all"];
+    BUILD_NODE_CAP = 2e3;
+    BUILD_DEPTH_CAP = 32;
+  }
+});
+
+// plugins/ezg-tools/src/shared/lint-summary.ts
+function summarizeLint(report) {
+  const { findings, counts, ...rest } = report;
+  const byRule = /* @__PURE__ */ new Map();
+  for (const f of findings) {
+    const list = byRule.get(f.rule);
+    if (list) list.push(f);
+    else byRule.set(f.rule, [f]);
+  }
+  for (const rule of Object.keys(counts)) {
+    if (!byRule.has(rule)) byRule.set(rule, []);
+  }
+  const groups = [];
+  for (const [rule, list] of byRule) {
+    const count = counts[rule] ?? list.length;
+    if (count === 0) continue;
+    groups.push({
+      rule,
+      count,
+      examples: list.slice(0, LINT_SUMMARY_EXAMPLES).map((f) => ({
+        nodeId: f.nodeId,
+        path: f.path,
+        detail: f.detail
+      })),
+      nodeIds: [...new Set(list.map((f) => f.nodeId))].slice(
+        0,
+        LINT_SUMMARY_IDS
+      )
+    });
+  }
+  groups.sort((a, b) => b.count - a.count);
+  return {
+    ...rest,
+    total: groups.reduce((sum, g) => sum + g.count, 0),
+    groups
+  };
+}
+var LINT_SUMMARY_EXAMPLES, LINT_SUMMARY_IDS;
+var init_lint_summary = __esm({
+  "plugins/ezg-tools/src/shared/lint-summary.ts"() {
+    "use strict";
+    LINT_SUMMARY_EXAMPLES = 3;
+    LINT_SUMMARY_IDS = 30;
+  }
+});
+
+// plugins/ezg-tools/src/shared/bridge-build-fail.ts
+function isBuildFailureData(v) {
+  if (!isRecord3(v) || v.kind !== "build-failure") return false;
+  if (typeof v.path !== "string" || typeof v.rolledBack !== "boolean")
+    return false;
+  if (typeof v.removed !== "number" || !Array.isArray(v.kept)) return false;
+  if (!v.kept.every((k) => typeof k === "string")) return false;
+  return v.issues === void 0 || Array.isArray(v.issues) && v.issues.every(isIssue);
+}
+var isRecord3, isIssue;
+var init_bridge_build_fail = __esm({
+  "plugins/ezg-tools/src/shared/bridge-build-fail.ts"() {
+    "use strict";
+    isRecord3 = (v) => typeof v === "object" && v !== null;
+    isIssue = (v) => isRecord3(v) && typeof v.path === "string" && typeof v.message === "string";
+  }
+});
+
 // bridge-server/src/tools/build.ts
 function failureNotes(data) {
-  if (!data || data.kind !== "build-failure") return [BUILD_PARTIAL_NOTE];
-  if (data.rolledBack === true)
-    return [`rolled back ${Number(data.removed) || 0} created nodes`];
-  const kept = Array.isArray(data.kept) ? data.kept.map(String) : [];
+  if (!isBuildFailureData(data)) return codeOf(data) ? [] : [BUILD_PARTIAL_NOTE];
+  if (data.issues?.length) return ["nothing was created"];
+  if (data.rolledBack) return [`rolled back ${data.removed} created nodes`];
+  const kept = data.kept;
   const more = kept.length - BUILD_KEPT_LIMIT;
   const list = kept.slice(0, BUILD_KEPT_LIMIT).join(", ");
   return [
     kept.length ? `kept: ${list}${more > 0 ? ` (+${more} more)` : ""}` : BUILD_PARTIAL_NOTE
   ];
+}
+function expectNote(e) {
+  if (!e) return "";
+  if (e.passed) return "expect: passed";
+  const list = e.failed.map((f) => `${f.check} ${f.count}`).join(", ");
+  return `expect: ${e.failed.length} failed (${list})`;
 }
 var BUILD_TIMEOUT_DEFAULT_MS, BUILD_TIMEOUT_MIN_MS, BUILD_TIMEOUT_MAX_MS, BUILD_RPC_MARGIN_MS, BUILD_KEPT_LIMIT, BUILD_OLD_PLUGIN_HINT, BUILD_PARTIAL_NOTE, DESCRIPTION, buildInputSchema, registerBuild;
 var init_build = __esm({
@@ -43581,6 +44029,10 @@ var init_build = __esm({
     "use strict";
     init_zod();
     init_bridge_build();
+    init_bridge_build_expect();
+    init_lint_summary();
+    init_bridge_error_codes();
+    init_bridge_build_fail();
     init_context();
     init_tool_result();
     BUILD_TIMEOUT_DEFAULT_MS = 6e4;
@@ -43590,22 +44042,52 @@ var init_build = __esm({
     BUILD_KEPT_LIMIT = 20;
     BUILD_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use build";
     BUILD_PARTIAL_NOTE = "atomic is false: nodes created before a failure stay in the file";
-    DESCRIPTION = "Creates a node tree from JSON in the connected Figma file in one call. Each node: type (FRAME, COMPONENT, COMPONENT_SET, SECTION, RECTANGLE, ELLIPSE, POLYGON, STAR, LINE, TEXT, INSTANCE), name, ref, props (Plugin API properties), layout (FRAME, COMPONENT, COMPONENT_SET: mode HORIZONTAL or VERTICAL, gap, padding, wrap, main, cross, width, height as FIXED, HUG or FILL), bind (property to variable name), text ({ chars, style }) on TEXT, component and setProps on INSTANCE, variants ({ cols, gap, padding }) on COMPONENT_SET, children. The spec is checked before any call; errors list the node path. atomic (default true) removes the nodes this call created when it fails; atomic false keeps partial nodes. The result maps each ref to its node id in ids, and roots lists the top-level ids. lint runs after the build on the roots and its report is part of the result. Load the ezg-figma-bridge skill first.";
+    DESCRIPTION = "Creates a node tree from JSON in the connected Figma file in one call. Each node: type (FRAME, COMPONENT, COMPONENT_SET, SECTION, RECTANGLE, ELLIPSE, POLYGON, STAR, LINE, TEXT, INSTANCE), name, ref, props (Plugin API properties), layout (FRAME, COMPONENT, COMPONENT_SET: mode HORIZONTAL or VERTICAL, gap, padding, wrap, main, cross, width, height as FIXED, HUG or FILL), bind (property to variable name), text ({ chars, style }) on TEXT, component and setProps on INSTANCE, variants ({ cols, gap, padding }) on COMPONENT_SET, children. The spec is checked before any call; errors list the node path. atomic (default true) removes the nodes this call created when it fails; atomic false keeps partial nodes. The result maps each ref to its node id in ids, and roots lists the top-level ids. ids refs (default) returns only the ids of nodes that have a ref; ids all returns every created node. lint runs after the build on the roots and its report is part of the result: detail summary (default) shows per-rule groups {rule, count, examples, nodeIds} and a total, detail full shows every finding. expect (checks: no-overflow, fonts, bound-colors, text-styles) runs lint rules on the roots after the build; a failed check does not fail the build, the result lists the failing node ids. thumbnail true returns a PNG of the built roots as an image. owner is your agent label: it must match your claim on the target, so claimed nodes of other agents are not touched. Load the ezg-figma-bridge skill first.";
     buildInputSchema = {
       fileKey: external_exports.string().min(1).optional(),
       parentId: external_exports.string().optional(),
       pageId: external_exports.string().optional(),
       nodes: external_exports.array(external_exports.unknown()),
       atomic: external_exports.boolean().default(true),
+      ids: external_exports.enum(BUILD_IDS_MODES).default("refs"),
+      detail: external_exports.enum(["summary", "full"]).default("summary"),
       lint: external_exports.record(external_exports.string(), external_exports.unknown()).optional(),
+      expect: external_exports.array(
+        external_exports.enum(Object.keys(BUILD_EXPECT_RULES))
+      ).optional(),
+      thumbnail: external_exports.boolean().optional(),
+      owner: external_exports.string().min(1).max(BUILD_OWNER_MAX).optional(),
       timeoutMs: external_exports.number().int().min(BUILD_TIMEOUT_MIN_MS).max(BUILD_TIMEOUT_MAX_MS).default(BUILD_TIMEOUT_DEFAULT_MS)
     };
     registerBuild = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.build,
         { description: DESCRIPTION, inputSchema: buildInputSchema },
-        async ({ fileKey: fileKey5, parentId, pageId, nodes, atomic, lint, timeoutMs }) => {
-          const raw = { parentId, pageId, nodes, atomic, lint };
+        async ({
+          fileKey: fileKey5,
+          parentId,
+          pageId,
+          nodes,
+          atomic,
+          ids,
+          detail,
+          lint,
+          expect,
+          thumbnail,
+          owner,
+          timeoutMs
+        }) => {
+          const raw = {
+            parentId,
+            pageId,
+            nodes,
+            atomic,
+            ids,
+            lint,
+            expect,
+            thumbnail,
+            owner
+          };
           const errors = buildErrors(raw);
           if (errors.length > 0) return errorResult(errors.join("\n"));
           const payload = parseBuildPayload(raw);
@@ -43619,10 +44101,14 @@ var init_build = __esm({
               payload,
               timeoutMs + BUILD_RPC_MARGIN_MS
             );
-            const out = withNotes(jsonResult(res), [
+            const { thumbnail: image, ...rest } = res;
+            const shown = rest.lint && detail !== "full" ? { ...rest, lint: summarizeLint(rest.lint) } : rest;
+            const out = withNotes(jsonResult(shown), [
               r.note ?? "",
-              atomic ? "" : BUILD_PARTIAL_NOTE
+              atomic === false ? BUILD_PARTIAL_NOTE : "",
+              expectNote(res.expect)
             ]);
+            if (image) out.content.push(...imageBlocks([image]));
             out._meta = {
               ezgStats: { elapsedMs: res.elapsedMs, createdCount: res.created }
             };
@@ -43640,8 +44126,179 @@ var init_build = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/bridge-claims.ts
+function parseClaimPayload(raw) {
+  if (typeof raw !== "object" || raw === null) return null;
+  const r = raw;
+  if (typeof r.owner !== "string" || r.owner.trim() === "") return null;
+  if (!Array.isArray(r.nodeIds)) return null;
+  const nodeIds = [];
+  for (const id of r.nodeIds) {
+    if (typeof id !== "string" || id === "") return null;
+    if (!nodeIds.includes(id)) nodeIds.push(id);
+  }
+  const out = { nodeIds, owner: r.owner.trim() };
+  if (r.ttlMs !== void 0) {
+    if (typeof r.ttlMs !== "number" || !Number.isFinite(r.ttlMs) || r.ttlMs <= 0)
+      return null;
+    out.ttlMs = r.ttlMs;
+  }
+  if (r.release !== void 0) {
+    if (typeof r.release !== "boolean") return null;
+    out.release = r.release;
+  }
+  if (nodeIds.length === 0 && !out.release) return null;
+  return out;
+}
+var CLAIM_TTL_DEFAULT_MS, CLAIM_TTL_MAX_MS;
+var init_bridge_claims = __esm({
+  "plugins/ezg-tools/src/shared/bridge-claims.ts"() {
+    "use strict";
+    CLAIM_TTL_DEFAULT_MS = 10 * 6e4;
+    CLAIM_TTL_MAX_MS = 60 * 6e4;
+  }
+});
+
+// bridge-server/src/tools/claim.ts
+var CLAIM_TIMEOUT_MS, CLAIM_OLD_PLUGIN_HINT, DESCRIPTION2, claimInputSchema, registerClaim;
+var init_claim = __esm({
+  "bridge-server/src/tools/claim.ts"() {
+    "use strict";
+    init_zod();
+    init_context();
+    init_bridge_claims();
+    init_tool_result();
+    CLAIM_TIMEOUT_MS = 15e3;
+    CLAIM_OLD_PLUGIN_HINT = "reopen the EZG Tools plugin to update it, then call claim again";
+    DESCRIPTION2 = `Lets an agent hold frames or pages so other agents cannot build or upload into them; pass the same owner to build and upload. nodeIds are the frames or pages to hold (a hold covers the whole subtree). owner is a label that tells agents apart, even when they share one session. ttlMs sets the hold time (default ${CLAIM_TTL_DEFAULT_MS} ms, max ${CLAIM_TTL_MAX_MS} ms); claiming again renews it. release: true frees the listed nodeIds, or every hold of that owner when nodeIds is empty. The result lists granted ids, conflicts (held by another owner) and all current claims. eval is not checked.`;
+    claimInputSchema = {
+      fileKey: external_exports.string().min(1).optional().describe(
+        "fileKey or clientId from files. Optional with one file connected."
+      ),
+      nodeIds: external_exports.array(external_exports.string().min(1)).default([]),
+      owner: external_exports.string().trim().min(1),
+      ttlMs: external_exports.number().int().positive().max(CLAIM_TTL_MAX_MS).optional(),
+      release: external_exports.boolean().optional()
+    };
+    registerClaim = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.claim,
+        { description: DESCRIPTION2, inputSchema: claimInputSchema },
+        async ({ fileKey: fileKey5, nodeIds, owner, ttlMs, release }) => {
+          if (nodeIds.length === 0 && !release)
+            return errorResult("nodeIds is empty", "pass nodeIds, or release: true");
+          const r = ctx2.files.resolve(fileKey5);
+          if ("error" in r) return errorResult(r.error);
+          const payload = {
+            nodeIds,
+            owner,
+            ...ttlMs !== void 0 ? { ttlMs } : {},
+            ...release !== void 0 ? { release } : {}
+          };
+          try {
+            const res = await ctx2.rpc.call(
+              r.file.connectionId,
+              "claim",
+              payload,
+              CLAIM_TIMEOUT_MS
+            );
+            return jsonResult(res, r.note);
+          } catch (e) {
+            if (e instanceof BridgeCallError && e.code === "remote" && e.remote?.message.startsWith("unknown op: claim"))
+              return errorResult(e.remote.message, CLAIM_OLD_PLUGIN_HINT);
+            return fromCallError(e);
+          }
+        }
+      );
+    };
+  }
+});
+
+// plugins/ezg-tools/src/shared/bridge-describe.ts
+function clampInt(v, def, min, max) {
+  if (v === void 0) return def;
+  if (typeof v !== "number" || !Number.isFinite(v)) return null;
+  return Math.min(max, Math.max(min, Math.floor(v)));
+}
+function parseDescribePayload(raw) {
+  if (!isRecord(raw)) return null;
+  const { nodeIds, depth, maxNodes } = raw;
+  if (!Array.isArray(nodeIds)) return null;
+  if (nodeIds.length < 1 || nodeIds.length > DESCRIBE_IDS_MAX) return null;
+  if (!nodeIds.every((v) => typeof v === "string" && v !== "")) return null;
+  const d = clampInt(depth, DESCRIBE_DEPTH_DEFAULT, 0, DESCRIBE_DEPTH_MAX);
+  const n = clampInt(maxNodes, DESCRIBE_NODES_DEFAULT, 1, DESCRIBE_NODES_MAX);
+  if (d === null || n === null) return null;
+  return { nodeIds: [...new Set(nodeIds)], depth: d, maxNodes: n };
+}
+var DESCRIBE_DEPTH_DEFAULT, DESCRIBE_DEPTH_MAX, DESCRIBE_NODES_DEFAULT, DESCRIBE_NODES_MAX, DESCRIBE_IDS_MAX;
+var init_bridge_describe = __esm({
+  "plugins/ezg-tools/src/shared/bridge-describe.ts"() {
+    "use strict";
+    init_values();
+    DESCRIBE_DEPTH_DEFAULT = 3;
+    DESCRIBE_DEPTH_MAX = 8;
+    DESCRIBE_NODES_DEFAULT = 300;
+    DESCRIBE_NODES_MAX = 2e3;
+    DESCRIBE_IDS_MAX = 20;
+  }
+});
+
+// bridge-server/src/tools/describe.ts
+var DESCRIBE_TIMEOUT_MS, DESCRIBE_OLD_PLUGIN_HINT, DESCRIPTION3, describeInputSchema, registerDescribe;
+var init_describe = __esm({
+  "bridge-server/src/tools/describe.ts"() {
+    "use strict";
+    init_zod();
+    init_context();
+    init_bridge_describe();
+    init_tool_result();
+    DESCRIBE_TIMEOUT_MS = 6e4;
+    DESCRIBE_OLD_PLUGIN_HINT = "reopen the EZG Tools plugin to update it";
+    DESCRIPTION3 = "Reads a compact tree: names, types, boxes, layout, bound tokens, text and component props. Use it before editing a screen instead of writing an eval walker.";
+    describeInputSchema = {
+      fileKey: external_exports.string().min(1).optional().describe(
+        "fileKey or clientId from files. Optional with one file connected."
+      ),
+      nodeIds: external_exports.array(external_exports.string().min(1)).min(1).max(DESCRIBE_IDS_MAX).describe("Node ids to read, for example from a selection."),
+      depth: external_exports.number().int().min(0).max(DESCRIBE_DEPTH_MAX).optional().describe(`Levels below each node. Default ${DESCRIBE_DEPTH_DEFAULT}.`),
+      maxNodes: external_exports.number().int().min(1).max(DESCRIBE_NODES_MAX).optional().describe(
+        `Node cap for the whole read. Default ${DESCRIBE_NODES_DEFAULT}.`
+      )
+    };
+    registerDescribe = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.describe,
+        { description: DESCRIPTION3, inputSchema: describeInputSchema },
+        async ({ fileKey: fileKey5, nodeIds, depth, maxNodes }) => {
+          const r = ctx2.files.resolve(fileKey5);
+          if ("error" in r) return errorResult(r.error);
+          const payload = {
+            nodeIds,
+            depth: depth ?? DESCRIBE_DEPTH_DEFAULT,
+            maxNodes: maxNodes ?? DESCRIBE_NODES_DEFAULT
+          };
+          try {
+            const res = await ctx2.rpc.call(
+              r.file.connectionId,
+              "describe",
+              payload,
+              DESCRIBE_TIMEOUT_MS
+            );
+            return jsonResult(res, r.note);
+          } catch (e) {
+            if (e instanceof BridgeCallError && e.code === "remote" && e.remote?.message.startsWith("unknown op: describe"))
+              return errorResult(e.remote.message, DESCRIBE_OLD_PLUGIN_HINT);
+            return fromCallError(e);
+          }
+        }
+      );
+    };
+  }
+});
+
 // plugins/ezg-tools/src/shared/bridge-eval.ts
-function isRecord3(v) {
+function isRecord4(v) {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 function parseEvalOptions(raw) {
@@ -43657,7 +44314,7 @@ function parseEvalOptions(raw) {
   return out;
 }
 function isEvalFailureData(v) {
-  return isRecord3(v) && v.kind === "eval-failure" && isRecord3(v.stats);
+  return isRecord4(v) && v.kind === "eval-failure" && isRecord4(v.stats);
 }
 var EVAL_CANCEL_GRACE_MS, EVAL_ARGS_MAX_CHARS;
 var init_bridge_eval = __esm({
@@ -43673,7 +44330,8 @@ function statsNote(s) {
   const queue = `queue ${s.queueMs} ms behind ${s.queueDepth ?? 0} calls`;
   const late2 = s.lateMs ? `; finished ${s.lateMs} ms after the timeout` : "";
   const fonts = s.slowFonts?.length ? `; slow font loads: ${s.slowFonts.map((f) => `${f.font} ${f.ms} ms`).join(", ")}` : "";
-  return `stats: ${s.elapsedMs} ms (${queue}), created ${s.createdCount} on page ${s.pageId}${late2}${fonts}`;
+  const removed = s.removed ? `, ${s.removed} created and removed again` : "";
+  return `stats: ${s.elapsedMs} ms (${queue}), created ${s.createdCount}${removed} on page ${s.pageId}${late2}${fonts}`;
 }
 function failureNotes2(d) {
   const at = d.line === void 0 ? "" : `at line ${d.line}${d.column === void 0 ? "" : ":" + d.column}`;
@@ -43683,10 +44341,11 @@ function failureNotes2(d) {
       EVAL_STILL_RUNNING_HINT
     ];
   if (d.rolledBack) return [at, `rolled back ${d.removed} created nodes`];
-  const kept = d.kept.length ? "kept: " + d.kept.slice(0, EVAL_KEPT_MAX).join(", ") + (d.kept.length > EVAL_KEPT_MAX ? ` (+${d.kept.length - EVAL_KEPT_MAX} more)` : "") : "";
+  if (!d.kept.length) return [at, EVAL_NOTHING_KEPT_NOTE];
+  const kept = "kept: " + d.kept.slice(0, EVAL_KEPT_MAX).join(", ") + (d.kept.length > EVAL_KEPT_MAX ? ` (+${d.kept.length - EVAL_KEPT_MAX} more)` : "");
   return [at, kept, EVAL_PARTIAL_HINT];
 }
-var EVAL_TIMEOUT_DEFAULT_MS, EVAL_TIMEOUT_MIN_MS, EVAL_TIMEOUT_MAX_MS, EVAL_RPC_MARGIN_MS, EVAL_PARTIAL_HINT, EVAL_KEPT_MAX, EVAL_STILL_RUNNING_HINT, PROTOTYPES_NOTE, DESCRIPTION2, evalInputSchema, registerEval;
+var EVAL_TIMEOUT_DEFAULT_MS, EVAL_TIMEOUT_MIN_MS, EVAL_TIMEOUT_MAX_MS, EVAL_RPC_MARGIN_MS, EVAL_PARTIAL_HINT, EVAL_NOTHING_KEPT_NOTE, EVAL_KEPT_MAX, EVAL_STILL_RUNNING_HINT, PROTOTYPES_NOTE, DESCRIPTION4, evalInputSchema, registerEval;
 var init_eval = __esm({
   "bridge-server/src/tools/eval.ts"() {
     "use strict";
@@ -43699,10 +44358,11 @@ var init_eval = __esm({
     EVAL_TIMEOUT_MAX_MS = 3e5;
     EVAL_RPC_MARGIN_MS = 5e3;
     EVAL_PARTIAL_HINT = "partial changes may remain; inspect before retry";
+    EVAL_NOTHING_KEPT_NOTE = "no nodes were created; edits to existing nodes, if any, stay";
     EVAL_KEPT_MAX = 20;
     EVAL_STILL_RUNNING_HINT = "call status until busy is false, then check recent for its outcome before you retry";
     PROTOTYPES_NOTE = "node.query(), node.matches(), node.set() and node.screenshot() are not available in this file; call query(node, selector), matches(node, selector), set(node, props) and screenshot(node) instead";
-    DESCRIPTION2 = `Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot, and the kit object (tokens, text, components, variants, auto layout), are passed as parameters; user code runs in an inner function, so it may declare its own names. args (any JSON, up to ${EVAL_ARGS_MAX_CHARS} characters, separate from the code cap) is passed to the code as the args parameter, so data never has to be pasted into code. One call is one undo step. Not atomic by default: a failed run may leave partial changes. Pass atomic: true to remove the nodes the call created when it fails (edits to existing nodes stay). Pass pageId to put new top-level nodes on that page. On timeoutMs the call is cancelled: the code stops at its next figma, kit or helper call (signal.cancelled and signal.throwIfCancelled() let long loops check), atomic removes what it created, and the error says where it was. If it does not stop within ${EVAL_CANCEL_GRACE_MS / 1e3} s, the error says it is still running; call status until busy is false before you retry. The result reports elapsed time, queue time and depth, slow font loads and created node ids. Load the ezg-figma-bridge skill first.`;
+    DESCRIPTION4 = `Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot, and the kit object (tokens, text, components, variants, auto layout), are passed as parameters; user code runs in an inner function, so it may declare its own names. args (any JSON, up to ${EVAL_ARGS_MAX_CHARS} characters, separate from the code cap) is passed to the code as the args parameter, so data never has to be pasted into code. One call is one undo step. Not atomic by default: a failed run may leave partial changes. Pass atomic: true to remove the nodes the call created when it fails (edits to existing nodes stay). Pass pageId to put new top-level nodes on that page. On timeoutMs the call is cancelled: the code stops at its next figma, kit or helper call (signal.cancelled and signal.throwIfCancelled() let long loops check), atomic removes what it created, and the error says where it was. If it does not stop within ${EVAL_CANCEL_GRACE_MS / 1e3} s, the error says it is still running; call status until busy is false before you retry. The result reports elapsed time, queue time and depth, slow font loads and created node ids. Load the ezg-figma-bridge skill first.`;
     evalInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -43718,7 +44378,7 @@ var init_eval = __esm({
     registerEval = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.eval,
-        { description: DESCRIPTION2, inputSchema: evalInputSchema },
+        { description: DESCRIPTION4, inputSchema: evalInputSchema },
         async ({ fileKey: fileKey5, code, description, timeoutMs, atomic, pageId, args }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -44033,11 +44693,172 @@ var init_bridge_icons = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/bridge-upload.ts
+function decodedBytes(base643) {
+  const pad = base643.endsWith("==") ? 2 : base643.endsWith("=") ? 1 : 0;
+  return base643.length * 3 / 4 - pad;
+}
+function parseItem(raw) {
+  if (!isRecord(raw) || !nonEmptyStr2(raw.name)) return null;
+  const { name, kind } = raw;
+  if (kind === "image") {
+    const { base64: base643 } = raw;
+    if (!nonEmptyStr2(base643) || base643.length % 4 !== 0) return null;
+    if (decodedBytes(base643) > UPLOAD_MAX_BYTES || !BASE64.test(base643))
+      return null;
+    return { name, kind, base64: base643 };
+  }
+  if (kind === "svg") {
+    const { svg } = raw;
+    if (!nonEmptyStr2(svg) || svg.length > UPLOAD_MAX_BYTES) return null;
+    return { name, kind, svg };
+  }
+  return null;
+}
+function optionalId(raw, key) {
+  const v = raw[key];
+  return v === void 0 ? { ok: true } : { ok: nonEmptyStr2(v), v };
+}
+function parseUploadPayload(raw) {
+  if (!isRecord(raw)) return null;
+  const { items, mode, scaleMode } = raw;
+  if (mode !== "node" && mode !== "fill") return null;
+  if (!Array.isArray(items) || items.length === 0) return null;
+  if (items.length > UPLOAD_MAX_ITEMS) return null;
+  const parsed = [];
+  for (const item of items) {
+    const p = parseItem(item);
+    if (!p) return null;
+    parsed.push(p);
+  }
+  const out = { items: parsed, mode };
+  if (mode === "fill") {
+    if (parsed.length !== 1 || parsed[0].kind !== "image") return null;
+    if (!nonEmptyStr2(raw.nodeId)) return null;
+    out.nodeId = raw.nodeId;
+  }
+  for (const key of ["parentId", "pageId"]) {
+    const id = optionalId(raw, key);
+    if (!id.ok) return null;
+    if ("v" in id) out[key] = id.v;
+  }
+  if (scaleMode !== void 0) {
+    if (typeof scaleMode !== "string" || !SCALE_MODES.has(scaleMode))
+      return null;
+    out.scaleMode = scaleMode;
+  }
+  if (raw.owner !== void 0) {
+    const { owner } = raw;
+    if (!nonEmptyStr2(owner) || owner.length > UPLOAD_OWNER_MAX) return null;
+    out.owner = owner;
+  }
+  return out;
+}
+var UPLOAD_MAX_ITEMS, UPLOAD_MAX_BYTES, UPLOAD_OWNER_MAX, SCALE_MODES, BASE64, nonEmptyStr2;
+var init_bridge_upload = __esm({
+  "plugins/ezg-tools/src/shared/bridge-upload.ts"() {
+    "use strict";
+    init_values();
+    UPLOAD_MAX_ITEMS = 20;
+    UPLOAD_MAX_BYTES = 32 * 1024 * 1024;
+    UPLOAD_OWNER_MAX = 64;
+    SCALE_MODES = /* @__PURE__ */ new Set(["FILL", "FIT", "CROP", "TILE"]);
+    BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
+    nonEmptyStr2 = (v) => typeof v === "string" && v.trim() !== "";
+  }
+});
+
+// plugins/ezg-tools/src/shared/bridge-export.ts
+function parseSize(raw, format) {
+  if (!isRecord(raw)) return "size must be { type, value }";
+  const { type, value } = raw;
+  if (typeof type !== "string" || !SIZE_TYPES.includes(type))
+    return "size.type must be WIDTH or HEIGHT";
+  if (!isFiniteNumber(value) || value < EXPORT_SIZE_MIN || value > EXPORT_SIZE_MAX)
+    return `size.value must be ${EXPORT_SIZE_MIN}..${EXPORT_SIZE_MAX}`;
+  if (typeof format === "string" && VECTOR_FORMATS.includes(format))
+    return `size applies to PNG and JPG only, not ${format}`;
+  return { type, value };
+}
+function parseExportOptions(raw) {
+  const { contentsOnly, useAbsoluteBounds, size: size2, colorProfile, scale } = raw;
+  const out = {};
+  if (contentsOnly !== void 0) {
+    if (typeof contentsOnly !== "boolean")
+      return "contentsOnly must be a boolean";
+    out.contentsOnly = contentsOnly;
+  }
+  if (useAbsoluteBounds !== void 0) {
+    if (typeof useAbsoluteBounds !== "boolean")
+      return "useAbsoluteBounds must be a boolean";
+    out.useAbsoluteBounds = useAbsoluteBounds;
+  }
+  if (size2 !== void 0) {
+    if (scale !== void 0) return "size and scale cannot be used together";
+    const parsed = parseSize(size2, raw.format);
+    if (typeof parsed === "string") return parsed;
+    out.size = parsed;
+  }
+  if (colorProfile !== void 0) {
+    if (typeof colorProfile !== "string" || !COLOR_PROFILES.includes(colorProfile))
+      return "colorProfile must be DOCUMENT, SRGB or DISPLAY_P3_V4";
+    out.colorProfile = colorProfile;
+  }
+  return out;
+}
+var EXPORT_SIZE_MIN, EXPORT_SIZE_MAX, SIZE_TYPES, COLOR_PROFILES, VECTOR_FORMATS;
+var init_bridge_export = __esm({
+  "plugins/ezg-tools/src/shared/bridge-export.ts"() {
+    "use strict";
+    init_values();
+    EXPORT_SIZE_MIN = 1;
+    EXPORT_SIZE_MAX = 16384;
+    SIZE_TYPES = ["WIDTH", "HEIGHT"];
+    COLOR_PROFILES = ["DOCUMENT", "SRGB", "DISPLAY_P3_V4"];
+    VECTOR_FORMATS = ["SVG", "PDF", "JSON"];
+  }
+});
+
+// plugins/ezg-tools/src/shared/fonts.ts
+var init_fonts = __esm({
+  "plugins/ezg-tools/src/shared/fonts.ts"() {
+    "use strict";
+  }
+});
+
+// plugins/ezg-tools/src/shared/bridge-fonts-check.ts
+function stringList(raw) {
+  if (raw === void 0) return void 0;
+  if (!Array.isArray(raw)) return null;
+  if (!raw.every((v) => typeof v === "string" && v !== "")) return null;
+  return raw;
+}
+function parseFontsCheckPayload(raw) {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
+  const obj = raw;
+  const fonts = stringList(obj.fonts);
+  const nodeIds = stringList(obj.nodeIds);
+  if (fonts === null || nodeIds === null) return null;
+  if (obj.textStyles !== void 0 && typeof obj.textStyles !== "boolean")
+    return null;
+  const out = {};
+  if (fonts?.length) out.fonts = fonts;
+  if (nodeIds?.length) out.nodeIds = nodeIds;
+  if (obj.textStyles === true) out.textStyles = true;
+  return out.fonts || out.nodeIds || out.textStyles ? out : null;
+}
+var init_bridge_fonts_check = __esm({
+  "plugins/ezg-tools/src/shared/bridge-fonts-check.ts"() {
+    "use strict";
+    init_fonts();
+  }
+});
+
 // plugins/ezg-tools/src/shared/bridge-parse.ts
 function parseEval(raw) {
   if (!isRecord(raw)) return null;
   const { code, description, timeoutMs } = raw;
-  if (!nonEmptyStr2(code) || !str2(description) || !positive(timeoutMs))
+  if (!nonEmptyStr3(code) || !str2(description) || !positive(timeoutMs))
     return null;
   const options = parseEvalOptions(raw);
   if (!options) return null;
@@ -44071,7 +44892,7 @@ function parseViewSet(raw) {
   return out;
 }
 function parseCheckpoint(raw) {
-  if (!isRecord(raw) || !nonEmptyStr2(raw.title)) return null;
+  if (!isRecord(raw) || !nonEmptyStr3(raw.title)) return null;
   if (raw.description === void 0) return { title: raw.title };
   if (!str2(raw.description)) return null;
   return { title: raw.title, description: raw.description };
@@ -44081,7 +44902,13 @@ function parseExport(raw) {
   const { nodeIds, format, scale } = raw;
   if (!strArray(nodeIds) || nodeIds.length === 0) return null;
   if (!str2(format) || !FORMAT_SET.has(format)) return null;
-  const out = { nodeIds: nodeIds.slice(), format };
+  const options = parseExportOptions(raw);
+  if (typeof options === "string") return null;
+  const out = {
+    nodeIds: nodeIds.slice(),
+    format,
+    ...options
+  };
   if (scale === void 0) return out;
   return positive(scale) ? { ...out, scale } : null;
 }
@@ -44090,7 +44917,7 @@ function parseWatch(raw) {
   return { document: raw.document };
 }
 function parseCodegen(raw) {
-  if (!isRecord(raw) || !nonEmptyStr2(raw.nodeId)) return null;
+  if (!isRecord(raw) || !nonEmptyStr3(raw.nodeId)) return null;
   const { snippets } = raw;
   if (!Array.isArray(snippets)) return null;
   try {
@@ -44112,7 +44939,7 @@ function parseUiScreenshot(raw) {
   if (!positive(raw.scale) || raw.scale > UI_SCREENSHOT_MAX_SCALE) return null;
   return { scale: raw.scale };
 }
-var EXPORT_FORMATS, EXPORT_MAX_NODES, FORMAT_SET, str2, nonEmptyStr2, positive, strArray, parseEmpty, UI_SCREENSHOT_MAX_SCALE, PARSERS;
+var EXPORT_FORMATS, EXPORT_MAX_NODES, FORMAT_SET, str2, nonEmptyStr3, positive, strArray, parseEmpty, UI_SCREENSHOT_MAX_SCALE, PARSERS;
 var init_bridge_parse = __esm({
   "plugins/ezg-tools/src/shared/bridge-parse.ts"() {
     "use strict";
@@ -44123,6 +44950,11 @@ var init_bridge_parse = __esm({
     init_lint_parse();
     init_bridge_build();
     init_bridge_icons();
+    init_bridge_upload();
+    init_bridge_claims();
+    init_bridge_describe();
+    init_bridge_export();
+    init_bridge_fonts_check();
     init_values();
     EXPORT_FORMATS = [
       "PNG",
@@ -44134,7 +44966,7 @@ var init_bridge_parse = __esm({
     EXPORT_MAX_NODES = 50;
     FORMAT_SET = new Set(EXPORT_FORMATS);
     str2 = (v) => typeof v === "string";
-    nonEmptyStr2 = (v) => str2(v) && v.trim() !== "";
+    nonEmptyStr3 = (v) => str2(v) && v.trim() !== "";
     positive = (v) => isFiniteNumber(v) && v > 0;
     strArray = (v) => Array.isArray(v) && v.every(str2);
     parseEmpty = (raw) => raw === void 0 || raw === null || isRecord(raw) ? {} : null;
@@ -44156,9 +44988,13 @@ var init_bridge_parse = __esm({
       "icons.search": parseIconsSearch,
       "icons.place": parseIconsPlace,
       "icons.tag": parseIconsTag,
+      upload: parseUploadPayload,
+      claim: parseClaimPayload,
+      describe: parseDescribePayload,
+      "fonts.check": parseFontsCheckPayload,
       "ui.screenshot": parseUiScreenshot,
       status: parseEmpty,
-      cancel: (raw) => isRecord(raw) && nonEmptyStr2(raw.id) ? { id: raw.id } : null
+      cancel: (raw) => isRecord(raw) && nonEmptyStr3(raw.id) ? { id: raw.id } : null
     };
   }
 });
@@ -44198,6 +45034,10 @@ var init_bridge_ops = __esm({
       "icons.search": true,
       "icons.place": true,
       "icons.tag": true,
+      upload: true,
+      claim: true,
+      describe: true,
+      "fonts.check": true,
       "ui.screenshot": true,
       status: true,
       cancel: true
@@ -44209,8 +45049,8 @@ var init_bridge_ops = __esm({
   }
 });
 
-// bridge-server/src/tools/export.ts
-import { mkdir, writeFile } from "node:fs/promises";
+// bridge-server/src/tools/export-files.ts
+import { writeFile } from "node:fs/promises";
 import { isAbsolute, join as join2, relative, resolve } from "node:path";
 function safeFileName(name) {
   let out = name.replace(/[^A-Za-z0-9._ -]/g, "-").replace(/-{2,}/g, "-").replace(EDGE_JUNK, "").slice(0, MAX_NAME_CHARS).replace(EDGE_JUNK, "");
@@ -44248,24 +45088,10 @@ async function writeExported(outDir, file2) {
   }
   return { written: { nodeId: file2.nodeId, path, bytes: data.length } };
 }
-function errorText(e) {
-  const block = fromCallError(e).content[0];
-  return block.type === "text" ? block.text : String(e);
-}
-var EXPORT_LIMITS, EXPORT_EXTENSIONS, MAX_NAME_CHARS, RESERVED_NAME, EDGE_JUNK, RASTER, inputSchema, registerExport;
-var init_export = __esm({
-  "bridge-server/src/tools/export.ts"() {
+var EXPORT_EXTENSIONS, MAX_NAME_CHARS, RESERVED_NAME, EDGE_JUNK;
+var init_export_files = __esm({
+  "bridge-server/src/tools/export-files.ts"() {
     "use strict";
-    init_zod();
-    init_bridge_ops();
-    init_bridge_parse();
-    init_context();
-    init_tool_result();
-    EXPORT_LIMITS = {
-      minScale: 0.1,
-      maxScale: 4,
-      callTimeoutMs: 6e4
-    };
     EXPORT_EXTENSIONS = {
       PNG: "png",
       JPG: "jpg",
@@ -44276,12 +45102,57 @@ var init_export = __esm({
     MAX_NAME_CHARS = 80;
     RESERVED_NAME = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
     EDGE_JUNK = /^[-. ]+|[-. ]+$/g;
+  }
+});
+
+// bridge-server/src/tools/export.ts
+import { mkdir } from "node:fs/promises";
+import { isAbsolute as isAbsolute2 } from "node:path";
+async function collect(slot2, outDir, id, res) {
+  slot2.warnings.push(...res.warnings ?? []);
+  const reported = res.failed ?? [];
+  slot2.failed.push(...reported);
+  if (!res.files.length && !reported.length)
+    slot2.failed.push({ nodeId: id, error: "plugin returned no file" });
+  for (const f of res.files) {
+    const out = await writeExported(outDir, f);
+    if ("written" in out) slot2.written.push(out.written);
+    else slot2.failed.push(out.failed);
+  }
+}
+function errorText(e) {
+  const block = fromCallError(e).content[0];
+  return block.type === "text" ? block.text : String(e);
+}
+var EXPORT_LIMITS, RASTER, inputSchema, registerExport;
+var init_export = __esm({
+  "bridge-server/src/tools/export.ts"() {
+    "use strict";
+    init_zod();
+    init_bridge_ops();
+    init_bridge_export();
+    init_bridge_parse();
+    init_context();
+    init_tool_result();
+    init_export_files();
+    init_export_files();
+    EXPORT_LIMITS = {
+      minScale: 0.1,
+      maxScale: 4,
+      callTimeoutMs: 6e4,
+      inFlight: 2
+    };
     RASTER = ["PNG", "JPG"];
     inputSchema = {
       fileKey: external_exports.string().optional(),
       nodeIds: external_exports.array(external_exports.string()).min(1).max(EXPORT_MAX_NODES),
       format: external_exports.enum(EXPORT_FORMATS),
       scale: external_exports.number().min(EXPORT_LIMITS.minScale).max(EXPORT_LIMITS.maxScale).optional(),
+      contentsOnly: external_exports.boolean().optional(),
+      useAbsoluteBounds: external_exports.boolean().optional(),
+      width: external_exports.number().optional(),
+      height: external_exports.number().optional(),
+      colorProfile: external_exports.enum(["DOCUMENT", "SRGB", "DISPLAY_P3_V4"]).optional(),
       outDir: external_exports.string()
     };
     registerExport = (server2, ctx2) => {
@@ -44289,15 +45160,39 @@ var init_export = __esm({
         TOOL_NAMES.export,
         {
           title: "Export nodes to disk",
-          description: `Renders nodes of the open Figma file and writes them as files to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes, and per-node failures in failed. At most ${EXPORT_MAX_NODES} nodeIds per call. scale applies to PNG and JPG only. Existing files with the same name are overwritten, so use a fresh outDir.`,
+          description: `Renders nodes of the open Figma file and writes them as files to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes, and per-node failures in failed. At most ${EXPORT_MAX_NODES} nodeIds per call. scale applies to PNG and JPG only. width or height (PNG and JPG, not with scale) sets the output size in px and keeps the aspect ratio. contentsOnly:false includes content clipped by a frame, useAbsoluteBounds uses the full bounds including strokes and effects, colorProfile picks the color space. warnings lists suspect results (tiny file, hidden node). Existing files with the same name are overwritten, so use a fresh outDir.`,
           inputSchema
         },
-        async ({ fileKey: fileKey5, nodeIds, format, scale, outDir }) => {
-          if (!isAbsolute(outDir))
+        async ({
+          fileKey: fileKey5,
+          nodeIds,
+          format,
+          scale,
+          width,
+          height,
+          outDir,
+          ...rest
+        }) => {
+          if (!isAbsolute2(outDir))
             return errorResult(
               "outDir must be an absolute path",
               "The tool does not expand ~ or relative paths."
             );
+          if (width !== void 0 && height !== void 0)
+            return errorResult("width and height cannot be used together");
+          const sized = width ?? height;
+          const options = parseExportOptions({
+            ...rest,
+            format,
+            scale,
+            ...sized !== void 0 && {
+              size: {
+                type: width !== void 0 ? "WIDTH" : "HEIGHT",
+                value: sized
+              }
+            }
+          });
+          if (typeof options === "string") return errorResult(options);
           const ids = [...new Set(nodeIds)];
           const resolved = ctx2.files.resolve(fileKey5);
           if ("error" in resolved) return errorResult(resolved.error);
@@ -44309,39 +45204,48 @@ var init_export = __esm({
               "Cannot create outDir: " + (e instanceof Error ? e.message : String(e))
             );
           }
-          const written = [];
-          const failed = [];
-          const payloadScale = RASTER.includes(format) ? { scale } : {};
+          const payloadScale = RASTER.includes(format) && scale !== void 0 ? { scale } : {};
+          const slots = ids.map(() => ({
+            written: [],
+            failed: [],
+            warnings: []
+          }));
+          let next = 0;
+          let closed = false;
           let thrown;
-          for (let i = 0; i < ids.length; i++) {
-            const id = ids[i];
-            try {
-              const res = await ctx2.rpc.call(
-                file2.connectionId,
-                "export",
-                { nodeIds: [id], format, ...payloadScale },
-                EXPORT_LIMITS.callTimeoutMs
-              );
-              const reported = res.failed ?? [];
-              failed.push(...reported);
-              if (!res.files.length && !reported.length)
-                failed.push({ nodeId: id, error: "plugin returned no file" });
-              for (const f of res.files) {
-                const out = await writeExported(outDir, f);
-                if ("written" in out) written.push(out.written);
-                else failed.push(out.failed);
-              }
-            } catch (e) {
-              thrown = e;
-              const text2 = errorText(e);
-              failed.push({ nodeId: id, error: text2 });
-              if (e instanceof BridgeCallError && e.code === "closed") {
-                for (const rest of ids.slice(i + 1))
-                  failed.push({ nodeId: rest, error: text2 });
-                break;
+          const worker = async () => {
+            while (!closed && next < ids.length) {
+              const i = next++;
+              const id = ids[i];
+              try {
+                const res = await ctx2.rpc.call(
+                  file2.connectionId,
+                  "export",
+                  { nodeIds: [id], format, ...payloadScale, ...options },
+                  EXPORT_LIMITS.callTimeoutMs
+                );
+                await collect(slots[i], outDir, id, res);
+              } catch (e) {
+                thrown = e;
+                const text2 = errorText(e);
+                slots[i].failed.push({ nodeId: id, error: text2 });
+                if (e instanceof BridgeCallError && e.code === "closed") {
+                  closed = true;
+                  for (; next < ids.length; next++)
+                    slots[next].failed.push({ nodeId: ids[next], error: text2 });
+                }
               }
             }
-          }
+          };
+          await Promise.all(
+            Array.from(
+              { length: Math.min(EXPORT_LIMITS.inFlight, ids.length) },
+              worker
+            )
+          );
+          const written = slots.flatMap((s) => s.written);
+          const failed = slots.flatMap((s) => s.failed);
+          const warnings = slots.flatMap((s) => s.warnings);
           if (!written.length) {
             if (failed.length === 1 && thrown !== void 0)
               return fromCallError(thrown);
@@ -44351,7 +45255,64 @@ var init_export = __esm({
               "Check the node ids with view_get, then try again."
             );
           }
-          return jsonResult({ outDir, written, failed }, note);
+          return jsonResult(
+            { outDir, written, failed, ...warnings.length && { warnings } },
+            note
+          );
+        }
+      );
+    };
+  }
+});
+
+// bridge-server/src/tools/fonts-check.ts
+var FONTS_CHECK_TIMEOUT_MS, FONTS_CHECK_OLD_PLUGIN_HINT, FONTS_CHECK_EMPTY_HINT, FONTS_CHECK_OP, DESCRIPTION5, fontsCheckInputSchema, registerFontsCheck;
+var init_fonts_check = __esm({
+  "bridge-server/src/tools/fonts-check.ts"() {
+    "use strict";
+    init_zod();
+    init_context();
+    init_tool_result();
+    FONTS_CHECK_TIMEOUT_MS = 6e4;
+    FONTS_CHECK_OLD_PLUGIN_HINT = "reopen the EZG Tools plugin to update it";
+    FONTS_CHECK_EMPTY_HINT = "pass at least one of fonts, nodeIds or textStyles";
+    FONTS_CHECK_OP = "fonts.check";
+    DESCRIPTION5 = 'Lists fonts a build or a subtree needs that this Figma user does not have. The bridge cannot install fonts. Sources: fonts (labels "Family Style", e.g. "Inter Bold"), text nodes under nodeIds, and every local text style when textStyles is true. Pass at least one. Returns needed (count of distinct fonts checked), missing (labels not available) and availableCount.';
+    fontsCheckInputSchema = {
+      fileKey: external_exports.string().min(1).optional().describe(
+        "fileKey or clientId from files. Optional with one file connected."
+      ),
+      fonts: external_exports.array(external_exports.string().min(1)).optional(),
+      nodeIds: external_exports.array(external_exports.string().min(1)).optional(),
+      textStyles: external_exports.boolean().optional()
+    };
+    registerFontsCheck = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.fontsCheck,
+        { description: DESCRIPTION5, inputSchema: fontsCheckInputSchema },
+        async ({ fileKey: fileKey5, fonts, nodeIds, textStyles }) => {
+          const payload = {
+            ...fonts?.length ? { fonts } : {},
+            ...nodeIds?.length ? { nodeIds } : {},
+            ...textStyles ? { textStyles } : {}
+          };
+          if (!payload.fonts && !payload.nodeIds && !payload.textStyles)
+            return errorResult("nothing to check", FONTS_CHECK_EMPTY_HINT);
+          const r = ctx2.files.resolve(fileKey5);
+          if ("error" in r) return errorResult(r.error);
+          try {
+            const res = await ctx2.rpc.call(
+              r.file.connectionId,
+              FONTS_CHECK_OP,
+              payload,
+              FONTS_CHECK_TIMEOUT_MS
+            );
+            return jsonResult(res, r.note);
+          } catch (e) {
+            if (e instanceof BridgeCallError && e.code === "remote" && e.remote?.message.startsWith("unknown op: fonts.check"))
+              return errorResult(e.remote.message, FONTS_CHECK_OLD_PLUGIN_HINT);
+            return fromCallError(e);
+          }
         }
       );
     };
@@ -44560,8 +45521,145 @@ var init_icons = __esm({
   }
 });
 
+// bridge-server/src/inventory-view.ts
+function propLine(p) {
+  const value = p.type === "VARIANT" && p.options?.length ? p.options.join(" | ") : String(p.default);
+  return `${p.name}: ${p.type} = ${value}`;
+}
+function names(list, ids) {
+  return list.map((s) => ids ? { id: s.id, name: s.name } : s.name);
+}
+function variables(r, on) {
+  return {
+    collections: r.collections.map((c) => ({ name: c.name, modes: c.modes })),
+    items: r.items.map((v) => {
+      const out = {};
+      if (on.has("ids")) out.id = v.id;
+      out.name = v.name;
+      out.collection = v.collection;
+      out.type = v.type;
+      if (on.has("scopes")) out.scopes = v.scopes;
+      out.value = v.value;
+      return out;
+    })
+  };
+}
+function styles(r, ids) {
+  return {
+    text: r.text.map((s) => {
+      const out = {};
+      if (ids) out.id = s.id;
+      return {
+        ...out,
+        name: s.name,
+        font: s.font,
+        size: s.size,
+        lineHeight: s.lineHeight
+      };
+    }),
+    paint: names(r.paint, ids),
+    effect: names(r.effect, ids),
+    grid: names(r.grid, ids)
+  };
+}
+function components(r, on) {
+  return r.map((c) => {
+    const out = { id: c.id, name: c.name, type: c.type, pageId: c.pageId };
+    if (c.variants !== void 0) out.variants = c.variants;
+    if (on.has("props")) out.properties = c.properties;
+    else out.props = c.properties.map(propLine);
+    if (on.has("descriptions")) out.description = c.description;
+    return out;
+  });
+}
+function slot(label, hint, owner, key) {
+  const items = owner[key];
+  if (!Array.isArray(items) || items.length === 0) return null;
+  const sizes = items.map((i) => sizeOf3(i) + 1);
+  const bytes = sizes.reduce((a, b) => a + b, 0);
+  return { label, hint, owner, key, items, sizes, keep: items.length, bytes };
+}
+function cut(view, slots, limit) {
+  let total = sizeOf3(view);
+  if (total <= limit) return [];
+  const budget = limit - slots.length * TRUNCATION_LINE_RESERVE;
+  while (total > budget) {
+    let big = null;
+    for (const s of slots)
+      if (s.keep > 0 && (!big || s.bytes > big.bytes)) big = s;
+    if (!big) break;
+    big.keep--;
+    big.bytes -= big.sizes[big.keep];
+    total -= big.sizes[big.keep];
+  }
+  const lines = [];
+  for (const s of slots) {
+    if (s.keep === s.items.length) continue;
+    s.owner[s.key] = s.items.slice(0, s.keep);
+    lines.push(`${s.label}: ${s.keep} of ${s.items.length} shown; ${s.hint}`);
+  }
+  return lines;
+}
+function compactInventory(r, detail) {
+  const on = new Set(detail);
+  const ids = on.has("ids");
+  const view = {};
+  const slots = [];
+  const hint = "narrow with name";
+  if (r.pages) {
+    view.pages = r.pages.map((p) => ({
+      id: p.id,
+      name: p.name,
+      childCount: p.childCount
+    }));
+    slots.push(slot("pages", hint, view, "pages"));
+  }
+  if (r.variables) {
+    const v = variables(r.variables, on);
+    view.variables = v;
+    slots.push(slot("variables", hint, v, "items"));
+  }
+  if (r.styles) {
+    const s = styles(r.styles, ids);
+    view.styles = s;
+    for (const k of ["text", "paint", "effect", "grid"])
+      slots.push(slot(`styles.${k}`, hint, s, k));
+  }
+  if (r.components) {
+    view.components = components(r.components, on);
+    slots.push(slot("components", `${hint} or pageIds`, view, "components"));
+  }
+  if (r.truncated) view.truncated = [...r.truncated];
+  const lines = cut(
+    view,
+    slots.filter((s) => s !== null),
+    INVENTORY_MAX_CHARS
+  );
+  if (lines.length > 0)
+    view.truncated = [
+      ...view.truncated ?? [],
+      ...lines
+    ];
+  return view;
+}
+var INVENTORY_DETAILS, INVENTORY_MAX_CHARS, TRUNCATION_LINE_RESERVE, sizeOf3;
+var init_inventory_view = __esm({
+  "bridge-server/src/inventory-view.ts"() {
+    "use strict";
+    INVENTORY_DETAILS = [
+      "ids",
+      "scopes",
+      "descriptions",
+      "props"
+    ];
+    INVENTORY_MAX_CHARS = 2e4;
+    TRUNCATION_LINE_RESERVE = 120;
+    sizeOf3 = (v) => JSON.stringify(v).length;
+  }
+});
+
 // bridge-server/src/tools/inventory.ts
-var INVENTORY_TIMEOUT_MS, INVENTORY_OLD_PLUGIN_HINT, DESCRIPTION3, inventoryInputSchema, registerInventory;
+var INVENTORY_TIMEOUT_MS, INVENTORY_OLD_PLUGIN_HINT, DESCRIPTION6, inventoryInputSchema, registerInventory;
 var init_inventory = __esm({
   "bridge-server/src/tools/inventory.ts"() {
     "use strict";
@@ -44569,22 +45667,24 @@ var init_inventory = __esm({
     init_context();
     init_bridge_inventory();
     init_tool_result();
+    init_inventory_view();
     INVENTORY_TIMEOUT_MS = 6e4;
     INVENTORY_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use inventory";
-    DESCRIPTION3 = "Lists what the connected Figma file holds in one call: pages (id, name, child count), variables (collections with modes, and each variable with type, scopes and first-mode value), styles (text, paint, effect, grid) and components (component sets and components with their property keys and friendly names, which kit.props in eval accepts). pageIds narrows which pages are loaded for components. Use name (case-insensitive substring) and include to narrow large files; a section that hits the item cap is listed in truncated. Reads live data every call.";
+    DESCRIPTION6 = `Lists what the connected Figma file holds in one call: pages (id, name, child count), variables (collections with modes, and each variable with type, scopes and first-mode value), styles (text, paint, effect, grid) and components (component sets and components with their property keys and friendly names, which kit.props in eval accepts). pageIds narrows which pages are loaded for components. Use name (case-insensitive substring) and include to narrow large files; a section that hits the item cap is listed in truncated. Reads live data every call. The default view is compact: variable ids and scopes, style ids, component descriptions and full property objects are left out (components list props as one line each). detail adds them back: ids, scopes, descriptions, props. The result is capped near ${INVENTORY_MAX_CHARS} characters; cut sections are listed in truncated, so narrow with name, include or pageIds.`;
     inventoryInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
       ),
       include: external_exports.array(external_exports.enum(INVENTORY_SECTIONS)).optional(),
       pageIds: external_exports.array(external_exports.string()).optional(),
-      name: external_exports.string().optional()
+      name: external_exports.string().optional(),
+      detail: external_exports.array(external_exports.enum(INVENTORY_DETAILS)).optional()
     };
     registerInventory = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.inventory,
-        { description: DESCRIPTION3, inputSchema: inventoryInputSchema },
-        async ({ fileKey: fileKey5, include, pageIds, name }) => {
+        { description: DESCRIPTION6, inputSchema: inventoryInputSchema },
+        async ({ fileKey: fileKey5, include, pageIds, name, detail }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
           const payload = {
@@ -44599,7 +45699,10 @@ var init_inventory = __esm({
               payload,
               INVENTORY_TIMEOUT_MS
             );
-            return jsonResult(res, r.note);
+            return jsonResult(
+              compactInventory(res, detail ?? []),
+              r.note
+            );
           } catch (e) {
             if (e instanceof BridgeCallError && e.code === "remote" && e.remote?.message.startsWith("unknown op: inventory"))
               return errorResult(e.remote.message, INVENTORY_OLD_PLUGIN_HINT);
@@ -44607,6 +45710,53 @@ var init_inventory = __esm({
           }
         }
       );
+    };
+  }
+});
+
+// bridge-server/src/tools/job.ts
+function registerJobWait(store, now = Date.now) {
+  return (server2) => {
+    server2.registerTool(
+      TOOL_NAMES.jobWait,
+      { description: DESCRIPTION7, inputSchema: jobWaitInputSchema },
+      async ({ jobId, timeoutMs }) => {
+        const entry = await store.wait(jobId, timeoutMs ?? JOB_WAIT_DEFAULT_MS);
+        if (!entry) return errorResult(`no job ${jobId} (jobs are kept 30 min)`);
+        if (entry.endedAt === void 0 || !entry.result)
+          return jsonResult({
+            jobId: entry.id,
+            state: "running",
+            ms: Math.max(0, now() - entry.startedAt)
+          });
+        const secs = ((entry.endedAt - entry.startedAt) / 1e3).toFixed(1);
+        const note = {
+          type: "text",
+          text: `job ${entry.id} (${entry.tool}) took ${secs} s`
+        };
+        return {
+          ...entry.result,
+          content: [note, ...entry.result.content]
+        };
+      }
+    );
+  };
+}
+var JOB_WAIT_DEFAULT_MS, JOB_WAIT_MAX_MS, DESCRIPTION7, jobWaitInputSchema;
+var init_job = __esm({
+  "bridge-server/src/tools/job.ts"() {
+    "use strict";
+    init_zod();
+    init_context();
+    init_tool_result();
+    JOB_WAIT_DEFAULT_MS = 6e4;
+    JOB_WAIT_MAX_MS = 12e4;
+    DESCRIPTION7 = "Waits for a background call started with async: true. Returns that call's own result with a first note job <id> (<tool>) took <s> s, or {jobId, state: running, ms} after timeoutMs (default 60000, max 120000): call job_wait again. The result stays available for 30 minutes and is returned on every call until then. At most 50 jobs are kept.";
+    jobWaitInputSchema = {
+      jobId: external_exports.string().min(1).describe("Job id, for example j3."),
+      timeoutMs: external_exports.number().int().min(0).max(JOB_WAIT_MAX_MS).optional().describe(
+        `How long to wait for the job. Default ${JOB_WAIT_DEFAULT_MS}, max ${JOB_WAIT_MAX_MS}.`
+      )
     };
   }
 });
@@ -44624,27 +45774,29 @@ function summarize(entries) {
   }
   return { count: entries.length, totalMs, byTool };
 }
-var JOURNAL_LIMIT_MIN, JOURNAL_LIMIT_MAX, JOURNAL_OFF_NOTE, DESCRIPTION4, journalInputSchema, registerJournal;
+var JOURNAL_LIMIT_MIN, JOURNAL_LIMIT_MAX, JOURNAL_OFF_NOTE, DESCRIPTION8, journalInputSchema, compact, registerJournal;
 var init_journal2 = __esm({
   "bridge-server/src/tools/journal.ts"() {
     "use strict";
     init_zod();
     init_context();
+    init_journal_tools();
     init_tool_result();
     JOURNAL_LIMIT_MIN = 1;
     JOURNAL_LIMIT_MAX = 1e3;
     JOURNAL_OFF_NOTE = "the journal is off (EZG_FIGMA_BRIDGE_JOURNAL=off); nothing is recorded";
-    DESCRIPTION4 = "Returns the tool-call journal: one metadata entry per call (time, session, tool, file, label, duration, ok, error head, byte sizes, stats) plus per-tool totals. The journal never stores eval code or results. session is current (default), all, or a session id; entries from other sessions may belong to other projects.";
+    DESCRIPTION8 = "Returns the tool-call journal: one metadata entry per call (time, session, tool, file, label, duration, ok, error head, byte sizes, stats) plus per-tool totals. The journal never stores eval code or results. session is current (default), all, or a session id; entries from other sessions may belong to other projects.";
     journalInputSchema = {
       session: external_exports.string().min(1).optional(),
       since: external_exports.number().int().min(0).optional(),
       tool: external_exports.string().min(1).optional(),
       limit: external_exports.number().int().min(JOURNAL_LIMIT_MIN).max(JOURNAL_LIMIT_MAX).optional()
     };
+    compact = (e) => e.stats === void 0 ? e : { ...e, stats: withoutCreated(e.stats) };
     registerJournal = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.journal,
-        { description: DESCRIPTION4, inputSchema: journalInputSchema },
+        { description: DESCRIPTION8, inputSchema: journalInputSchema },
         ({ session: session2, since, tool, limit }) => {
           const { journal: journal2, session: current } = ctx2.journal;
           const scope = session2 === void 0 ? "current" : session2;
@@ -44655,11 +45807,12 @@ var init_journal2 = __esm({
             tool,
             limit
           });
+          const view = entries.map(compact);
           return jsonResult(
             {
               path: journal2.path,
               session: scope === "all" ? "all" : id,
-              entries,
+              entries: view,
               summary: summarize(entries)
             },
             journal2.path === null ? JOURNAL_OFF_NOTE : void 0
@@ -44671,18 +45824,19 @@ var init_journal2 = __esm({
 });
 
 // bridge-server/src/tools/lint.ts
-var LINT_TIMEOUT_MS, LINT_OLD_PLUGIN_HINT, LINT_INVALID_HINT, DESCRIPTION5, lintInputSchema, registerLint;
+var LINT_TIMEOUT_MS, LINT_OLD_PLUGIN_HINT, LINT_INVALID_HINT, DESCRIPTION9, lintInputSchema, registerLint;
 var init_lint = __esm({
   "bridge-server/src/tools/lint.ts"() {
     "use strict";
     init_zod();
     init_context();
     init_lint_types();
+    init_lint_summary();
     init_tool_result();
     LINT_TIMEOUT_MS = 12e4;
     LINT_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use lint";
     LINT_INVALID_HINT = 'options shapes: "name-pattern" {pattern, flags?, types?}; clip {allow?}; "safe-zone" {top?, bottom?, left?, right?, frame?{width,height}, types?, names?}; "grid-style" {styleId?, frame?{width,height}}; "unbound-number" {fields?}; overflow {tolerance?}; reuse {min?}; fix {clip?, styles?, rename?}';
-    DESCRIPTION5 = "Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more. fix applies safe fixes to the findings in the same call (one undo step), then lints again: clip true unclips clip findings; styles true binds unbound-color and text-no-style nodes to the one local paint or text style with exactly the same values; rename {old: new} renames generic-name and name-pattern findings by exact name. The report then has fixes {fixed, skipped}.";
+    DESCRIPTION9 = 'Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more. fix applies safe fixes to the findings in the same call (one undo step), then lints again: clip true unclips clip findings; styles true binds unbound-color and text-no-style nodes to the one local paint or text style with exactly the same values; rename {old: new} renames generic-name and name-pattern findings by exact name. The report then has fixes {fixed, skipped}. detail "summary" (default) returns per-rule groups {rule, count, examples, nodeIds} and a total instead of every finding; detail "full" returns every finding and counts.';
     lintInputSchema = {
       fileKey: external_exports.string().optional(),
       nodeIds: external_exports.array(external_exports.string()).optional(),
@@ -44691,6 +45845,7 @@ var init_lint = __esm({
       options: external_exports.record(external_exports.string(), external_exports.unknown()).optional(),
       includeInstances: external_exports.boolean().optional(),
       limit: external_exports.number().int().min(1).max(5e3).optional(),
+      detail: external_exports.enum(["summary", "full"]).default("summary"),
       fix: external_exports.object({
         clip: external_exports.boolean().optional(),
         styles: external_exports.boolean().optional(),
@@ -44700,8 +45855,8 @@ var init_lint = __esm({
     registerLint = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.lint,
-        { description: DESCRIPTION5, inputSchema: lintInputSchema },
-        async ({ fileKey: fileKey5, ...rest }) => {
+        { description: DESCRIPTION9, inputSchema: lintInputSchema },
+        async ({ fileKey: fileKey5, detail, ...rest }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
           const payload = Object.fromEntries(
@@ -44717,7 +45872,10 @@ var init_lint = __esm({
             const n = report.findings.length;
             const fixed = report.fixes ? `; fixed ${report.fixes.fixed.length}, skipped ${report.fixes.skipped.length}` : "";
             const summary = `${n} findings (rules: ${report.rules.join(", ")})${fixed}`;
-            const out = jsonResult(report, r.note);
+            const out = jsonResult(
+              detail === "full" ? report : summarizeLint(report),
+              r.note
+            );
             out.content.unshift({ type: "text", text: summary });
             return out;
           } catch (e) {
@@ -44777,8 +45935,199 @@ var init_session = __esm({
   }
 });
 
+// bridge-server/src/run-refs.ts
+function parseSteps(raw) {
+  if (!Array.isArray(raw)) return "steps must be an array";
+  if (raw.length === 0) return "steps must not be empty";
+  if (raw.length > RUN_MAX_STEPS) {
+    return `too many steps (${raw.length}), max ${RUN_MAX_STEPS}`;
+  }
+  const steps = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (let i = 0; i < raw.length; i++) {
+    const at = `step ${i + 1}`;
+    const item = raw[i];
+    if (!isRecord5(item)) return `${at}: must be an object`;
+    const extra = Object.keys(item).find((k) => !STEP_KEYS.has(k));
+    if (extra !== void 0) return `${at}: unknown field "${extra}"`;
+    const tool = item.tool;
+    if (!RUN_TOOLS.includes(tool)) {
+      return `${at}: tool ${JSON.stringify(tool)} is not allowed, use one of ${RUN_TOOLS.join(", ")}`;
+    }
+    const args = item.args ?? {};
+    if (!isRecord5(args)) return `${at}: args must be an object`;
+    const step = { tool, args };
+    if (item.as !== void 0) {
+      const name = item.as;
+      if (typeof name !== "string" || !NAME.test(name)) {
+        return `${at}: as must match ${NAME}`;
+      }
+      if (seen.has(name)) return `${at}: as "${name}" is already used`;
+      seen.add(name);
+      step.as = name;
+    }
+    steps.push(step);
+  }
+  return steps;
+}
+function lookup(value, segments) {
+  let cur = value;
+  for (const seg of segments) {
+    if (Array.isArray(cur)) {
+      if (!/^\d+$/.test(seg)) return void 0;
+      cur = cur[Number(seg)];
+    } else if (isRecord5(cur) && Object.hasOwn(cur, seg)) {
+      cur = cur[seg];
+    } else {
+      return void 0;
+    }
+  }
+  return cur;
+}
+function resolveRefs(args, results, step) {
+  const fail = (ref) => {
+    const prefix = step === void 0 ? "" : `step ${step}: `;
+    throw new RunRefError(`${prefix}${ref} not found`);
+  };
+  const walk2 = (v) => {
+    if (typeof v === "string") {
+      if (v.startsWith("$$")) return v.slice(1);
+      const m = REF.exec(v);
+      if (!m) return v;
+      const name = m[1];
+      if (!Object.hasOwn(results, name)) return fail(v);
+      const segments = m[2] ? m[2].slice(1).split(".") : [];
+      const found = lookup(results[name], segments);
+      return found === void 0 ? fail(v) : found;
+    }
+    if (Array.isArray(v)) return v.map(walk2);
+    if (isRecord5(v)) {
+      return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk2(x)]));
+    }
+    return v;
+  };
+  return walk2(args);
+}
+var RUN_MAX_STEPS, RUN_TOOLS, RunRefError, NAME, REF, STEP_KEYS, isRecord5;
+var init_run_refs = __esm({
+  "bridge-server/src/run-refs.ts"() {
+    "use strict";
+    RUN_MAX_STEPS = 20;
+    RUN_TOOLS = [
+      "eval",
+      "build",
+      "lint",
+      "inventory",
+      "export",
+      "upload",
+      "view_get",
+      "view_set",
+      "icons_search",
+      "icons_place",
+      "checkpoint",
+      "status"
+    ];
+    RunRefError = class extends Error {
+    };
+    NAME = /^[A-Za-z_][\w-]*$/;
+    REF = /^\$([A-Za-z_][\w-]*)((?:\.[^.\s]+)*)$/;
+    STEP_KEYS = /* @__PURE__ */ new Set(["tool", "args", "as"]);
+    isRecord5 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+  }
+});
+
+// bridge-server/src/tools/run.ts
+function parseText(text2) {
+  try {
+    return JSON.parse(text2);
+  } catch {
+    return text2;
+  }
+}
+function capped(value) {
+  const json2 = JSON.stringify(value) ?? "null";
+  return json2.length <= RUN_STEP_MAX_CHARS ? value : truncateJson(json2, RUN_STEP_MAX_CHARS);
+}
+function registerRun(registry3) {
+  return (server2) => {
+    server2.registerTool(
+      TOOL_NAMES.run,
+      { description: DESCRIPTION10, inputSchema: runInputSchema },
+      async ({ fileKey: fileKey5, steps: raw, continueOnError }) => {
+        const steps = parseSteps(raw);
+        if (typeof steps === "string") return errorResult(steps);
+        const results = {};
+        const out = [];
+        const images = [];
+        let stopped = false;
+        for (let i = 0; i < steps.length && !stopped; i++) {
+          const step = steps[i];
+          const started = Date.now();
+          const entry = {
+            tool: step.tool,
+            ...step.as !== void 0 && { as: step.as },
+            ok: false,
+            ms: 0
+          };
+          try {
+            const args = resolveRefs(step.args, results, i + 1);
+            if (fileKey5 !== void 0 && args.fileKey === void 0) {
+              args.fileKey = fileKey5;
+            }
+            const res = await registry3.call(step.tool, args);
+            const texts = textOf(res);
+            entry.ok = !res.isError;
+            if (entry.ok) {
+              const value = parseText(texts[0] ?? "");
+              if (step.as !== void 0) results[step.as] = value;
+              entry.result = capped(value);
+            } else {
+              entry.error = truncateJson(texts.join("\n"), RUN_STEP_MAX_CHARS);
+            }
+            for (const b of res.content) {
+              if (b.type === "image") images.push(b);
+            }
+          } catch (e) {
+            entry.error = truncateJson(
+              e instanceof Error ? e.message : String(e),
+              RUN_STEP_MAX_CHARS
+            );
+          }
+          entry.ms = Date.now() - started;
+          out.push(entry);
+          if (!entry.ok && !continueOnError) stopped = true;
+        }
+        const content = [
+          { type: "text", text: JSON.stringify({ steps: out }) },
+          ...images
+        ];
+        return stopped ? { isError: true, content } : { content };
+      }
+    );
+  };
+}
+var RUN_STEP_MAX_CHARS, DESCRIPTION10, runInputSchema, textOf;
+var init_run = __esm({
+  "bridge-server/src/tools/run.ts"() {
+    "use strict";
+    init_zod();
+    init_bridge_result();
+    init_context();
+    init_run_refs();
+    init_tool_result();
+    RUN_STEP_MAX_CHARS = 2e4;
+    DESCRIPTION10 = `Runs up to ${RUN_MAX_STEPS} tool steps in order in one call, so build, lint and export cost one round trip. Each step is {tool, args?, as?}; tool is one of ${RUN_TOOLS.join(", ")}. The steps call the same tools with the same validation. A string arg that is exactly $name or $name.a.0.b is replaced by that path in the result of the earlier step whose as is name (write $$text for a literal $text). Steps get fileKey unless they set their own. The run stops at the first failing step unless continueOnError is true. Returns {steps:[{tool, as?, ok, ms, result|error}]}, each step capped near ${RUN_STEP_MAX_CHARS} characters (as refs still see the full result), plus every image the steps returned. Inner calls are not journaled one by one.`;
+    runInputSchema = {
+      fileKey: string2().min(1).optional().describe("Default fileKey for steps that do not set their own."),
+      steps: array(unknown()).describe("Steps: [{tool, args?, as?}], run in order."),
+      continueOnError: boolean2().optional().describe("Keep going after a failing step. Default false.")
+    };
+    textOf = (res) => res.content.filter((b) => b.type === "text").map((b) => b.text ?? "");
+  }
+});
+
 // bridge-server/src/tools/status.ts
-var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION6, statusInputSchema, registerStatus;
+var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION11, statusInputSchema, registerStatus;
 var init_status = __esm({
   "bridge-server/src/tools/status.ts"() {
     "use strict";
@@ -44787,7 +46136,7 @@ var init_status = __esm({
     init_tool_result();
     STATUS_TIMEOUT_MS = 5e3;
     STATUS_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use status";
-    DESCRIPTION6 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
+    DESCRIPTION11 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
     statusInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -44796,7 +46145,7 @@ var init_status = __esm({
     registerStatus = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.status,
-        { description: DESCRIPTION6, inputSchema: statusInputSchema },
+        { description: DESCRIPTION11, inputSchema: statusInputSchema },
         async ({ fileKey: fileKey5 }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -44826,7 +46175,7 @@ var init_status = __esm({
 
 // bridge-server/src/tools/ui-screenshot.ts
 import { mkdir as mkdir2, writeFile as writeFile2 } from "node:fs/promises";
-import { dirname as dirname2, isAbsolute as isAbsolute2 } from "node:path";
+import { dirname as dirname2, isAbsolute as isAbsolute3 } from "node:path";
 var UI_SCREENSHOT_TIMEOUT_MS, UPDATE_HINT, inputSchema2, registerUiScreenshot;
 var init_ui_screenshot = __esm({
   "bridge-server/src/tools/ui-screenshot.ts"() {
@@ -44855,7 +46204,7 @@ var init_ui_screenshot = __esm({
           annotations: { readOnlyHint: true }
         },
         async ({ fileKey: fileKey5, scale, outPath }) => {
-          if (outPath !== void 0 && !(isAbsolute2(outPath) && /\.png$/i.test(outPath)))
+          if (outPath !== void 0 && !(isAbsolute3(outPath) && /\.png$/i.test(outPath)))
             return errorResult(
               "outPath must be an absolute path ending in .png",
               "The tool does not expand ~ or relative paths."
@@ -44904,6 +46253,269 @@ var init_ui_screenshot = __esm({
             },
             note ? [note] : []
           );
+        }
+      );
+    };
+  }
+});
+
+// bridge-server/src/upload-read.ts
+import { readFile, stat } from "node:fs/promises";
+import { basename, extname, isAbsolute as isAbsolute4 } from "node:path";
+function sniffKind(bytes) {
+  if (startsWith(bytes, [137, 80, 78, 71]) || startsWith(bytes, [255, 216, 255]) || startsWith(bytes, [71, 73, 70, 56]))
+    return "image";
+  const head = new TextDecoder().decode(bytes.subarray(0, SNIFF_CHARS * 4)).replace(/^\uFEFF/, "").trimStart().slice(0, SNIFF_CHARS);
+  return head.includes("<svg") ? "svg" : null;
+}
+function toItem(name, bytes) {
+  if (bytes.length === 0) throw new Error("file is empty");
+  if (bytes.length > UPLOAD_MAX_BYTES) throw new Error("file is too large");
+  const kind = sniffKind(bytes);
+  if (kind === "image")
+    return { name, kind, base64: Buffer.from(bytes).toString("base64") };
+  if (kind === "svg") {
+    const svg = new TextDecoder().decode(bytes).replace(/^\uFEFF/, "").trim();
+    return { name, kind, svg };
+  }
+  throw new Error("unsupported file type");
+}
+async function readPath(path) {
+  if (!isAbsolute4(path)) throw new Error("path must be absolute");
+  const info = await stat(path);
+  if (!info.isFile()) throw new Error("not a file");
+  if (info.size > UPLOAD_MAX_BYTES) throw new Error("file is too large");
+  return toItem(stem(path), await readFile(path));
+}
+async function readBody(res) {
+  if (!res.body) return new Uint8Array(await res.arrayBuffer());
+  const chunks = [];
+  let total = 0;
+  const reader = res.body.getReader();
+  for (; ; ) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > UPLOAD_MAX_BYTES) {
+      await reader.cancel();
+      throw new Error("file is too large");
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks);
+}
+async function readUrl(raw) {
+  let url2;
+  try {
+    url2 = new URL(raw);
+  } catch {
+    throw new Error("invalid url");
+  }
+  if (url2.protocol !== "http:" && url2.protocol !== "https:")
+    throw new Error("url must be http or https");
+  const last = url2.pathname.split("/").filter(Boolean).pop() ?? "";
+  let segment = last;
+  try {
+    segment = decodeURIComponent(last);
+  } catch {
+  }
+  const res = await fetch(url2, { signal: AbortSignal.timeout(URL_TIMEOUT_MS) });
+  if (!res.ok) throw new Error(`http ${res.status}`);
+  return toItem(stem(segment), await readBody(res));
+}
+function message(e) {
+  if (e instanceof Error) {
+    if (e.name === "TimeoutError") return "request timed out";
+    const code = e.code;
+    if (code === "ENOENT") return "file not found";
+    if (code === "EACCES") return "permission denied";
+    return e.message;
+  }
+  return String(e);
+}
+async function readUploads(sources) {
+  const jobs = [
+    ...(sources.paths ?? []).map((s) => ({ s, run: readPath })),
+    ...(sources.urls ?? []).map((s) => ({ s, run: readUrl }))
+  ];
+  const results = await Promise.all(
+    jobs.map(async ({ s, run: run2 }) => {
+      try {
+        return { item: await run2(s), failed: void 0 };
+      } catch (e) {
+        return { item: void 0, failed: { name: s, error: message(e) } };
+      }
+    })
+  );
+  const items = [];
+  const failed = [];
+  for (const r of results) {
+    if (r.failed) failed.push(r.failed);
+    else if (r.item && items.length >= UPLOAD_MAX_ITEMS)
+      failed.push({ name: r.item.name, error: "too many items" });
+    else if (r.item) items.push(r.item);
+  }
+  return { items, failed };
+}
+var URL_TIMEOUT_MS, SNIFF_CHARS, startsWith, stem;
+var init_upload_read = __esm({
+  "bridge-server/src/upload-read.ts"() {
+    "use strict";
+    init_bridge_upload();
+    URL_TIMEOUT_MS = 3e4;
+    SNIFF_CHARS = 1024;
+    startsWith = (b, sig) => sig.every((v, i) => b[i] === v);
+    stem = (file2) => {
+      const base = basename(file2);
+      const ext = extname(base);
+      return (ext ? base.slice(0, -ext.length) : base) || "image";
+    };
+  }
+});
+
+// bridge-server/src/tools/upload.ts
+function itemChars(item) {
+  if (item.kind === "svg") return JSON.stringify(item).length;
+  return item.base64.length + item.name.length * NAME_ESCAPE_FACTOR + ITEM_OVERHEAD_CHARS;
+}
+function planBatches(items, maxChars = ASSEMBLED_MAX_CHARS - UPLOAD_LIMITS.envelopeChars) {
+  const batches = [];
+  let cur;
+  for (const item of items) {
+    const chars = itemChars(item);
+    if (!cur || cur.items.length >= UPLOAD_MAX_ITEMS || cur.chars + chars > maxChars) {
+      cur = { items: [], chars: 0 };
+      batches.push(cur);
+    }
+    cur.items.push(item);
+    cur.chars += chars;
+  }
+  return batches;
+}
+function errorText2(e) {
+  const block = fromCallError(e).content[0];
+  return block.type === "text" ? block.text : String(e);
+}
+var UPLOAD_LIMITS, UPLOAD_OLD_PLUGIN_HINT, MB, NAME_ESCAPE_FACTOR, ITEM_OVERHEAD_CHARS, uploadTimeoutMs, inputSchema3, registerUpload;
+var init_upload = __esm({
+  "bridge-server/src/tools/upload.ts"() {
+    "use strict";
+    init_zod();
+    init_bridge_chunk();
+    init_bridge_upload();
+    init_context();
+    init_tool_result();
+    init_upload_read();
+    UPLOAD_LIMITS = {
+      baseTimeoutMs: 6e4,
+      perMbTimeoutMs: 5e3,
+      envelopeChars: 4096
+    };
+    UPLOAD_OLD_PLUGIN_HINT = "Reopen the EZG Tools plugin to update it, then retry.";
+    MB = 1024 * 1024;
+    NAME_ESCAPE_FACTOR = 6;
+    ITEM_OVERHEAD_CHARS = 64;
+    uploadTimeoutMs = (chars) => UPLOAD_LIMITS.baseTimeoutMs + Math.ceil(chars / MB) * UPLOAD_LIMITS.perMbTimeoutMs;
+    inputSchema3 = {
+      fileKey: external_exports.string().optional(),
+      paths: external_exports.array(external_exports.string()).optional(),
+      urls: external_exports.array(external_exports.string()).optional(),
+      mode: external_exports.enum(["node", "fill"]).default("node"),
+      nodeId: external_exports.string().optional(),
+      parentId: external_exports.string().optional(),
+      pageId: external_exports.string().optional(),
+      scaleMode: external_exports.enum(["FILL", "FIT", "CROP", "TILE"]).optional(),
+      owner: external_exports.string().trim().min(1).max(UPLOAD_OWNER_MAX).optional()
+    };
+    registerUpload = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.upload,
+        {
+          title: "Upload files into Figma",
+          description: `Puts local files (absolute paths on the machine that runs Claude Code) and http(s) URLs into the open Figma file. The server reads the bytes, so they never enter the chat; send only paths or urls. Supported types: PNG, JPG, GIF and SVG, up to ${UPLOAD_MAX_BYTES / MB} MB each and ${UPLOAD_MAX_ITEMS} sources per call. mode "node" (default) creates one node per source: a rectangle with an image fill, or vector nodes for SVG, under parentId or the page pageId, default the current page. mode "fill" sets one image as the fill of the existing node nodeId and takes exactly one source. scaleMode sets the image fill scale. owner is your agent label: it must match your claim on the target, so nodes claimed by other agents are not touched. Returns placed (name, nodeId, size) and failed (source, error).`,
+          inputSchema: inputSchema3
+        },
+        async ({
+          fileKey: fileKey5,
+          paths,
+          urls,
+          mode,
+          nodeId,
+          parentId,
+          pageId,
+          scaleMode,
+          owner
+        }) => {
+          const count = (paths?.length ?? 0) + (urls?.length ?? 0);
+          if (count === 0)
+            return errorResult(
+              "Give at least one path or url.",
+              "Paths must be absolute; urls must be http or https."
+            );
+          if (count > UPLOAD_MAX_ITEMS)
+            return errorResult(
+              `At most ${UPLOAD_MAX_ITEMS} sources per call, got ${count}.`,
+              "Split the sources over several calls."
+            );
+          if (mode === "fill" && (!nodeId || count !== 1))
+            return errorResult(
+              'mode "fill" needs nodeId and exactly one source.',
+              'Use mode "node" to create nodes from several sources.'
+            );
+          const resolved = ctx2.files.resolve(fileKey5);
+          if ("error" in resolved) return errorResult(resolved.error);
+          const { file: file2, note } = resolved;
+          const read2 = await readUploads({ paths, urls });
+          if (!read2.items.length) {
+            const lines = read2.failed.map((f) => `${f.name}: ${f.error}`).join("\n");
+            return errorResult(
+              "No source could be read.\n" + lines,
+              "Check the paths and urls, then try again."
+            );
+          }
+          const base = { mode };
+          if (mode === "fill" && nodeId) base.nodeId = nodeId;
+          if (parentId) base.parentId = parentId;
+          if (pageId) base.pageId = pageId;
+          if (scaleMode) base.scaleMode = scaleMode;
+          if (owner) base.owner = owner;
+          const placed = [];
+          const failed = [...read2.failed];
+          const batches = planBatches(read2.items);
+          let thrown;
+          for (let i = 0; i < batches.length && thrown === void 0; i++) {
+            const batch = batches[i];
+            try {
+              const res = await ctx2.rpc.call(
+                file2.connectionId,
+                "upload",
+                { ...base, items: batch.items },
+                uploadTimeoutMs(batch.chars)
+              );
+              placed.push(...res.placed);
+              failed.push(...res.failed);
+            } catch (e) {
+              thrown = e;
+              const text2 = errorText2(e);
+              for (const b of batches.slice(i))
+                for (const item of b.items)
+                  failed.push({ name: item.name, error: text2 });
+            }
+          }
+          if (!placed.length) {
+            if (thrown instanceof BridgeCallError && thrown.code === "remote") {
+              const m = thrown.remote?.message ?? thrown.message;
+              if (/unknown op/.test(m))
+                return errorResult(thrown.message, UPLOAD_OLD_PLUGIN_HINT);
+            }
+            if (thrown !== void 0) return fromCallError(thrown);
+            const lines = failed.map((f) => `${f.name}: ${f.error}`).join("\n");
+            return errorResult(
+              "Nothing was uploaded.\n" + lines,
+              "Check the node ids and file types, then try again."
+            );
+          }
+          return jsonResult({ placed, failed }, note);
         }
       );
     };
@@ -44988,7 +46600,7 @@ __export(mcp_exports, {
 });
 import { randomUUID as randomUUID4 } from "node:crypto";
 import { homedir } from "node:os";
-var SERVER_VERSION, EXIT_GRACE_MS2, handlers, events, rpc, files, link2, session, journal, ctx, server, tools, closing2, shutdown2;
+var SERVER_VERSION, EXIT_GRACE_MS2, handlers, events, rpc, files, link2, session, journal, ctx, server, tools, registry2, closing2, shutdown2;
 var init_mcp2 = __esm({
   async "bridge-server/src/mcp.ts"() {
     "use strict";
@@ -45002,19 +46614,26 @@ var init_mcp2 = __esm({
     init_journal_tools();
     init_link();
     init_rpc();
+    init_tool_registry();
     init_authoring();
     init_build();
+    init_claim();
+    init_describe();
     init_eval();
     init_events2();
     init_export();
+    init_fonts_check();
     init_history();
     init_icons();
     init_inventory();
+    init_job();
     init_journal2();
     init_lint();
     init_session();
+    init_run();
     init_status();
     init_ui_screenshot();
+    init_upload();
     init_view();
     SERVER_VERSION = "1.0.0";
     EXIT_GRACE_MS2 = 2e3;
@@ -45063,6 +46682,7 @@ var init_mcp2 = __esm({
       { instructions: INSTRUCTIONS }
     );
     tools = withJournal(server, journal, session);
+    registry2 = createToolRegistry(tools);
     for (const register of [
       registerEval,
       registerSession,
@@ -45077,9 +46697,15 @@ var init_mcp2 = __esm({
       registerBuild,
       registerJournal,
       registerIcons,
-      registerStatus
+      registerStatus,
+      registerUpload,
+      registerClaim,
+      registerDescribe,
+      registerFontsCheck,
+      registerJobWait(registry2.jobs),
+      registerRun(registry2)
     ]) {
-      register(tools, ctx);
+      register(registry2.server, ctx);
     }
     await server.connect(new StdioServerTransport());
     closing2 = false;

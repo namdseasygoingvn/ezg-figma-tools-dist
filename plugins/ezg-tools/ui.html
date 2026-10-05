@@ -1506,7 +1506,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.42" : "dev";
+  var BUILD_VERSION = true ? "0.1.43" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -2616,22 +2616,43 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return out;
   }
 
-  // plugins/ezg-tools/src/shared/bridge-build.ts
-  var BUILD_TYPES = [
-    "FRAME",
-    "COMPONENT",
-    "COMPONENT_SET",
-    "SECTION",
-    "RECTANGLE",
-    "ELLIPSE",
-    "POLYGON",
-    "STAR",
-    "LINE",
-    "TEXT",
-    "INSTANCE"
-  ];
-  var BUILD_NODE_CAP = 2e3;
-  var BUILD_DEPTH_CAP = 32;
+  // plugins/ezg-tools/src/shared/bridge-build-expect.ts
+  var BUILD_EXPECT_RULES = {
+    "no-overflow": "overflow",
+    fonts: "missing-font",
+    "bound-colors": "unbound-color",
+    "text-styles": "text-no-style"
+  };
+  var BUILD_OWNER_MAX = 64;
+  var isBuildExpect = (v) => typeof v === "string" && Object.prototype.hasOwnProperty.call(BUILD_EXPECT_RULES, v);
+  function expectErrors(raw) {
+    const out = [];
+    const e = raw.expect;
+    if (e !== void 0) {
+      const names = Object.keys(BUILD_EXPECT_RULES).join(", ");
+      if (!Array.isArray(e)) out.push(`expect must be an array of ${names}`);
+      else
+        for (const c of e)
+          if (!isBuildExpect(c))
+            out.push(`unknown expect check ${JSON.stringify(c)} (use ${names})`);
+    }
+    if (raw.thumbnail !== void 0 && typeof raw.thumbnail !== "boolean")
+      out.push("thumbnail must be a boolean");
+    const o = raw.owner;
+    if (o !== void 0 && !(typeof o === "string" && o.length >= 1 && o.length <= BUILD_OWNER_MAX))
+      out.push(`owner must be a string of 1..${BUILD_OWNER_MAX} chars`);
+    return out;
+  }
+  function parseExpect(raw) {
+    const out = {};
+    if (Array.isArray(raw.expect))
+      out.expect = [...new Set(raw.expect.filter(isBuildExpect))];
+    if (typeof raw.thumbnail === "boolean") out.thumbnail = raw.thumbnail;
+    if (typeof raw.owner === "string") out.owner = raw.owner;
+    return out;
+  }
+
+  // plugins/ezg-tools/src/shared/bridge-build-parse.ts
   var isRec3 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
   var num2 = (v) => typeof v === "number" && Number.isFinite(v);
   var LEAF_TYPES = [
@@ -2746,6 +2767,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
         errors.push(`${k} must be a string`);
     if (raw.atomic !== void 0 && typeof raw.atomic !== "boolean")
       errors.push("atomic must be a boolean");
+    if (raw.ids !== void 0 && !BUILD_IDS_MODES.includes(raw.ids))
+      errors.push(`ids must be one of ${BUILD_IDS_MODES.join(", ")}`);
+    errors.push(...expectErrors(raw));
     const l = raw.lint;
     if (l !== void 0 && (!isRec3(l) || "nodeIds" in l || "pageIds" in l || !parseLintPayload(l)))
       errors.push("lint must be valid lint options without nodeIds and pageIds");
@@ -2789,13 +2813,33 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const r = raw;
     const out = {
       nodes: r.nodes,
-      atomic: r.atomic !== false
+      atomic: r.atomic !== false,
+      ids: r.ids ?? "refs"
     };
     if (typeof r.parentId === "string") out.parentId = r.parentId;
     if (typeof r.pageId === "string") out.pageId = r.pageId;
     if (r.lint !== void 0) out.lint = parseLintPayload(r.lint) ?? void 0;
+    Object.assign(out, parseExpect(r));
     return out;
   }
+
+  // plugins/ezg-tools/src/shared/bridge-build.ts
+  var BUILD_TYPES = [
+    "FRAME",
+    "COMPONENT",
+    "COMPONENT_SET",
+    "SECTION",
+    "RECTANGLE",
+    "ELLIPSE",
+    "POLYGON",
+    "STAR",
+    "LINE",
+    "TEXT",
+    "INSTANCE"
+  ];
+  var BUILD_IDS_MODES = ["refs", "all"];
+  var BUILD_NODE_CAP = 2e3;
+  var BUILD_DEPTH_CAP = 32;
 
   // plugins/ezg-tools/src/shared/icon-tags.ts
   var TAG_MAX_LENGTH = 32;
@@ -2888,6 +2932,190 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return parseIconTagChange(raw);
   }
 
+  // plugins/ezg-tools/src/shared/bridge-upload.ts
+  var UPLOAD_MAX_ITEMS = 20;
+  var UPLOAD_MAX_BYTES = 32 * 1024 * 1024;
+  var UPLOAD_OWNER_MAX = 64;
+  var SCALE_MODES = /* @__PURE__ */ new Set(["FILL", "FIT", "CROP", "TILE"]);
+  var BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
+  var nonEmptyStr2 = (v) => typeof v === "string" && v.trim() !== "";
+  function decodedBytes(base64) {
+    const pad = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+    return base64.length * 3 / 4 - pad;
+  }
+  function parseItem(raw) {
+    if (!isRecord(raw) || !nonEmptyStr2(raw.name)) return null;
+    const { name, kind } = raw;
+    if (kind === "image") {
+      const { base64 } = raw;
+      if (!nonEmptyStr2(base64) || base64.length % 4 !== 0) return null;
+      if (decodedBytes(base64) > UPLOAD_MAX_BYTES || !BASE64.test(base64))
+        return null;
+      return { name, kind, base64 };
+    }
+    if (kind === "svg") {
+      const { svg: svg3 } = raw;
+      if (!nonEmptyStr2(svg3) || svg3.length > UPLOAD_MAX_BYTES) return null;
+      return { name, kind, svg: svg3 };
+    }
+    return null;
+  }
+  function optionalId(raw, key) {
+    const v = raw[key];
+    return v === void 0 ? { ok: true } : { ok: nonEmptyStr2(v), v };
+  }
+  function parseUploadPayload(raw) {
+    if (!isRecord(raw)) return null;
+    const { items, mode, scaleMode } = raw;
+    if (mode !== "node" && mode !== "fill") return null;
+    if (!Array.isArray(items) || items.length === 0) return null;
+    if (items.length > UPLOAD_MAX_ITEMS) return null;
+    const parsed = [];
+    for (const item of items) {
+      const p = parseItem(item);
+      if (!p) return null;
+      parsed.push(p);
+    }
+    const out = { items: parsed, mode };
+    if (mode === "fill") {
+      if (parsed.length !== 1 || parsed[0].kind !== "image") return null;
+      if (!nonEmptyStr2(raw.nodeId)) return null;
+      out.nodeId = raw.nodeId;
+    }
+    for (const key of ["parentId", "pageId"]) {
+      const id = optionalId(raw, key);
+      if (!id.ok) return null;
+      if ("v" in id) out[key] = id.v;
+    }
+    if (scaleMode !== void 0) {
+      if (typeof scaleMode !== "string" || !SCALE_MODES.has(scaleMode))
+        return null;
+      out.scaleMode = scaleMode;
+    }
+    if (raw.owner !== void 0) {
+      const { owner } = raw;
+      if (!nonEmptyStr2(owner) || owner.length > UPLOAD_OWNER_MAX) return null;
+      out.owner = owner;
+    }
+    return out;
+  }
+
+  // plugins/ezg-tools/src/shared/bridge-claims.ts
+  var CLAIM_TTL_DEFAULT_MS = 10 * 6e4;
+  var CLAIM_TTL_MAX_MS = 60 * 6e4;
+  function parseClaimPayload(raw) {
+    if (typeof raw !== "object" || raw === null) return null;
+    const r = raw;
+    if (typeof r.owner !== "string" || r.owner.trim() === "") return null;
+    if (!Array.isArray(r.nodeIds)) return null;
+    const nodeIds = [];
+    for (const id of r.nodeIds) {
+      if (typeof id !== "string" || id === "") return null;
+      if (!nodeIds.includes(id)) nodeIds.push(id);
+    }
+    const out = { nodeIds, owner: r.owner.trim() };
+    if (r.ttlMs !== void 0) {
+      if (typeof r.ttlMs !== "number" || !Number.isFinite(r.ttlMs) || r.ttlMs <= 0)
+        return null;
+      out.ttlMs = r.ttlMs;
+    }
+    if (r.release !== void 0) {
+      if (typeof r.release !== "boolean") return null;
+      out.release = r.release;
+    }
+    if (nodeIds.length === 0 && !out.release) return null;
+    return out;
+  }
+
+  // plugins/ezg-tools/src/shared/bridge-describe.ts
+  var DESCRIBE_DEPTH_DEFAULT = 3;
+  var DESCRIBE_DEPTH_MAX = 8;
+  var DESCRIBE_NODES_DEFAULT = 300;
+  var DESCRIBE_NODES_MAX = 2e3;
+  var DESCRIBE_IDS_MAX = 20;
+  function clampInt(v, def, min, max) {
+    if (v === void 0) return def;
+    if (typeof v !== "number" || !Number.isFinite(v)) return null;
+    return Math.min(max, Math.max(min, Math.floor(v)));
+  }
+  function parseDescribePayload(raw) {
+    if (!isRecord(raw)) return null;
+    const { nodeIds, depth, maxNodes } = raw;
+    if (!Array.isArray(nodeIds)) return null;
+    if (nodeIds.length < 1 || nodeIds.length > DESCRIBE_IDS_MAX) return null;
+    if (!nodeIds.every((v) => typeof v === "string" && v !== "")) return null;
+    const d = clampInt(depth, DESCRIBE_DEPTH_DEFAULT, 0, DESCRIBE_DEPTH_MAX);
+    const n = clampInt(maxNodes, DESCRIBE_NODES_DEFAULT, 1, DESCRIBE_NODES_MAX);
+    if (d === null || n === null) return null;
+    return { nodeIds: [...new Set(nodeIds)], depth: d, maxNodes: n };
+  }
+
+  // plugins/ezg-tools/src/shared/bridge-export.ts
+  var EXPORT_SIZE_MIN = 1;
+  var EXPORT_SIZE_MAX = 16384;
+  var SIZE_TYPES = ["WIDTH", "HEIGHT"];
+  var COLOR_PROFILES = ["DOCUMENT", "SRGB", "DISPLAY_P3_V4"];
+  var VECTOR_FORMATS = ["SVG", "PDF", "JSON"];
+  function parseSize(raw, format) {
+    if (!isRecord(raw)) return "size must be { type, value }";
+    const { type, value } = raw;
+    if (typeof type !== "string" || !SIZE_TYPES.includes(type))
+      return "size.type must be WIDTH or HEIGHT";
+    if (!isFiniteNumber(value) || value < EXPORT_SIZE_MIN || value > EXPORT_SIZE_MAX)
+      return `size.value must be ${EXPORT_SIZE_MIN}..${EXPORT_SIZE_MAX}`;
+    if (typeof format === "string" && VECTOR_FORMATS.includes(format))
+      return `size applies to PNG and JPG only, not ${format}`;
+    return { type, value };
+  }
+  function parseExportOptions(raw) {
+    const { contentsOnly, useAbsoluteBounds, size: size2, colorProfile, scale } = raw;
+    const out = {};
+    if (contentsOnly !== void 0) {
+      if (typeof contentsOnly !== "boolean")
+        return "contentsOnly must be a boolean";
+      out.contentsOnly = contentsOnly;
+    }
+    if (useAbsoluteBounds !== void 0) {
+      if (typeof useAbsoluteBounds !== "boolean")
+        return "useAbsoluteBounds must be a boolean";
+      out.useAbsoluteBounds = useAbsoluteBounds;
+    }
+    if (size2 !== void 0) {
+      if (scale !== void 0) return "size and scale cannot be used together";
+      const parsed = parseSize(size2, raw.format);
+      if (typeof parsed === "string") return parsed;
+      out.size = parsed;
+    }
+    if (colorProfile !== void 0) {
+      if (typeof colorProfile !== "string" || !COLOR_PROFILES.includes(colorProfile))
+        return "colorProfile must be DOCUMENT, SRGB or DISPLAY_P3_V4";
+      out.colorProfile = colorProfile;
+    }
+    return out;
+  }
+
+  // plugins/ezg-tools/src/shared/bridge-fonts-check.ts
+  function stringList(raw) {
+    if (raw === void 0) return void 0;
+    if (!Array.isArray(raw)) return null;
+    if (!raw.every((v) => typeof v === "string" && v !== "")) return null;
+    return raw;
+  }
+  function parseFontsCheckPayload(raw) {
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
+    const obj = raw;
+    const fonts = stringList(obj.fonts);
+    const nodeIds = stringList(obj.nodeIds);
+    if (fonts === null || nodeIds === null) return null;
+    if (obj.textStyles !== void 0 && typeof obj.textStyles !== "boolean")
+      return null;
+    const out = {};
+    if (fonts?.length) out.fonts = fonts;
+    if (nodeIds?.length) out.nodeIds = nodeIds;
+    if (obj.textStyles === true) out.textStyles = true;
+    return out.fonts || out.nodeIds || out.textStyles ? out : null;
+  }
+
   // plugins/ezg-tools/src/shared/bridge-parse.ts
   var EXPORT_FORMATS = [
     "PNG",
@@ -2898,14 +3126,14 @@ input[type=range]:focus-visible::-moz-range-thumb {
   ];
   var FORMAT_SET = new Set(EXPORT_FORMATS);
   var str = (v) => typeof v === "string";
-  var nonEmptyStr2 = (v) => str(v) && v.trim() !== "";
+  var nonEmptyStr3 = (v) => str(v) && v.trim() !== "";
   var positive = (v) => isFiniteNumber(v) && v > 0;
   var strArray = (v) => Array.isArray(v) && v.every(str);
   var parseEmpty = (raw) => raw === void 0 || raw === null || isRecord(raw) ? {} : null;
   function parseEval(raw) {
     if (!isRecord(raw)) return null;
     const { code, description, timeoutMs } = raw;
-    if (!nonEmptyStr2(code) || !str(description) || !positive(timeoutMs))
+    if (!nonEmptyStr3(code) || !str(description) || !positive(timeoutMs))
       return null;
     const options2 = parseEvalOptions(raw);
     if (!options2) return null;
@@ -2939,7 +3167,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return out;
   }
   function parseCheckpoint(raw) {
-    if (!isRecord(raw) || !nonEmptyStr2(raw.title)) return null;
+    if (!isRecord(raw) || !nonEmptyStr3(raw.title)) return null;
     if (raw.description === void 0) return { title: raw.title };
     if (!str(raw.description)) return null;
     return { title: raw.title, description: raw.description };
@@ -2949,7 +3177,13 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const { nodeIds, format, scale } = raw;
     if (!strArray(nodeIds) || nodeIds.length === 0) return null;
     if (!str(format) || !FORMAT_SET.has(format)) return null;
-    const out = { nodeIds: nodeIds.slice(), format };
+    const options2 = parseExportOptions(raw);
+    if (typeof options2 === "string") return null;
+    const out = {
+      nodeIds: nodeIds.slice(),
+      format,
+      ...options2
+    };
     if (scale === void 0) return out;
     return positive(scale) ? { ...out, scale } : null;
   }
@@ -2958,7 +3192,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return { document: raw.document };
   }
   function parseCodegen(raw) {
-    if (!isRecord(raw) || !nonEmptyStr2(raw.nodeId)) return null;
+    if (!isRecord(raw) || !nonEmptyStr3(raw.nodeId)) return null;
     const { snippets } = raw;
     if (!Array.isArray(snippets)) return null;
     try {
@@ -2998,9 +3232,13 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "icons.search": parseIconsSearch,
     "icons.place": parseIconsPlace,
     "icons.tag": parseIconsTag,
+    upload: parseUploadPayload,
+    claim: parseClaimPayload,
+    describe: parseDescribePayload,
+    "fonts.check": parseFontsCheckPayload,
     "ui.screenshot": parseUiScreenshot,
     status: parseEmpty,
-    cancel: (raw) => isRecord(raw) && nonEmptyStr2(raw.id) ? { id: raw.id } : null
+    cancel: (raw) => isRecord(raw) && nonEmptyStr3(raw.id) ? { id: raw.id } : null
   };
 
   // plugins/ezg-tools/src/shared/bridge-ops.ts
@@ -3021,6 +3259,10 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "icons.search": true,
     "icons.place": true,
     "icons.tag": true,
+    upload: true,
+    claim: true,
+    describe: true,
+    "fonts.check": true,
     "ui.screenshot": true,
     status: true,
     cancel: true
@@ -3044,6 +3286,91 @@ input[type=range]:focus-visible::-moz-range-thumb {
     }
   }
 
+  // plugins/ezg-tools/src/shared/bridge-chunk.ts
+  var CHUNK_CHARS = 4 * 1024 * 1024;
+  var SPLIT_ABOVE_CHARS = BRIDGE_MAX_FRAME_BYTES - 1024 * 1024;
+  var ASSEMBLED_MAX_CHARS = 256 * 1024 * 1024;
+  var PART_TTL_MS = 6e4;
+  var PART_PREFIX = '{"kind":"part"';
+  function newId() {
+    let id = "";
+    while (id.length < 8) id += Math.random().toString(36).slice(2);
+    return id.slice(0, 8);
+  }
+  function splitFrame(text, max) {
+    if (text.length <= SPLIT_ABOVE_CHARS) return [text];
+    max ?? (max = CHUNK_CHARS);
+    const total = Math.ceil(text.length / max);
+    const id = newId();
+    const out = [];
+    for (let seq = 0; seq < total; seq++) {
+      const part = {
+        kind: "part",
+        id,
+        seq,
+        total,
+        data: text.slice(seq * max, (seq + 1) * max)
+      };
+      out.push(JSON.stringify(part));
+    }
+    return out;
+  }
+  function parsePart(text) {
+    let v;
+    try {
+      v = JSON.parse(text);
+    } catch {
+      return null;
+    }
+    const p = v;
+    if (!p || p.kind !== "part" || typeof p.id !== "string" || typeof p.data !== "string" || !Number.isInteger(p.seq) || !Number.isInteger(p.total))
+      return null;
+    if (p.total < 1 || p.seq < 0 || p.seq >= p.total) return null;
+    return p;
+  }
+  function createAssembler(now = Date.now) {
+    const sets = /* @__PURE__ */ new Map();
+    const dropped = /* @__PURE__ */ new Map();
+    function sweep(t) {
+      for (const [id, s] of sets) if (t - s.at > PART_TTL_MS) sets.delete(id);
+      for (const [id, at] of dropped) if (t - at > PART_TTL_MS) dropped.delete(id);
+    }
+    function drop(id, t) {
+      sets.delete(id);
+      dropped.set(id, t);
+    }
+    return {
+      accept(text) {
+        const t = now();
+        sweep(t);
+        if (!text.startsWith(PART_PREFIX)) return text;
+        const p = parsePart(text);
+        if (!p) return text;
+        if (dropped.has(p.id)) return null;
+        let s = sets.get(p.id);
+        if (!s) {
+          s = { total: p.total, parts: /* @__PURE__ */ new Map(), chars: 0, at: t };
+          sets.set(p.id, s);
+        }
+        if (s.total !== p.total) {
+          drop(p.id, t);
+          return null;
+        }
+        s.chars += p.data.length - (s.parts.get(p.seq)?.length ?? 0);
+        s.parts.set(p.seq, p.data);
+        if (s.chars > ASSEMBLED_MAX_CHARS) {
+          drop(p.id, t);
+          return null;
+        }
+        if (s.parts.size < s.total) return null;
+        sets.delete(p.id);
+        let out = "";
+        for (let i = 0; i < s.total; i++) out += s.parts.get(i);
+        return out;
+      }
+    };
+  }
+
   // plugins/ezg-tools/src/ui/bridge/socket.ts
   var BACKOFF_MIN_MS = 1e3;
   var BACKOFF_MAX_MS = 2e3;
@@ -3055,6 +3382,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     let timer = null;
     let closed = false;
     let blocked2 = false;
+    let assembler = createAssembler();
     function onViolation(event) {
       if (!event.blockedURI.startsWith(`ws://localhost:${options2.port}`)) return;
       blocked2 = true;
@@ -3087,6 +3415,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
         return;
       }
       ws = socket2;
+      assembler = createAssembler();
       socket2.onopen = () => {
         if (ws !== socket2 || closed) return;
         attempt = 0;
@@ -3100,9 +3429,11 @@ input[type=range]:focus-visible::-moz-range-thumb {
       socket2.onmessage = (event) => {
         if (ws !== socket2 || closed) return;
         if (typeof event.data !== "string") return;
+        const text = assembler.accept(event.data);
+        if (text === null) return;
         let raw;
         try {
-          raw = JSON.parse(event.data);
+          raw = JSON.parse(text);
         } catch {
           return;
         }
@@ -3126,9 +3457,9 @@ input[type=range]:focus-visible::-moz-range-thumb {
       send(frame) {
         if (!ws || ws.readyState !== WebSocket.OPEN) return false;
         const text = JSON.stringify(frame);
-        if (text.length > BRIDGE_MAX_FRAME_BYTES) return false;
+        if (text.length > ASSEMBLED_MAX_CHARS) return false;
         try {
-          ws.send(text);
+          for (const part of splitFrame(text)) ws.send(part);
           return true;
         } catch {
           return false;
@@ -3185,7 +3516,6 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var MAX_DEPTH = 20;
   var MAX_ERROR_CHARS = 4e3;
   var UNREADABLE = "[Unreadable]";
-  var CHUNK_CHARS = 12 * 1024;
   var DROP = /* @__PURE__ */ Symbol("drop");
   function put(out, key, v) {
     Object.defineProperty(out, key, {
@@ -3530,6 +3860,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     switch (frame.kind) {
       case "welcome":
         update({ status: "ready", reason: void 0, wasReady: true });
+        post({ type: "bridge-connected" });
         return;
       case "sessions":
         update({ sessions: frame.count });
