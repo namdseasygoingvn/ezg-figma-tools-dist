@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 // installer/src/install.ts
-import { copyFile as copyFile2, readFile as readFile2, rm as rm3, writeFile as writeFile5 } from "node:fs/promises";
+import { copyFile as copyFile2, readFile as readFile2, rm as rm4, writeFile as writeFile4 } from "node:fs/promises";
 import { homedir as homedir3 } from "node:os";
-import { join as join6 } from "node:path";
+import { dirname as dirname4, join as join7 } from "node:path";
 
 // plugins/_loader/src/shared/version.ts
 function parseVersion(v) {
@@ -23,7 +23,6 @@ var BRIDGE_DIR = "_bridge";
 var BRIDGE_MCP_NAME = "ezg-figma-bridge";
 var BRIDGE_HUB_FLAG = "--hub-only";
 var BRIDGE_HUB_LABEL = "vn.easygoing.ezg-figma-bridge";
-var BRIDGE_HUB_LOG = "hub.log";
 var SKILL_DIR_PARTS = [".claude", "skills", "ezg-figma-bridge"];
 var DIST_FILES = {
   index: "index.json",
@@ -36,7 +35,8 @@ var PLUGIN_FILES = {
   manifest: "manifest.json",
   code: "code.js",
   ui: "ui.html",
-  bundle: "bundle.json"
+  bundle: "bundle.json",
+  desktopUi: "desktop-ui.html"
 };
 function distUrl(path) {
   return `${RAW_ORIGIN}/${DIST_OWNER}/${DIST_REPO}/${DIST_BRANCH}/${path}`;
@@ -154,124 +154,60 @@ async function fetchBridge(home) {
 }
 
 // installer/src/hub-service.ts
-import { spawn, spawnSync } from "node:child_process";
-import { mkdir as mkdir3, writeFile as writeFile3 } from "node:fs/promises";
-import { dirname as dirname2, join as join3 } from "node:path";
+import { spawnSync } from "node:child_process";
+import { rm as rm3 } from "node:fs/promises";
+import { join as join3 } from "node:path";
 
 // installer/src/hub-files.ts
-var xml = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-function launchAgentPlist(spec) {
-  const args = [spec.node, spec.server, BRIDGE_HUB_FLAG].map((a) => `    <string>${xml(a)}</string>`).join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key>
-  <string>${BRIDGE_HUB_LABEL}</string>
-  <key>ProgramArguments</key>
-  <array>
-${args}
-  </array>
-  <key>RunAtLoad</key>
-  <true/>
-  <key>KeepAlive</key>
-  <dict>
-    <key>SuccessfulExit</key>
-    <false/>
-  </dict>
-  <key>StandardOutPath</key>
-  <string>${xml(spec.log)}</string>
-  <key>StandardErrorPath</key>
-  <string>${xml(spec.log)}</string>
-</dict>
-</plist>
-`;
-}
-function startupScript(spec) {
-  const quoted = (a) => `""${a}""`;
-  const command = [spec.node, spec.server].map(quoted).concat(BRIDGE_HUB_FLAG).join(" ");
-  return `CreateObject("WScript.Shell").Run "${command}", 0, False\r
-`;
-}
 function hubProcessFilter(server) {
   const pattern = `*${server}*${BRIDGE_HUB_FLAG}*`.replace(/'/g, "''");
   return `Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'node.exe' -and $_.CommandLine -like '${pattern}' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }`;
 }
 
 // installer/src/hub-service.ts
-var BOOTSTRAP_TRIES = 5;
-var BOOTSTRAP_WAIT_MS = 300;
-var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-function firstLine(text) {
-  return (text ?? "").split(/\r?\n/).find((l) => l.trim() !== "") ?? "";
+async function removeMac(home) {
+  spawnSync("launchctl", [
+    "bootout",
+    `gui/${process.getuid()}/${BRIDGE_HUB_LABEL}`
+  ]);
+  await rm3(join3(home, "Library", "LaunchAgents", `${BRIDGE_HUB_LABEL}.plist`), {
+    force: true
+  });
 }
-async function writeIn(path, text) {
-  await mkdir3(dirname2(path), { recursive: true });
-  await writeFile3(path, text);
-}
-async function installMac(home, spec) {
-  const plist = join3(
+async function removeWindows(home) {
+  const server = join3(
     home,
-    "Library",
-    "LaunchAgents",
-    `${BRIDGE_HUB_LABEL}.plist`
+    ...INSTALL_DIR_PARTS,
+    BRIDGE_DIR,
+    DIST_FILES.bridgeServer
   );
-  await writeIn(plist, launchAgentPlist(spec));
-  const domain = `gui/${process.getuid()}`;
-  spawnSync("launchctl", ["bootout", `${domain}/${BRIDGE_HUB_LABEL}`]);
-  let reason2 = "";
-  for (let i = 0; i < BOOTSTRAP_TRIES; i++) {
-    const r = spawnSync("launchctl", ["bootstrap", domain, plist], {
-      encoding: "utf8"
-    });
-    if (r.status === 0) return;
-    reason2 = firstLine(r.stderr) || `exit ${r.status}`;
-    await sleep(BOOTSTRAP_WAIT_MS);
-  }
-  throw new Error(`launchctl bootstrap failed: ${reason2}`);
-}
-async function installWindows(spec) {
-  const appData = process.env.APPDATA;
-  if (!appData) throw new Error("APPDATA is not set");
-  const script = join3(
-    appData,
-    "Microsoft",
-    "Windows",
-    "Start Menu",
-    "Programs",
-    "Startup",
-    `${BRIDGE_HUB_LABEL}.vbs`
-  );
-  const utf16 = Buffer.from(startupScript(spec), "utf16le");
-  await writeIn(script, Buffer.concat([Buffer.from([255, 254]), utf16]));
   spawnSync(
     "powershell",
-    ["-NoProfile", "-Command", hubProcessFilter(spec.server)],
+    ["-NoProfile", "-Command", hubProcessFilter(server)],
     { stdio: "ignore", timeout: 3e4 }
   );
-  const child = spawn("wscript.exe", [script], {
-    detached: true,
-    stdio: "ignore"
-  });
-  await new Promise((resolve, reject) => {
-    child.once("spawn", resolve);
-    child.once("error", reject);
-  });
-  child.unref();
+  const appData = process.env.APPDATA;
+  if (!appData) return;
+  await rm3(
+    join3(
+      appData,
+      "Microsoft",
+      "Windows",
+      "Start Menu",
+      "Programs",
+      "Startup",
+      `${BRIDGE_HUB_LABEL}.vbs`
+    ),
+    { force: true }
+  );
 }
-async function installHub(home, server) {
-  const spec = {
-    node: process.execPath,
-    server,
-    log: join3(dirname2(server), BRIDGE_HUB_LOG)
-  };
-  if (process.platform === "darwin") await installMac(home, spec);
-  else if (process.platform === "win32") await installWindows(spec);
-  else throw new Error("macOS and Windows only");
+async function removeHub(home) {
+  if (process.platform === "darwin") await removeMac(home);
+  else if (process.platform === "win32") await removeWindows(home);
 }
 
 // installer/src/figma-app.ts
-import { execFileSync, spawn as spawn2 } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { homedir } from "node:os";
 import { join as join4 } from "node:path";
 var POLL_MS = 500;
@@ -320,11 +256,11 @@ function requestQuit(force) {
     unsupported();
   }
 }
-var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function waitForExit(ms) {
   for (let waited = 0; waited < ms; waited += POLL_MS) {
     if (!isFigmaRunning()) return true;
-    await sleep2(POLL_MS);
+    await sleep(POLL_MS);
   }
   return !isFigmaRunning();
 }
@@ -340,27 +276,27 @@ async function quitFigma(timeoutMs = 2e4) {
 }
 function openFigma() {
   if (process.platform === "darwin") {
-    spawn2("open", ["-a", "Figma"], { detached: true, stdio: "ignore" }).unref();
+    spawn("open", ["-a", "Figma"], { detached: true, stdio: "ignore" }).unref();
   } else if (process.platform === "win32") {
     const localAppData = process.env.LOCALAPPDATA ?? join4(homedir(), "AppData", "Local");
     const exe = join4(localAppData, "Figma", "Figma.exe");
-    spawn2(exe, [], { detached: true, stdio: "ignore" }).unref();
+    spawn(exe, [], { detached: true, stdio: "ignore" }).unref();
   } else {
     unsupported();
   }
 }
 
 // installer/src/figma-settings.ts
-import { dirname as dirname4 } from "node:path";
+import { dirname as dirname3 } from "node:path";
 
 // installer/src/stale-dirs.ts
-import { dirname as dirname3, relative, sep } from "node:path";
+import { dirname as dirname2, relative, sep } from "node:path";
 function isPluginDirIn(dir, root) {
   const rel = relative(root, dir);
   return rel !== "" && !rel.startsWith("..") && !rel.includes(sep);
 }
 function staleDirs(manifestPaths, root) {
-  return manifestPaths.map(dirname3).filter((dir) => isPluginDirIn(dir, root));
+  return manifestPaths.map(dirname2).filter((dir) => isPluginDirIn(dir, root));
 }
 
 // installer/src/figma-settings.ts
@@ -426,7 +362,7 @@ function movedManifests(entries, plugins, installRoot) {
   const paths = new Set(plugins.map((plugin) => plugin.manifestPath));
   const ids = new Set(plugins.map((plugin) => plugin.id));
   return entries.filter(
-    (entry) => isManifestEntry(entry) && ids.has(String(entry.lastKnownPluginId)) && !paths.has(entry.manifestPath) && isPluginDirIn(dirname4(entry.manifestPath), installRoot)
+    (entry) => isManifestEntry(entry) && ids.has(String(entry.lastKnownPluginId)) && !paths.has(entry.manifestPath) && isPluginDirIn(dirname3(entry.manifestPath), installRoot)
   );
 }
 function movedManifestPaths(settings, plugins, installRoot) {
@@ -464,17 +400,35 @@ function planInstall(settings, plugins, installRoot) {
   };
 }
 
+// installer/src/node-info.ts
+import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { join as join5 } from "node:path";
+var NODE_INFO_FILE = "node.json";
+function writeNodeInfo(bridgeDir) {
+  const file = join5(bridgeDir, NODE_INFO_FILE);
+  const temp = `${file}.tmp`;
+  const info = { path: process.execPath, version: process.version };
+  try {
+    mkdirSync(bridgeDir, { recursive: true });
+    writeFileSync(temp, JSON.stringify(info));
+    renameSync(temp, file);
+  } catch (error) {
+    rmSync(temp, { force: true });
+    throw error;
+  }
+}
+
 // installer/src/register-desktop.ts
 import {
   copyFile,
   readFile,
   readdir,
   rename as rename3,
-  writeFile as writeFile4
+  writeFile as writeFile3
 } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { homedir as homedir2 } from "node:os";
-import { join as join5 } from "node:path";
+import { join as join6 } from "node:path";
 
 // installer/src/desktop-config.ts
 var DesktopConfigError = class extends Error {
@@ -501,17 +455,17 @@ function withBridgeServer(config, spec) {
 var CONFIG = "claude_desktop_config.json";
 async function windowsDirs() {
   const home = homedir2();
-  const appData = process.env.APPDATA ?? join5(home, "AppData", "Roaming");
-  const local = process.env.LOCALAPPDATA ?? join5(home, "AppData", "Local");
-  const dirs = [join5(appData, "Claude")];
-  const packages = join5(local, "Packages");
+  const appData = process.env.APPDATA ?? join6(home, "AppData", "Roaming");
+  const local = process.env.LOCALAPPDATA ?? join6(home, "AppData", "Local");
+  const dirs = [join6(appData, "Claude")];
+  const packages = join6(local, "Packages");
   const names = await readdir(packages).catch(() => []);
   for (const name of names.filter((n) => n.startsWith("Claude_")))
-    dirs.push(join5(packages, name, "LocalCache", "Roaming", "Claude"));
+    dirs.push(join6(packages, name, "LocalCache", "Roaming", "Claude"));
   return dirs;
 }
 async function configDirs() {
-  const dirs = process.platform === "win32" ? await windowsDirs() : [join5(homedir2(), "Library", "Application Support", "Claude")];
+  const dirs = process.platform === "win32" ? await windowsDirs() : [join6(homedir2(), "Library", "Application Support", "Claude")];
   return dirs.filter((d) => existsSync(d));
 }
 async function readConfig(path) {
@@ -529,14 +483,14 @@ async function readConfig(path) {
   }
 }
 async function register(dir, server) {
-  const path = join5(dir, CONFIG);
+  const path = join6(dir, CONFIG);
   const next = withBridgeServer(await readConfig(path), {
     name: BRIDGE_MCP_NAME,
     node: process.execPath,
     server
   });
   if (existsSync(path)) await copyFile(path, `${path}.ezg-bak`);
-  await writeFile4(`${path}.tmp`, JSON.stringify(next, null, 2));
+  await writeFile3(`${path}.tmp`, JSON.stringify(next, null, 2));
   await rename3(`${path}.tmp`, path);
 }
 async function registerDesktop(server) {
@@ -606,11 +560,11 @@ function hasClaude() {
   if (WIN) return run2("where", ["claude"]).status === 0;
   return spawnSync2("sh", ["-c", "command -v claude"], { stdio: "ignore" }).status === 0;
 }
-function firstLine2(text) {
+function firstLine(text) {
   return (text ?? "").split(/\r?\n/).find((l) => l.trim() !== "") ?? "";
 }
 function reason(r) {
-  const text = firstLine2(r.stderr) || firstLine2(r.stdout) || r.error?.message || `exit ${r.status}`;
+  const text = firstLine(r.stderr) || firstLine(r.stdout) || r.error?.message || `exit ${r.status}`;
   return text.trim().slice(0, 120);
 }
 function fail(why) {
@@ -673,10 +627,16 @@ async function installBridge(home) {
   registerMcp(server);
   await registerDesktop(server);
   try {
-    await installHub(home, server);
-    console.log("  ok bridge hub runs at login");
+    await removeHub(home);
+    console.log("  ok no login hub left");
   } catch (error) {
-    console.log(`  warn bridge hub failed: ${messageOf(error)}`);
+    console.log(`  warn login hub removal failed: ${messageOf(error)}`);
+  }
+  try {
+    writeNodeInfo(dirname4(server));
+    console.log("  ok node path saved for EZG Desktop");
+  } catch (error) {
+    console.log(`  warn node path not saved: ${messageOf(error)}`);
   }
 }
 async function main() {
@@ -687,7 +647,7 @@ async function main() {
   await installBridge(homedir3());
   console.log("> Registering in Figma\u2026");
   const path = settingsPath();
-  const installRoot = join6(homedir3(), ...INSTALL_DIR_PARTS);
+  const installRoot = join7(homedir3(), ...INSTALL_DIR_PARTS);
   const plan = planInstall(
     (await readSettings(path)).json,
     plugins,
@@ -695,7 +655,7 @@ async function main() {
   );
   if (!plan.rewrite) {
     for (const dir of plan.stale)
-      await rm3(dir, { recursive: true, force: true });
+      await rm4(dir, { recursive: true, force: true });
     console.log(`  ok already registered (v${version})`);
     console.log("Done. Open Figma \u2192 Plugins \u2192 Development.");
     return;
@@ -704,8 +664,8 @@ async function main() {
   const { raw, json } = await readSettings(path);
   const next = registerPlugins(json, plugins, installRoot);
   await copyFile2(path, `${path}.ezg-bak`);
-  await writeFile5(path, JSON.stringify(next, null, indentOf(raw)));
-  for (const dir of plan.stale) await rm3(dir, { recursive: true, force: true });
+  await writeFile4(path, JSON.stringify(next, null, indentOf(raw)));
+  for (const dir of plan.stale) await rm4(dir, { recursive: true, force: true });
   openFigma();
   console.log(`  ok ${plan.missing.length} plugin added (Figma restarted)`);
   console.log("Done. Open Figma \u2192 Plugins \u2192 Development.");

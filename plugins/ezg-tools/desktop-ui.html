@@ -1233,6 +1233,79 @@ input[type=range]:focus-visible::-moz-range-thumb {
 
 /* plugins/ezg-tools/src/ui/styles/index.css */
 
+/* plugins/ezg-tools/src/ui/styles/desktop.css */
+:root {
+  --figma-color-bg: #ffffff;
+  --figma-color-bg-secondary: #f5f5f5;
+  --figma-color-bg-tertiary: #e6e6e6;
+  --figma-color-bg-hover: #f5f5f5;
+  --figma-color-bg-pressed: #e6e6e6;
+  --figma-color-bg-brand: #0d99ff;
+  --figma-color-bg-brand-hover: #0a8ae6;
+  --figma-color-bg-brand-pressed: #007be5;
+  --figma-color-bg-brand-tertiary: #e5f4ff;
+  --figma-color-bg-selected: #e5f4ff;
+  --figma-color-bg-selected-strong: #bde3ff;
+  --figma-color-bg-disabled: #d9d9d9;
+  --figma-color-text: rgba(0, 0, 0, 0.9);
+  --figma-color-text-secondary: rgba(0, 0, 0, 0.5);
+  --figma-color-text-tertiary: rgba(0, 0, 0, 0.3);
+  --figma-color-text-onbrand: #ffffff;
+  --figma-color-text-disabled: rgba(0, 0, 0, 0.3);
+  --figma-color-text-ondisabled: #ffffff;
+  --figma-color-text-danger: #dc3412;
+  --figma-color-text-success: #14ae5c;
+  --figma-color-text-warning: #f5a623;
+  --figma-color-border: #e6e6e6;
+  --figma-color-border-strong: #2c2c2c;
+  --figma-color-border-selected: #0d99ff;
+  --figma-color-border-selected-strong: #007be5;
+  --figma-color-border-disabled: #e6e6e6;
+  --figma-color-icon: rgba(0, 0, 0, 0.9);
+  --figma-color-icon-secondary: rgba(0, 0, 0, 0.5);
+  --figma-color-icon-tertiary: rgba(0, 0, 0, 0.3);
+  --figma-color-icon-brand: #0d99ff;
+  --figma-color-icon-danger: #f24822;
+  --figma-color-icon-onbrand: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --figma-color-bg: #2c2c2c;
+    --figma-color-bg-secondary: #383838;
+    --figma-color-bg-tertiary: #444444;
+    --figma-color-bg-hover: #383838;
+    --figma-color-bg-pressed: #444444;
+    --figma-color-bg-brand: #0c8ce9;
+    --figma-color-bg-brand-hover: #0a7dd0;
+    --figma-color-bg-brand-pressed: #0a6dc2;
+    --figma-color-bg-brand-tertiary: #394360;
+    --figma-color-bg-selected: #394360;
+    --figma-color-bg-selected-strong: #4a5878;
+    --figma-color-bg-disabled: #555555;
+    --figma-color-text: #ffffff;
+    --figma-color-text-secondary: rgba(255, 255, 255, 0.7);
+    --figma-color-text-tertiary: rgba(255, 255, 255, 0.4);
+    --figma-color-text-onbrand: #ffffff;
+    --figma-color-text-disabled: rgba(255, 255, 255, 0.4);
+    --figma-color-text-ondisabled: rgba(255, 255, 255, 0.4);
+    --figma-color-text-danger: #fca397;
+    --figma-color-text-success: #79d297;
+    --figma-color-text-warning: #ffcd29;
+    --figma-color-border: #444444;
+    --figma-color-border-strong: #ffffff;
+    --figma-color-border-selected: #0c8ce9;
+    --figma-color-border-selected-strong: #7cc4f8;
+    --figma-color-border-disabled: #444444;
+    --figma-color-icon: #ffffff;
+    --figma-color-icon-secondary: rgba(255, 255, 255, 0.7);
+    --figma-color-icon-tertiary: rgba(255, 255, 255, 0.4);
+    --figma-color-icon-brand: #7cc4f8;
+    --figma-color-icon-danger: #f24822;
+    --figma-color-icon-onbrand: #ffffff;
+  }
+}
+
     </style>
   </head>
   <body>
@@ -1506,7 +1579,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   }
 
   // plugins/ezg-tools/src/shared/host.ts
-  var HOST = typeof __EZG_HOST__ === "string" && __EZG_HOST__ === "desktop" ? "desktop" : "figma";
+  var HOST = true ? "desktop" : "figma";
   var isDesktopHost = () => HOST === "desktop";
 
   // plugins/ezg-tools/src/shared/version.ts
