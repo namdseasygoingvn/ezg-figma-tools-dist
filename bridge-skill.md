@@ -16,6 +16,7 @@ Use the bridge for:
 - the user's current selection or viewport
 - events (what changed since the last look)
 - exporting nodes to disk on this machine
+- reading the whole file as REST JSON, or image fill bytes
 - plugin data, and big files
 - Dev Mode codegen snippets and text review rules
 
@@ -372,6 +373,14 @@ Errors without a code are plain messages.
 - Bytes never enter the chat.
 - Renders run one at a time per file, but the server writes one file while the plugin renders the next (at most 2 requests in flight), so many nodes in one call is the fast path. Do not start a second export or `screenshot` to speed it up, and do not retry one that is slow; check `status` instead.
 - The raw plugin op `export` (WebSocket) has no `outDir` and writes no files. It returns `{files: [{nodeId, name, format, base64 | text}], failed: [{nodeId, error}], warnings?}`: `base64` for PNG, JPG and PDF, `text` for SVG and JSON. Every row in `files` has data; every error is in `failed`.
+
+## Snapshot and image fills
+
+- `doc_snapshot` writes REST-shaped JSON of every page (or `pageIds`) to the absolute `outPath`. It uses no Figma REST quota and takes seconds. It returns `{ path, bytes, name, pages, nodes, ms }`.
+- `images_get` writes image fill bytes by hash (at most 100 `hashes`) into the absolute `outDir`. It returns `{ outDir, written, missing, failed }`.
+- Bytes never enter the chat. Read the file at `path` only when you need it.
+- The Unity importer (`com.ezg.figma-bridge`, setting `Source = Bridge`) uses the same ops directly over the hub, with no MCP and no Claude.
+- An "unknown op" error means the plugin is old. Ask the user to reopen it.
 
 ## Watch mode
 

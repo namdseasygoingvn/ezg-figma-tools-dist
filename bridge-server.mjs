@@ -4111,7 +4111,7 @@ var init_peer_wire = __esm({
 // bridge-server/src/agent-link.ts
 function connectAgent(port, handlers2, options = {}) {
   const handshakeMs = options.handshakeMs ?? DEFAULT_HANDSHAKE_MS;
-  return new Promise((resolve2) => {
+  return new Promise((resolve3) => {
     const ws = new import_websocket.default(`ws://127.0.0.1:${port}${AGENT_PATH}`, {
       maxPayload: BRIDGE_MAX_FRAME_BYTES
     });
@@ -4147,7 +4147,7 @@ function connectAgent(port, handlers2, options = {}) {
       });
       if (ws.readyState !== import_websocket.default.CLOSED) ws.terminate();
       if (!welcomed) {
-        resolve2(null);
+        resolve3(null);
         return;
       }
       for (const id of known) handlers2.onClose(id);
@@ -4166,7 +4166,7 @@ function connectAgent(port, handlers2, options = {}) {
         if (frame.kind === "agent-welcome") {
           welcomed = true;
           clearTimeout(timer);
-          resolve2(link3);
+          resolve3(link3);
         } else if (frame.kind === "bye") end();
         return;
       }
@@ -4461,7 +4461,7 @@ function createFileRegistry(linkError = () => null) {
     error: `${message2}
 ${describeFiles(list())}`
   });
-  function resolve2(target) {
+  function resolve3(target) {
     const t = target?.trim() ?? "";
     const all = list();
     if (t) {
@@ -4513,7 +4513,7 @@ ${describeFiles(list())}`
       entries.delete(connectionId);
     },
     list,
-    resolve: resolve2
+    resolve: resolve3
   };
 }
 var FILE_KEY_SHAPE, NOT_CONNECTED, clean;
@@ -4529,12 +4529,12 @@ var init_files = __esm({
 // bridge-server/src/listen.ts
 import { createServer } from "node:http";
 function listenOnce(server2, port) {
-  return new Promise((resolve2, fail) => {
+  return new Promise((resolve3, fail) => {
     server2.once("error", (err) => {
-      if (err.code === "EADDRINUSE") resolve2("in-use");
+      if (err.code === "EADDRINUSE") resolve3("in-use");
       else fail(err);
     });
-    server2.listen(port, "127.0.0.1", () => resolve2("ok"));
+    server2.listen(port, "127.0.0.1", () => resolve3("ok"));
   });
 }
 async function listenBridge(port, agentPath, onSocket) {
@@ -4570,9 +4570,9 @@ async function listenBridge(port, agentPath, onSocket) {
   return {
     port: server2.address().port,
     close() {
-      closing3 ??= new Promise((resolve2) => {
+      closing3 ??= new Promise((resolve3) => {
         for (const ws of wss.clients) ws.terminate();
-        server2.close(() => resolve2());
+        server2.close(() => resolve3());
         server2.closeAllConnections();
       });
       return closing3;
@@ -4664,7 +4664,7 @@ async function startHub(port, handlers2, options = {}) {
   });
   let closing3;
   let resolveClosed;
-  const closed = new Promise((resolve2) => resolveClosed = resolve2);
+  const closed = new Promise((resolve3) => resolveClosed = resolve3);
   return {
     port: boundPort,
     send: (connectionId, frame) => plugins.send(connectionId, frame),
@@ -4724,13 +4724,13 @@ function startLink(options) {
   let agent = null;
   let aborted2 = false;
   let wake = null;
-  const sleep = (ms) => new Promise((resolve2) => {
+  const sleep = (ms) => new Promise((resolve3) => {
     const timer = setTimeout(done, ms);
     timer.unref();
     function done() {
       clearTimeout(timer);
       wake = null;
-      resolve2();
+      resolve3();
     }
     wake = done;
   });
@@ -13303,7 +13303,7 @@ function isRef(value) {
 function cloneIssues(issues) {
   return issues.map((iss) => iss.path ? { ...iss, path: iss.path.slice() } : { ...iss });
 }
-function isRecursive(inst, stack, resolve2) {
+function isRecursive(inst, stack, resolve3) {
   const cached2 = recursive.get(inst);
   if (cached2 !== void 0)
     return cached2 ? PROVEN : NONE;
@@ -13313,7 +13313,7 @@ function isRecursive(inst, stack, resolve2) {
   let result = NONE;
   const check2 = (child2) => {
     if (result !== PROVEN && child2?._zod) {
-      const answer = isRecursive(child2, stack, resolve2);
+      const answer = isRecursive(child2, stack, resolve3);
       if (answer > result)
         result = answer;
     }
@@ -13324,7 +13324,7 @@ function isRecursive(inst, stack, resolve2) {
       const desc = Object.getOwnPropertyDescriptor(sh, key);
       if (spread && !desc.enumerable)
         continue;
-      const child2 = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve2) : NONE;
+      const child2 = desc.get ? ASSUMED : desc.value?._zod ? isRecursive(desc.value, stack, resolve3) : NONE;
       if (child2 > answer)
         answer = child2;
     }
@@ -13388,7 +13388,7 @@ function isRecursive(inst, stack, resolve2) {
       break;
     // `$ZodLazy` caches its inner on the def, so a resolved edge is followed exactly
     case "lazy": {
-      const inner = def._cachedInner ?? (resolve2 ? inst._zod.innerType : void 0);
+      const inner = def._cachedInner ?? (resolve3 ? inst._zod.innerType : void 0);
       merge2(inner ? isRecursive(inner, stack, false) : ASSUMED);
       break;
     }
@@ -33151,7 +33151,7 @@ var init_protocol = __esm({
               return;
             }
             const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-            await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
+            await new Promise((resolve3) => setTimeout(resolve3, pollInterval));
             options?.signal?.throwIfAborted();
           }
         } catch (error62) {
@@ -33168,7 +33168,7 @@ var init_protocol = __esm({
        */
       request(request, resultSchema, options) {
         const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-        return new Promise((resolve2, reject2) => {
+        return new Promise((resolve3, reject2) => {
           const earlyReject = (error62) => {
             reject2(error62);
           };
@@ -33246,7 +33246,7 @@ var init_protocol = __esm({
               if (!parseResult.success) {
                 reject2(parseResult.error);
               } else {
-                resolve2(parseResult.data);
+                resolve3(parseResult.data);
               }
             } catch (error62) {
               reject2(error62);
@@ -33507,12 +33507,12 @@ var init_protocol = __esm({
           }
         } catch {
         }
-        return new Promise((resolve2, reject2) => {
+        return new Promise((resolve3, reject2) => {
           if (signal.aborted) {
             reject2(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
             return;
           }
-          const timeoutId = setTimeout(resolve2, interval);
+          const timeoutId = setTimeout(resolve3, interval);
           signal.addEventListener("abort", () => {
             clearTimeout(timeoutId);
             reject2(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -36539,7 +36539,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve2.call(this, root, ref);
+      let _sch = resolve3.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a3 = root.localRefs) === null || _a3 === void 0 ? void 0 : _a3[ref];
         const { schemaId } = this.opts;
@@ -36566,7 +36566,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve2(root, ref) {
+    function resolve3(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -37396,7 +37396,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve2(baseURI, relativeURI, options) {
+    function resolve3(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const {
         parsed: baseParsed,
@@ -37765,7 +37765,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve: resolve2,
+      resolve: resolve3,
       resolveComponent,
       equal,
       serialize,
@@ -41883,7 +41883,7 @@ var init_mcp = __esm({
         let task = createTaskResult.task;
         const pollInterval = task.pollInterval ?? 5e3;
         while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-          await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
+          await new Promise((resolve3) => setTimeout(resolve3, pollInterval));
           const updatedTask = await extra.taskStore.getTask(taskId);
           if (!updatedTask) {
             throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -42213,12 +42213,12 @@ var init_mcp = __esm({
         }
         return registeredPrompt;
       }
-      _createRegisteredTool(name, title, description, inputSchema4, outputSchema, annotations, execution, _meta, handler) {
+      _createRegisteredTool(name, title, description, inputSchema5, outputSchema, annotations, execution, _meta, handler) {
         validateAndWarnToolName(name);
         const registeredTool = {
           title,
           description,
-          inputSchema: getZodSchemaObject(inputSchema4),
+          inputSchema: getZodSchemaObject(inputSchema5),
           outputSchema: getZodSchemaObject(outputSchema),
           annotations,
           execution,
@@ -42269,7 +42269,7 @@ var init_mcp = __esm({
           throw new Error(`Tool ${name} is already registered`);
         }
         let description;
-        let inputSchema4;
+        let inputSchema5;
         let outputSchema;
         let annotations;
         if (typeof rest[0] === "string") {
@@ -42278,7 +42278,7 @@ var init_mcp = __esm({
         if (rest.length > 1) {
           const firstArg = rest[0];
           if (isZodRawShapeCompat(firstArg)) {
-            inputSchema4 = rest.shift();
+            inputSchema5 = rest.shift();
             if (rest.length > 1 && typeof rest[0] === "object" && rest[0] !== null && !isZodRawShapeCompat(rest[0])) {
               annotations = rest.shift();
             }
@@ -42290,7 +42290,7 @@ var init_mcp = __esm({
           }
         }
         const callback = rest[0];
-        return this._createRegisteredTool(name, void 0, description, inputSchema4, outputSchema, annotations, { taskSupport: "forbidden" }, void 0, callback);
+        return this._createRegisteredTool(name, void 0, description, inputSchema5, outputSchema, annotations, { taskSupport: "forbidden" }, void 0, callback);
       }
       /**
        * Registers a tool with a config object and callback.
@@ -42299,8 +42299,8 @@ var init_mcp = __esm({
         if (this._registeredTools[name]) {
           throw new Error(`Tool ${name} is already registered`);
         }
-        const { title, description, inputSchema: inputSchema4, outputSchema, annotations, _meta } = config2;
-        return this._createRegisteredTool(name, title, description, inputSchema4, outputSchema, annotations, { taskSupport: "forbidden" }, _meta, cb);
+        const { title, description, inputSchema: inputSchema5, outputSchema, annotations, _meta } = config2;
+        return this._createRegisteredTool(name, title, description, inputSchema5, outputSchema, annotations, { taskSupport: "forbidden" }, _meta, cb);
       }
       prompt(name, ...rest) {
         if (this._registeredPrompts[name]) {
@@ -42492,12 +42492,12 @@ var init_stdio2 = __esm({
         this.onclose?.();
       }
       send(message2) {
-        return new Promise((resolve2) => {
+        return new Promise((resolve3) => {
           const json2 = serializeMessage(message2);
           if (this._stdout.write(json2)) {
-            resolve2();
+            resolve3();
           } else {
-            this._stdout.once("drain", resolve2);
+            this._stdout.once("drain", resolve3);
           }
         });
       }
@@ -42544,14 +42544,14 @@ function createEventStore(capacity = EVENT_CAPACITY) {
     if (now.events.length > 0 || now.dropped || timeoutMs <= 0) {
       return Promise.resolve(now);
     }
-    return new Promise((resolve2) => {
+    return new Promise((resolve3) => {
       let settled = false;
       const finish2 = (page) => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
         waiters = waiters.filter((w) => w !== waiter);
-        resolve2(page);
+        resolve3(page);
       };
       const waiter = { q, done: finish2 };
       const timer = setTimeout(() => finish2(since(q)), timeoutMs);
@@ -42787,6 +42787,8 @@ var init_context = __esm({
       claim: "claim",
       describe: "describe",
       fontsCheck: "fonts_check",
+      docSnapshot: "doc_snapshot",
+      imagesGet: "images_get",
       jobWait: "job_wait"
     };
     BridgeCallError = class extends Error {
@@ -42834,13 +42836,13 @@ function createRpc(send) {
   }
   return {
     call(connectionId, op, payload, timeoutMs) {
-      return new Promise((resolve2, reject2) => {
+      return new Promise((resolve3, reject2) => {
         const id = String(++counter);
         const entry = {
           connectionId,
           op,
           startedAt: Date.now(),
-          resolve: resolve2,
+          resolve: resolve3,
           reject: reject2,
           timer: void 0,
           deadline: Date.now() + timeoutMs
@@ -43172,8 +43174,8 @@ function createJobStore(now = Date.now) {
     const entry = get(id);
     if (!entry || entry.endedAt !== void 0) return entry;
     let timer;
-    const timeout = new Promise((resolve2) => {
-      timer = setTimeout(resolve2, Math.max(0, timeoutMs));
+    const timeout = new Promise((resolve3) => {
+      timer = setTimeout(resolve3, Math.max(0, timeoutMs));
     });
     try {
       await Promise.race([done.get(id), timeout]);
@@ -44430,6 +44432,94 @@ var init_eval = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/bridge-snapshot.ts
+function parseDocSnapshotPayload(raw) {
+  if (raw === void 0 || raw === null) return {};
+  if (typeof raw !== "object" || Array.isArray(raw)) return null;
+  const ids = raw.pageIds;
+  if (ids === void 0) return {};
+  if (!Array.isArray(ids)) return null;
+  if (ids.length < 1 || ids.length > SNAPSHOT_MAX_PAGE_IDS) return null;
+  if (!ids.every((id) => typeof id === "string" && id !== "")) return null;
+  return { pageIds: [...new Set(ids)] };
+}
+var SNAPSHOT_OP, SNAPSHOT_TIMEOUT_MS, SNAPSHOT_MAX_PAGE_IDS;
+var init_bridge_snapshot = __esm({
+  "plugins/ezg-tools/src/shared/bridge-snapshot.ts"() {
+    "use strict";
+    SNAPSHOT_OP = "doc.snapshot";
+    SNAPSHOT_TIMEOUT_MS = 12e4;
+    SNAPSHOT_MAX_PAGE_IDS = 200;
+  }
+});
+
+// bridge-server/src/tools/doc-snapshot.ts
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname as dirname2, isAbsolute } from "node:path";
+var DOC_SNAPSHOT_OLD_PLUGIN_HINT, DESCRIPTION5, docSnapshotInputSchema, registerDocSnapshot;
+var init_doc_snapshot = __esm({
+  "bridge-server/src/tools/doc-snapshot.ts"() {
+    "use strict";
+    init_zod();
+    init_bridge_snapshot();
+    init_context();
+    init_tool_result();
+    DOC_SNAPSHOT_OLD_PLUGIN_HINT = "reopen the EZG Tools plugin to update it";
+    DESCRIPTION5 = "Writes the open Figma file as one JSON file at outPath, the same shape as GET /v1/files/:key?geometry=paths (no text outlines). Takes every page unless pageIds is given. Use it for a Unity import or offline reading. Returns path, bytes, name, pages, nodes and ms, not the JSON. An existing file at outPath is overwritten.";
+    docSnapshotInputSchema = {
+      fileKey: external_exports.string().min(1).optional().describe(
+        "fileKey or clientId from files. Optional with one file connected."
+      ),
+      pageIds: external_exports.array(external_exports.string().min(1)).min(1).max(SNAPSHOT_MAX_PAGE_IDS).optional().describe("Page node ids to include. Default: every page."),
+      outPath: external_exports.string().min(1).describe("Absolute path of the .json file to write.")
+    };
+    registerDocSnapshot = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.docSnapshot,
+        {
+          title: "Snapshot the document to disk",
+          description: DESCRIPTION5,
+          inputSchema: docSnapshotInputSchema
+        },
+        async ({ fileKey: fileKey5, pageIds, outPath }) => {
+          if (!isAbsolute(outPath))
+            return errorResult("outPath must be an absolute path");
+          if (!outPath.endsWith(".json"))
+            return errorResult("outPath must end in .json");
+          const r = ctx2.files.resolve(fileKey5);
+          if ("error" in r) return errorResult(r.error);
+          const payload = pageIds?.length ? { pageIds } : {};
+          try {
+            const res = await ctx2.rpc.call(
+              r.file.connectionId,
+              SNAPSHOT_OP,
+              payload,
+              SNAPSHOT_TIMEOUT_MS
+            );
+            await mkdir(dirname2(outPath), { recursive: true });
+            await writeFile(outPath, res.text);
+            return jsonResult(
+              {
+                path: outPath,
+                bytes: Buffer.byteLength(res.text),
+                name: res.name,
+                pages: res.pages,
+                nodes: res.nodes,
+                ms: res.ms
+              },
+              r.note
+            );
+          } catch (e) {
+            if (e instanceof BridgeCallError && e.code === "remote" && e.remote?.message.startsWith("unknown op"))
+              return errorResult(e.remote.message, DOC_SNAPSHOT_OLD_PLUGIN_HINT);
+            return fromCallError(e);
+          }
+        }
+      );
+    };
+  }
+});
+
 // bridge-server/src/tools/events.ts
 function buildQuery(ctx2, input2) {
   const query = { since: input2.since, types: input2.types };
@@ -44854,6 +44944,41 @@ var init_bridge_fonts_check = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/bridge-images.ts
+function parseImagesGetPayload(raw) {
+  if (typeof raw !== "object" || raw === null) return null;
+  const hashes = raw.hashes;
+  if (!Array.isArray(hashes)) return null;
+  if (hashes.length < 1 || hashes.length > IMAGES_GET_MAX_HASHES) return null;
+  for (const h of hashes) {
+    if (typeof h !== "string" || h.length < 1 || h.length > MAX_HASH_LENGTH)
+      return null;
+  }
+  return { hashes: [...new Set(hashes)] };
+}
+function startsWith(bytes, at, sig) {
+  return sig.every((b, i) => bytes[at + i] === b);
+}
+function imageExtension(bytes) {
+  if (bytes.length < 12) return "bin";
+  if (startsWith(bytes, 0, [137, 80, 78, 71])) return "png";
+  if (startsWith(bytes, 0, [255, 216, 255])) return "jpg";
+  if (startsWith(bytes, 0, [71, 73, 70, 56])) return "gif";
+  if (startsWith(bytes, 0, [82, 73, 70, 70]) && startsWith(bytes, 8, [87, 69, 66, 80]))
+    return "webp";
+  return "bin";
+}
+var IMAGES_OP, IMAGES_GET_MAX_HASHES, IMAGES_GET_TIMEOUT_MS, MAX_HASH_LENGTH;
+var init_bridge_images = __esm({
+  "plugins/ezg-tools/src/shared/bridge-images.ts"() {
+    "use strict";
+    IMAGES_OP = "images.get";
+    IMAGES_GET_MAX_HASHES = 100;
+    IMAGES_GET_TIMEOUT_MS = 6e4;
+    MAX_HASH_LENGTH = 128;
+  }
+});
+
 // plugins/ezg-tools/src/shared/bridge-parse.ts
 function parseEval(raw) {
   if (!isRecord(raw)) return null;
@@ -44955,6 +45080,8 @@ var init_bridge_parse = __esm({
     init_bridge_describe();
     init_bridge_export();
     init_bridge_fonts_check();
+    init_bridge_snapshot();
+    init_bridge_images();
     init_values();
     EXPORT_FORMATS = [
       "PNG",
@@ -44992,6 +45119,8 @@ var init_bridge_parse = __esm({
       claim: parseClaimPayload,
       describe: parseDescribePayload,
       "fonts.check": parseFontsCheckPayload,
+      "doc.snapshot": parseDocSnapshotPayload,
+      "images.get": parseImagesGetPayload,
       "ui.screenshot": parseUiScreenshot,
       status: parseEmpty,
       cancel: (raw) => isRecord(raw) && nonEmptyStr3(raw.id) ? { id: raw.id } : null
@@ -45038,6 +45167,8 @@ var init_bridge_ops = __esm({
       claim: true,
       describe: true,
       "fonts.check": true,
+      "doc.snapshot": true,
+      "images.get": true,
       "ui.screenshot": true,
       status: true,
       cancel: true
@@ -45050,8 +45181,8 @@ var init_bridge_ops = __esm({
 });
 
 // bridge-server/src/tools/export-files.ts
-import { writeFile } from "node:fs/promises";
-import { isAbsolute, join as join2, relative, resolve } from "node:path";
+import { writeFile as writeFile2 } from "node:fs/promises";
+import { isAbsolute as isAbsolute2, join as join2, relative, resolve } from "node:path";
 function safeFileName(name) {
   let out = name.replace(/[^A-Za-z0-9._ -]/g, "-").replace(/-{2,}/g, "-").replace(EDGE_JUNK, "").slice(0, MAX_NAME_CHARS).replace(EDGE_JUNK, "");
   if (!out) out = "node";
@@ -45066,7 +45197,7 @@ function resolveInside(outDir, fileName) {
   const root = resolve(outDir);
   const target = resolve(join2(root, fileName));
   const rel = relative(root, target);
-  if (!rel || rel.startsWith("..") || isAbsolute(rel)) return null;
+  if (!rel || rel.startsWith("..") || isAbsolute2(rel)) return null;
   return target;
 }
 function failure2(nodeId, error62) {
@@ -45082,7 +45213,7 @@ async function writeExported(outDir, file2) {
   const path = resolveInside(outDir, exportFileName(file2));
   if (!path) return failure2(file2.nodeId, "file name resolves outside outDir");
   try {
-    await writeFile(path, data);
+    await writeFile2(path, data);
   } catch (e) {
     return failure2(file2.nodeId, e instanceof Error ? e.message : String(e));
   }
@@ -45106,8 +45237,8 @@ var init_export_files = __esm({
 });
 
 // bridge-server/src/tools/export.ts
-import { mkdir } from "node:fs/promises";
-import { isAbsolute as isAbsolute2 } from "node:path";
+import { mkdir as mkdir2 } from "node:fs/promises";
+import { isAbsolute as isAbsolute3 } from "node:path";
 async function collect(slot2, outDir, id, res) {
   slot2.warnings.push(...res.warnings ?? []);
   const reported = res.failed ?? [];
@@ -45173,7 +45304,7 @@ var init_export = __esm({
           outDir,
           ...rest
         }) => {
-          if (!isAbsolute2(outDir))
+          if (!isAbsolute3(outDir))
             return errorResult(
               "outDir must be an absolute path",
               "The tool does not expand ~ or relative paths."
@@ -45198,7 +45329,7 @@ var init_export = __esm({
           if ("error" in resolved) return errorResult(resolved.error);
           const { file: file2, note } = resolved;
           try {
-            await mkdir(outDir, { recursive: true });
+            await mkdir2(outDir, { recursive: true });
           } catch (e) {
             return errorResult(
               "Cannot create outDir: " + (e instanceof Error ? e.message : String(e))
@@ -45266,7 +45397,7 @@ var init_export = __esm({
 });
 
 // bridge-server/src/tools/fonts-check.ts
-var FONTS_CHECK_TIMEOUT_MS, FONTS_CHECK_OLD_PLUGIN_HINT, FONTS_CHECK_EMPTY_HINT, FONTS_CHECK_OP, DESCRIPTION5, fontsCheckInputSchema, registerFontsCheck;
+var FONTS_CHECK_TIMEOUT_MS, FONTS_CHECK_OLD_PLUGIN_HINT, FONTS_CHECK_EMPTY_HINT, FONTS_CHECK_OP, DESCRIPTION6, fontsCheckInputSchema, registerFontsCheck;
 var init_fonts_check = __esm({
   "bridge-server/src/tools/fonts-check.ts"() {
     "use strict";
@@ -45277,7 +45408,7 @@ var init_fonts_check = __esm({
     FONTS_CHECK_OLD_PLUGIN_HINT = "reopen the EZG Tools plugin to update it";
     FONTS_CHECK_EMPTY_HINT = "pass at least one of fonts, nodeIds or textStyles";
     FONTS_CHECK_OP = "fonts.check";
-    DESCRIPTION5 = 'Lists fonts a build or a subtree needs that this Figma user does not have. The bridge cannot install fonts. Sources: fonts (labels "Family Style", e.g. "Inter Bold"), text nodes under nodeIds, and every local text style when textStyles is true. Pass at least one. Returns needed (count of distinct fonts checked), missing (labels not available) and availableCount.';
+    DESCRIPTION6 = 'Lists fonts a build or a subtree needs that this Figma user does not have. The bridge cannot install fonts. Sources: fonts (labels "Family Style", e.g. "Inter Bold"), text nodes under nodeIds, and every local text style when textStyles is true. Pass at least one. Returns needed (count of distinct fonts checked), missing (labels not available) and availableCount.';
     fontsCheckInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -45289,7 +45420,7 @@ var init_fonts_check = __esm({
     registerFontsCheck = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.fontsCheck,
-        { description: DESCRIPTION5, inputSchema: fontsCheckInputSchema },
+        { description: DESCRIPTION6, inputSchema: fontsCheckInputSchema },
         async ({ fileKey: fileKey5, fonts, nodeIds, textStyles }) => {
           const payload = {
             ...fonts?.length ? { fonts } : {},
@@ -45387,6 +45518,95 @@ var init_history = __esm({
           } catch (err) {
             return fromCallError(err);
           }
+        }
+      );
+    };
+  }
+});
+
+// bridge-server/src/tools/images-get.ts
+import { mkdir as mkdir3, writeFile as writeFile3 } from "node:fs/promises";
+import { dirname as dirname3, isAbsolute as isAbsolute4, resolve as resolve2 } from "node:path";
+async function writeImage(outDir, hash2, base643) {
+  const data = Buffer.from(base643, "base64");
+  if (!data.length)
+    return { failed: { hash: hash2, error: "plugin returned no data" } };
+  const path = resolveInside(outDir, `${hash2}.${imageExtension(data)}`);
+  if (!path || dirname3(path) !== resolve2(outDir))
+    return { failed: { hash: hash2, error: "hash resolves outside outDir" } };
+  try {
+    await writeFile3(path, data);
+  } catch (e) {
+    return {
+      failed: { hash: hash2, error: e instanceof Error ? e.message : String(e) }
+    };
+  }
+  return { written: { hash: hash2, path, bytes: data.length } };
+}
+var DESCRIPTION7, OLD_PLUGIN_HINT, inputSchema2, registerImagesGet;
+var init_images_get = __esm({
+  "bridge-server/src/tools/images-get.ts"() {
+    "use strict";
+    init_zod();
+    init_bridge_images();
+    init_context();
+    init_tool_result();
+    init_export_files();
+    DESCRIPTION7 = `Reads image fills of the open Figma file and writes each as <hash>.<ext> to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes. hashes are the imageHash of an IMAGE paint (REST imageRef); the bytes are the original upload, not a render. missing lists hashes the file does not hold, failed lists per-image errors. At most ${IMAGES_GET_MAX_HASHES} hashes per call; split bigger lists. Existing files with the same name are overwritten.`;
+    OLD_PLUGIN_HINT = "The EZG Tools plugin in Figma is older than this server. Reopen the plugin to update it, then retry.";
+    inputSchema2 = {
+      fileKey: external_exports.string().optional(),
+      hashes: external_exports.array(external_exports.string().min(1)).min(1).max(IMAGES_GET_MAX_HASHES),
+      outDir: external_exports.string()
+    };
+    registerImagesGet = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.imagesGet,
+        {
+          title: "Save image fills to disk",
+          description: DESCRIPTION7,
+          inputSchema: inputSchema2
+        },
+        async ({ fileKey: fileKey5, hashes, outDir }) => {
+          if (!isAbsolute4(outDir))
+            return errorResult(
+              "outDir must be an absolute path",
+              "The tool does not expand ~ or relative paths."
+            );
+          const resolved = ctx2.files.resolve(fileKey5);
+          if ("error" in resolved) return errorResult(resolved.error);
+          const { file: file2, note } = resolved;
+          try {
+            await mkdir3(outDir, { recursive: true });
+          } catch (e) {
+            return errorResult(
+              "Cannot create outDir: " + (e instanceof Error ? e.message : String(e))
+            );
+          }
+          let res;
+          try {
+            res = await ctx2.rpc.call(
+              file2.connectionId,
+              IMAGES_OP,
+              { hashes: [...new Set(hashes)] },
+              IMAGES_GET_TIMEOUT_MS
+            );
+          } catch (e) {
+            if (e instanceof BridgeCallError && e.code === "remote" && /unknown op/.test(e.remote?.message ?? ""))
+              return errorResult(e.remote?.message ?? e.message, OLD_PLUGIN_HINT);
+            return fromCallError(e);
+          }
+          const written = [];
+          const failed = [...res.failed ?? []];
+          for (const img of res.images ?? []) {
+            const out = await writeImage(outDir, img.hash, img.base64);
+            if ("written" in out) written.push(out.written);
+            else failed.push(out.failed);
+          }
+          return jsonResult(
+            { outDir, written, missing: res.missing ?? [], failed },
+            note
+          );
         }
       );
     };
@@ -45659,7 +45879,7 @@ var init_inventory_view = __esm({
 });
 
 // bridge-server/src/tools/inventory.ts
-var INVENTORY_TIMEOUT_MS, INVENTORY_OLD_PLUGIN_HINT, DESCRIPTION6, inventoryInputSchema, registerInventory;
+var INVENTORY_TIMEOUT_MS, INVENTORY_OLD_PLUGIN_HINT, DESCRIPTION8, inventoryInputSchema, registerInventory;
 var init_inventory = __esm({
   "bridge-server/src/tools/inventory.ts"() {
     "use strict";
@@ -45670,7 +45890,7 @@ var init_inventory = __esm({
     init_inventory_view();
     INVENTORY_TIMEOUT_MS = 6e4;
     INVENTORY_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use inventory";
-    DESCRIPTION6 = `Lists what the connected Figma file holds in one call: pages (id, name, child count), variables (collections with modes, and each variable with type, scopes and first-mode value), styles (text, paint, effect, grid) and components (component sets and components with their property keys and friendly names, which kit.props in eval accepts). pageIds narrows which pages are loaded for components. Use name (case-insensitive substring) and include to narrow large files; a section that hits the item cap is listed in truncated. Reads live data every call. The default view is compact: variable ids and scopes, style ids, component descriptions and full property objects are left out (components list props as one line each). detail adds them back: ids, scopes, descriptions, props. The result is capped near ${INVENTORY_MAX_CHARS} characters; cut sections are listed in truncated, so narrow with name, include or pageIds.`;
+    DESCRIPTION8 = `Lists what the connected Figma file holds in one call: pages (id, name, child count), variables (collections with modes, and each variable with type, scopes and first-mode value), styles (text, paint, effect, grid) and components (component sets and components with their property keys and friendly names, which kit.props in eval accepts). pageIds narrows which pages are loaded for components. Use name (case-insensitive substring) and include to narrow large files; a section that hits the item cap is listed in truncated. Reads live data every call. The default view is compact: variable ids and scopes, style ids, component descriptions and full property objects are left out (components list props as one line each). detail adds them back: ids, scopes, descriptions, props. The result is capped near ${INVENTORY_MAX_CHARS} characters; cut sections are listed in truncated, so narrow with name, include or pageIds.`;
     inventoryInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -45683,7 +45903,7 @@ var init_inventory = __esm({
     registerInventory = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.inventory,
-        { description: DESCRIPTION6, inputSchema: inventoryInputSchema },
+        { description: DESCRIPTION8, inputSchema: inventoryInputSchema },
         async ({ fileKey: fileKey5, include, pageIds, name, detail }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -45719,7 +45939,7 @@ function registerJobWait(store, now = Date.now) {
   return (server2) => {
     server2.registerTool(
       TOOL_NAMES.jobWait,
-      { description: DESCRIPTION7, inputSchema: jobWaitInputSchema },
+      { description: DESCRIPTION9, inputSchema: jobWaitInputSchema },
       async ({ jobId, timeoutMs }) => {
         const entry = await store.wait(jobId, timeoutMs ?? JOB_WAIT_DEFAULT_MS);
         if (!entry) return errorResult(`no job ${jobId} (jobs are kept 30 min)`);
@@ -45742,7 +45962,7 @@ function registerJobWait(store, now = Date.now) {
     );
   };
 }
-var JOB_WAIT_DEFAULT_MS, JOB_WAIT_MAX_MS, DESCRIPTION7, jobWaitInputSchema;
+var JOB_WAIT_DEFAULT_MS, JOB_WAIT_MAX_MS, DESCRIPTION9, jobWaitInputSchema;
 var init_job = __esm({
   "bridge-server/src/tools/job.ts"() {
     "use strict";
@@ -45751,7 +45971,7 @@ var init_job = __esm({
     init_tool_result();
     JOB_WAIT_DEFAULT_MS = 6e4;
     JOB_WAIT_MAX_MS = 12e4;
-    DESCRIPTION7 = "Waits for a background call started with async: true. Returns that call's own result with a first note job <id> (<tool>) took <s> s, or {jobId, state: running, ms} after timeoutMs (default 60000, max 120000): call job_wait again. The result stays available for 30 minutes and is returned on every call until then. At most 50 jobs are kept.";
+    DESCRIPTION9 = "Waits for a background call started with async: true. Returns that call's own result with a first note job <id> (<tool>) took <s> s, or {jobId, state: running, ms} after timeoutMs (default 60000, max 120000): call job_wait again. The result stays available for 30 minutes and is returned on every call until then. At most 50 jobs are kept.";
     jobWaitInputSchema = {
       jobId: external_exports.string().min(1).describe("Job id, for example j3."),
       timeoutMs: external_exports.number().int().min(0).max(JOB_WAIT_MAX_MS).optional().describe(
@@ -45774,7 +45994,7 @@ function summarize(entries) {
   }
   return { count: entries.length, totalMs, byTool };
 }
-var JOURNAL_LIMIT_MIN, JOURNAL_LIMIT_MAX, JOURNAL_OFF_NOTE, DESCRIPTION8, journalInputSchema, compact, registerJournal;
+var JOURNAL_LIMIT_MIN, JOURNAL_LIMIT_MAX, JOURNAL_OFF_NOTE, DESCRIPTION10, journalInputSchema, compact, registerJournal;
 var init_journal2 = __esm({
   "bridge-server/src/tools/journal.ts"() {
     "use strict";
@@ -45785,7 +46005,7 @@ var init_journal2 = __esm({
     JOURNAL_LIMIT_MIN = 1;
     JOURNAL_LIMIT_MAX = 1e3;
     JOURNAL_OFF_NOTE = "the journal is off (EZG_FIGMA_BRIDGE_JOURNAL=off); nothing is recorded";
-    DESCRIPTION8 = "Returns the tool-call journal: one metadata entry per call (time, session, tool, file, label, duration, ok, error head, byte sizes, stats) plus per-tool totals. The journal never stores eval code or results. session is current (default), all, or a session id; entries from other sessions may belong to other projects.";
+    DESCRIPTION10 = "Returns the tool-call journal: one metadata entry per call (time, session, tool, file, label, duration, ok, error head, byte sizes, stats) plus per-tool totals. The journal never stores eval code or results. session is current (default), all, or a session id; entries from other sessions may belong to other projects.";
     journalInputSchema = {
       session: external_exports.string().min(1).optional(),
       since: external_exports.number().int().min(0).optional(),
@@ -45796,7 +46016,7 @@ var init_journal2 = __esm({
     registerJournal = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.journal,
-        { description: DESCRIPTION8, inputSchema: journalInputSchema },
+        { description: DESCRIPTION10, inputSchema: journalInputSchema },
         ({ session: session2, since, tool, limit }) => {
           const { journal: journal2, session: current } = ctx2.journal;
           const scope = session2 === void 0 ? "current" : session2;
@@ -45824,7 +46044,7 @@ var init_journal2 = __esm({
 });
 
 // bridge-server/src/tools/lint.ts
-var LINT_TIMEOUT_MS, LINT_OLD_PLUGIN_HINT, LINT_INVALID_HINT, DESCRIPTION9, lintInputSchema, registerLint;
+var LINT_TIMEOUT_MS, LINT_OLD_PLUGIN_HINT, LINT_INVALID_HINT, DESCRIPTION11, lintInputSchema, registerLint;
 var init_lint = __esm({
   "bridge-server/src/tools/lint.ts"() {
     "use strict";
@@ -45836,7 +46056,7 @@ var init_lint = __esm({
     LINT_TIMEOUT_MS = 12e4;
     LINT_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use lint";
     LINT_INVALID_HINT = 'options shapes: "name-pattern" {pattern, flags?, types?}; clip {allow?}; "safe-zone" {top?, bottom?, left?, right?, frame?{width,height}, types?, names?}; "grid-style" {styleId?, frame?{width,height}}; "unbound-number" {fields?}; overflow {tolerance?}; reuse {min?}; fix {clip?, styles?, rename?}';
-    DESCRIPTION9 = 'Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more. fix applies safe fixes to the findings in the same call (one undo step), then lints again: clip true unclips clip findings; styles true binds unbound-color and text-no-style nodes to the one local paint or text style with exactly the same values; rename {old: new} renames generic-name and name-pattern findings by exact name. The report then has fixes {fixed, skipped}. detail "summary" (default) returns per-rule groups {rule, count, examples, nodeIds} and a total instead of every finding; detail "full" returns every finding and counts.';
+    DESCRIPTION11 = 'Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more. fix applies safe fixes to the findings in the same call (one undo step), then lints again: clip true unclips clip findings; styles true binds unbound-color and text-no-style nodes to the one local paint or text style with exactly the same values; rename {old: new} renames generic-name and name-pattern findings by exact name. The report then has fixes {fixed, skipped}. detail "summary" (default) returns per-rule groups {rule, count, examples, nodeIds} and a total instead of every finding; detail "full" returns every finding and counts.';
     lintInputSchema = {
       fileKey: external_exports.string().optional(),
       nodeIds: external_exports.array(external_exports.string()).optional(),
@@ -45855,7 +46075,7 @@ var init_lint = __esm({
     registerLint = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.lint,
-        { description: DESCRIPTION9, inputSchema: lintInputSchema },
+        { description: DESCRIPTION11, inputSchema: lintInputSchema },
         async ({ fileKey: fileKey5, detail, ...rest }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -46052,7 +46272,7 @@ function registerRun(registry3) {
   return (server2) => {
     server2.registerTool(
       TOOL_NAMES.run,
-      { description: DESCRIPTION10, inputSchema: runInputSchema },
+      { description: DESCRIPTION12, inputSchema: runInputSchema },
       async ({ fileKey: fileKey5, steps: raw, continueOnError }) => {
         const steps = parseSteps(raw);
         if (typeof steps === "string") return errorResult(steps);
@@ -46106,7 +46326,7 @@ function registerRun(registry3) {
     );
   };
 }
-var RUN_STEP_MAX_CHARS, DESCRIPTION10, runInputSchema, textOf;
+var RUN_STEP_MAX_CHARS, DESCRIPTION12, runInputSchema, textOf;
 var init_run = __esm({
   "bridge-server/src/tools/run.ts"() {
     "use strict";
@@ -46116,7 +46336,7 @@ var init_run = __esm({
     init_run_refs();
     init_tool_result();
     RUN_STEP_MAX_CHARS = 2e4;
-    DESCRIPTION10 = `Runs up to ${RUN_MAX_STEPS} tool steps in order in one call, so build, lint and export cost one round trip. Each step is {tool, args?, as?}; tool is one of ${RUN_TOOLS.join(", ")}. The steps call the same tools with the same validation. A string arg that is exactly $name or $name.a.0.b is replaced by that path in the result of the earlier step whose as is name (write $$text for a literal $text). Steps get fileKey unless they set their own. The run stops at the first failing step unless continueOnError is true. Returns {steps:[{tool, as?, ok, ms, result|error}]}, each step capped near ${RUN_STEP_MAX_CHARS} characters (as refs still see the full result), plus every image the steps returned. Inner calls are not journaled one by one.`;
+    DESCRIPTION12 = `Runs up to ${RUN_MAX_STEPS} tool steps in order in one call, so build, lint and export cost one round trip. Each step is {tool, args?, as?}; tool is one of ${RUN_TOOLS.join(", ")}. The steps call the same tools with the same validation. A string arg that is exactly $name or $name.a.0.b is replaced by that path in the result of the earlier step whose as is name (write $$text for a literal $text). Steps get fileKey unless they set their own. The run stops at the first failing step unless continueOnError is true. Returns {steps:[{tool, as?, ok, ms, result|error}]}, each step capped near ${RUN_STEP_MAX_CHARS} characters (as refs still see the full result), plus every image the steps returned. Inner calls are not journaled one by one.`;
     runInputSchema = {
       fileKey: string2().min(1).optional().describe("Default fileKey for steps that do not set their own."),
       steps: array(unknown()).describe("Steps: [{tool, args?, as?}], run in order."),
@@ -46127,7 +46347,7 @@ var init_run = __esm({
 });
 
 // bridge-server/src/tools/status.ts
-var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION11, statusInputSchema, registerStatus;
+var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION13, statusInputSchema, registerStatus;
 var init_status = __esm({
   "bridge-server/src/tools/status.ts"() {
     "use strict";
@@ -46136,7 +46356,7 @@ var init_status = __esm({
     init_tool_result();
     STATUS_TIMEOUT_MS = 5e3;
     STATUS_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use status";
-    DESCRIPTION11 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
+    DESCRIPTION13 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
     statusInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -46145,7 +46365,7 @@ var init_status = __esm({
     registerStatus = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.status,
-        { description: DESCRIPTION11, inputSchema: statusInputSchema },
+        { description: DESCRIPTION13, inputSchema: statusInputSchema },
         async ({ fileKey: fileKey5 }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -46174,9 +46394,9 @@ var init_status = __esm({
 });
 
 // bridge-server/src/tools/ui-screenshot.ts
-import { mkdir as mkdir2, writeFile as writeFile2 } from "node:fs/promises";
-import { dirname as dirname2, isAbsolute as isAbsolute3 } from "node:path";
-var UI_SCREENSHOT_TIMEOUT_MS, UPDATE_HINT, inputSchema2, registerUiScreenshot;
+import { mkdir as mkdir4, writeFile as writeFile4 } from "node:fs/promises";
+import { dirname as dirname4, isAbsolute as isAbsolute5 } from "node:path";
+var UI_SCREENSHOT_TIMEOUT_MS, UPDATE_HINT, inputSchema3, registerUiScreenshot;
 var init_ui_screenshot = __esm({
   "bridge-server/src/tools/ui-screenshot.ts"() {
     "use strict";
@@ -46187,7 +46407,7 @@ var init_ui_screenshot = __esm({
     init_tool_result();
     UI_SCREENSHOT_TIMEOUT_MS = 15e3;
     UPDATE_HINT = "Update the plugin (re-run the installer) and reopen it.";
-    inputSchema2 = {
+    inputSchema3 = {
       fileKey: external_exports.string().min(1).optional().describe(
         "file key or clientId from `files`; may be omitted when one file is connected"
       ),
@@ -46200,11 +46420,11 @@ var init_ui_screenshot = __esm({
         {
           title: "Screenshot the plugin UI",
           description: "Captures the content of the EZG Tools plugin window (not the canvas, not Figma chrome) as a PNG. scale defaults to the screen pixel ratio. outPath, an absolute path ending in .png, also writes the file on the machine that runs the server; an existing file is overwritten. Use it to document or check the plugin UI.",
-          inputSchema: inputSchema2,
+          inputSchema: inputSchema3,
           annotations: { readOnlyHint: true }
         },
         async ({ fileKey: fileKey5, scale, outPath }) => {
-          if (outPath !== void 0 && !(isAbsolute3(outPath) && /\.png$/i.test(outPath)))
+          if (outPath !== void 0 && !(isAbsolute5(outPath) && /\.png$/i.test(outPath)))
             return errorResult(
               "outPath must be an absolute path ending in .png",
               "The tool does not expand ~ or relative paths."
@@ -46235,8 +46455,8 @@ var init_ui_screenshot = __esm({
           }
           if (outPath) {
             try {
-              await mkdir2(dirname2(outPath), { recursive: true });
-              await writeFile2(outPath, Buffer.from(shot.image.base64, "base64"));
+              await mkdir4(dirname4(outPath), { recursive: true });
+              await writeFile4(outPath, Buffer.from(shot.image.base64, "base64"));
             } catch (e) {
               return errorResult(
                 "Cannot write outPath: " + (e instanceof Error ? e.message : String(e))
@@ -46261,9 +46481,9 @@ var init_ui_screenshot = __esm({
 
 // bridge-server/src/upload-read.ts
 import { readFile, stat } from "node:fs/promises";
-import { basename, extname, isAbsolute as isAbsolute4 } from "node:path";
+import { basename, extname, isAbsolute as isAbsolute6 } from "node:path";
 function sniffKind(bytes) {
-  if (startsWith(bytes, [137, 80, 78, 71]) || startsWith(bytes, [255, 216, 255]) || startsWith(bytes, [71, 73, 70, 56]))
+  if (startsWith2(bytes, [137, 80, 78, 71]) || startsWith2(bytes, [255, 216, 255]) || startsWith2(bytes, [71, 73, 70, 56]))
     return "image";
   const head = new TextDecoder().decode(bytes.subarray(0, SNIFF_CHARS * 4)).replace(/^\uFEFF/, "").trimStart().slice(0, SNIFF_CHARS);
   return head.includes("<svg") ? "svg" : null;
@@ -46281,7 +46501,7 @@ function toItem(name, bytes) {
   throw new Error("unsupported file type");
 }
 async function readPath(path) {
-  if (!isAbsolute4(path)) throw new Error("path must be absolute");
+  if (!isAbsolute6(path)) throw new Error("path must be absolute");
   const info = await stat(path);
   if (!info.isFile()) throw new Error("not a file");
   if (info.size > UPLOAD_MAX_BYTES) throw new Error("file is too large");
@@ -46357,14 +46577,14 @@ async function readUploads(sources) {
   }
   return { items, failed };
 }
-var URL_TIMEOUT_MS, SNIFF_CHARS, startsWith, stem;
+var URL_TIMEOUT_MS, SNIFF_CHARS, startsWith2, stem;
 var init_upload_read = __esm({
   "bridge-server/src/upload-read.ts"() {
     "use strict";
     init_bridge_upload();
     URL_TIMEOUT_MS = 3e4;
     SNIFF_CHARS = 1024;
-    startsWith = (b, sig) => sig.every((v, i) => b[i] === v);
+    startsWith2 = (b, sig) => sig.every((v, i) => b[i] === v);
     stem = (file2) => {
       const base = basename(file2);
       const ext = extname(base);
@@ -46396,7 +46616,7 @@ function errorText2(e) {
   const block = fromCallError(e).content[0];
   return block.type === "text" ? block.text : String(e);
 }
-var UPLOAD_LIMITS, UPLOAD_OLD_PLUGIN_HINT, MB, NAME_ESCAPE_FACTOR, ITEM_OVERHEAD_CHARS, uploadTimeoutMs, inputSchema3, registerUpload;
+var UPLOAD_LIMITS, UPLOAD_OLD_PLUGIN_HINT, MB, NAME_ESCAPE_FACTOR, ITEM_OVERHEAD_CHARS, uploadTimeoutMs, inputSchema4, registerUpload;
 var init_upload = __esm({
   "bridge-server/src/tools/upload.ts"() {
     "use strict";
@@ -46416,7 +46636,7 @@ var init_upload = __esm({
     NAME_ESCAPE_FACTOR = 6;
     ITEM_OVERHEAD_CHARS = 64;
     uploadTimeoutMs = (chars) => UPLOAD_LIMITS.baseTimeoutMs + Math.ceil(chars / MB) * UPLOAD_LIMITS.perMbTimeoutMs;
-    inputSchema3 = {
+    inputSchema4 = {
       fileKey: external_exports.string().optional(),
       paths: external_exports.array(external_exports.string()).optional(),
       urls: external_exports.array(external_exports.string()).optional(),
@@ -46433,7 +46653,7 @@ var init_upload = __esm({
         {
           title: "Upload files into Figma",
           description: `Puts local files (absolute paths on the machine that runs Claude Code) and http(s) URLs into the open Figma file. The server reads the bytes, so they never enter the chat; send only paths or urls. Supported types: PNG, JPG, GIF and SVG, up to ${UPLOAD_MAX_BYTES / MB} MB each and ${UPLOAD_MAX_ITEMS} sources per call. mode "node" (default) creates one node per source: a rectangle with an image fill, or vector nodes for SVG, under parentId or the page pageId, default the current page. mode "fill" sets one image as the fill of the existing node nodeId and takes exactly one source. scaleMode sets the image fill scale. owner is your agent label: it must match your claim on the target, so nodes claimed by other agents are not touched. Returns placed (name, nodeId, size) and failed (source, error).`,
-          inputSchema: inputSchema3
+          inputSchema: inputSchema4
         },
         async ({
           fileKey: fileKey5,
@@ -46620,10 +46840,12 @@ var init_mcp2 = __esm({
     init_claim();
     init_describe();
     init_eval();
+    init_doc_snapshot();
     init_events2();
     init_export();
     init_fonts_check();
     init_history();
+    init_images_get();
     init_icons();
     init_inventory();
     init_job();
@@ -46702,6 +46924,8 @@ var init_mcp2 = __esm({
       registerClaim,
       registerDescribe,
       registerFontsCheck,
+      registerDocSnapshot,
+      registerImagesGet,
       registerJobWait(registry2.jobs),
       registerRun(registry2)
     ]) {
