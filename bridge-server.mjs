@@ -45893,13 +45893,12 @@ function verifyPairs(doc, idMap, limit) {
     if (node2?.type === "COMPONENT_SET")
       for (const child2 of node2.children ?? []) wanted.add(child2);
   }
-  const pairs = [];
-  for (const [sourceId, targetId] of Object.entries(idMap)) {
-    if (pairs.length >= Math.floor(limit)) break;
-    if (has(sourceId) && wanted.has(sourceId))
-      pairs.push({ name: doc.nodes[sourceId].name, sourceId, targetId });
-  }
-  return pairs;
+  const all = Object.entries(idMap).filter(([id]) => has(id) && wanted.has(id));
+  const count = Math.min(all.length, Math.floor(limit));
+  return Array.from({ length: count }, (_, i) => {
+    const [sourceId, targetId] = all[Math.floor(i * all.length / count)];
+    return { name: doc.nodes[sourceId].name, sourceId, targetId };
+  });
 }
 async function runCopy(ctx2, input2, given = {}) {
   const started = performance.now();
