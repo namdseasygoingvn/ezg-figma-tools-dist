@@ -348,6 +348,11 @@ Errors without a code are plain messages.
 - Instances made with `createInstance()` or `clone()` in raw code are not tracked for `atomic` rollback. Make them through `kit`.
 - Remote library components are not in `inventory`.
 - Never call `exportAsync` or `screenshot` in `Promise.all`. Renders run one at a time per file, so `await` them in a loop.
+- `kit.token()` returns a promise. `setBoundVariable(field, kit.token(...))` without `await` fails with "Expected node id to be a string".
+- `node.clone()` puts the copy in the source's parent, or on the current page when that parent is the page. `atomic: true` does not remove it. Append it where it belongs right away, and check the page for strays after a failed run.
+- `componentPropertyReferences` can only be set once the node is inside the component ("Can only set component property references on symbol sublayer"). Append first, then set it.
+- Resolve `instance.overrides` ids by walking `instance.findAll()` into an id map. `figma.getNodeByIdAsync` on those ids can fail with "Unable to establish connection".
+- Some bridge builds have no `args` on `eval`. Inline small base64 images in `code` (keep under the 50,000-character cap) and decode them with `figma.base64Decode`.
 
 ## See and change the view
 
