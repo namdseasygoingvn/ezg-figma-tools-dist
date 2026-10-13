@@ -1408,11 +1408,11 @@ var require_receiver = __commonJS({
        * @return {(Error|RangeError)} The error
        * @private
        */
-      createError(ErrorCtor, message2, prefix, statusCode, errorCode) {
+      createError(ErrorCtor, message3, prefix, statusCode, errorCode) {
         this._loop = false;
         this._errored = true;
         const err = new ErrorCtor(
-          prefix ? `Invalid WebSocket frame: ${message2}` : message2
+          prefix ? `Invalid WebSocket frame: ${message3}` : message3
         );
         Error.captureStackTrace(err, this.createError);
         err.code = errorCode;
@@ -2078,10 +2078,10 @@ var require_event_target = __commonJS({
             callListener(handler, this, event);
           };
         } else if (type === "close") {
-          wrapper = function onClose(code, message2) {
+          wrapper = function onClose(code, message3) {
             const event = new CloseEvent("close", {
               code,
-              reason: message2.toString(),
+              reason: message3.toString(),
               wasClean: this._closeFrameReceived && this._closeFrameSent
             });
             event[kTarget] = this;
@@ -3013,29 +3013,29 @@ var require_websocket = __commonJS({
         const secWebSocketExtensions = res.headers["sec-websocket-extensions"];
         if (secWebSocketExtensions !== void 0) {
           if (!perMessageDeflate) {
-            const message2 = "Server sent a Sec-WebSocket-Extensions header but no extension was requested";
-            abortHandshake(websocket, socket, message2);
+            const message3 = "Server sent a Sec-WebSocket-Extensions header but no extension was requested";
+            abortHandshake(websocket, socket, message3);
             return;
           }
           let extensions;
           try {
             extensions = parse3(secWebSocketExtensions);
           } catch (err) {
-            const message2 = "Invalid Sec-WebSocket-Extensions header";
-            abortHandshake(websocket, socket, message2);
+            const message3 = "Invalid Sec-WebSocket-Extensions header";
+            abortHandshake(websocket, socket, message3);
             return;
           }
           const extensionNames = Object.keys(extensions);
           if (extensionNames.length !== 1 || extensionNames[0] !== PerMessageDeflate2.extensionName) {
-            const message2 = "Server indicated an extension that was not requested";
-            abortHandshake(websocket, socket, message2);
+            const message3 = "Server indicated an extension that was not requested";
+            abortHandshake(websocket, socket, message3);
             return;
           }
           try {
             perMessageDeflate.accept(extensions[PerMessageDeflate2.extensionName]);
           } catch (err) {
-            const message2 = "Invalid Sec-WebSocket-Extensions header";
-            abortHandshake(websocket, socket, message2);
+            const message3 = "Invalid Sec-WebSocket-Extensions header";
+            abortHandshake(websocket, socket, message3);
             return;
           }
           websocket._extensions[PerMessageDeflate2.extensionName] = perMessageDeflate;
@@ -3072,9 +3072,9 @@ var require_websocket = __commonJS({
       }
       return tls.connect(options);
     }
-    function abortHandshake(websocket, stream, message2) {
+    function abortHandshake(websocket, stream, message3) {
       websocket._readyState = WebSocket3.CLOSING;
-      const err = new Error(message2);
+      const err = new Error(message3);
       Error.captureStackTrace(err, abortHandshake);
       if (stream.setHeader) {
         stream[kAborted] = true;
@@ -3238,7 +3238,7 @@ var require_stream = __commonJS({
         objectMode: false,
         writableObjectMode: false
       });
-      ws.on("message", function message2(msg, isBinary) {
+      ws.on("message", function message3(msg, isBinary) {
         const data = !isBinary && duplex._readableState.objectMode ? msg.toString() : msg;
         if (!duplex.push(data)) ws.pause();
       });
@@ -3561,23 +3561,23 @@ var require_websocket_server = __commonJS({
         const upgrade = req.headers.upgrade;
         const version2 = +req.headers["sec-websocket-version"];
         if (req.method !== "GET") {
-          const message2 = "Invalid HTTP method";
-          abortHandshakeOrEmitwsClientError(this, req, socket, 405, message2);
+          const message3 = "Invalid HTTP method";
+          abortHandshakeOrEmitwsClientError(this, req, socket, 405, message3);
           return;
         }
         if (upgrade === void 0 || upgrade.toLowerCase() !== "websocket") {
-          const message2 = "Invalid Upgrade header";
-          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2);
+          const message3 = "Invalid Upgrade header";
+          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message3);
           return;
         }
         if (key === void 0 || !keyRegex.test(key)) {
-          const message2 = "Missing or invalid Sec-WebSocket-Key header";
-          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2);
+          const message3 = "Missing or invalid Sec-WebSocket-Key header";
+          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message3);
           return;
         }
         if (version2 !== 13 && version2 !== 8) {
-          const message2 = "Missing or invalid Sec-WebSocket-Version header";
-          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2, {
+          const message3 = "Missing or invalid Sec-WebSocket-Version header";
+          abortHandshakeOrEmitwsClientError(this, req, socket, 400, message3, {
             "Sec-WebSocket-Version": "13, 8"
           });
           return;
@@ -3592,8 +3592,8 @@ var require_websocket_server = __commonJS({
           try {
             protocols = subprotocol2.parse(secWebSocketProtocol);
           } catch (err) {
-            const message2 = "Invalid Sec-WebSocket-Protocol header";
-            abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2);
+            const message3 = "Invalid Sec-WebSocket-Protocol header";
+            abortHandshakeOrEmitwsClientError(this, req, socket, 400, message3);
             return;
           }
         }
@@ -3612,8 +3612,8 @@ var require_websocket_server = __commonJS({
               extensions[PerMessageDeflate2.extensionName] = perMessageDeflate;
             }
           } catch (err) {
-            const message2 = "Invalid or unacceptable Sec-WebSocket-Extensions header";
-            abortHandshakeOrEmitwsClientError(this, req, socket, 400, message2);
+            const message3 = "Invalid or unacceptable Sec-WebSocket-Extensions header";
+            abortHandshakeOrEmitwsClientError(this, req, socket, 400, message3);
             return;
           }
         }
@@ -3624,9 +3624,9 @@ var require_websocket_server = __commonJS({
             req
           };
           if (this.options.verifyClient.length === 2) {
-            this.options.verifyClient(info, (verified, code, message2, headers) => {
+            this.options.verifyClient(info, (verified, code, message3, headers) => {
               if (!verified) {
-                return abortHandshake(socket, code || 401, message2, headers);
+                return abortHandshake(socket, code || 401, message3, headers);
               }
               this.completeUpgrade(
                 extensions,
@@ -3726,27 +3726,27 @@ var require_websocket_server = __commonJS({
     function socketOnError() {
       this.destroy();
     }
-    function abortHandshake(socket, code, message2, headers) {
-      message2 = message2 || http.STATUS_CODES[code];
+    function abortHandshake(socket, code, message3, headers) {
+      message3 = message3 || http.STATUS_CODES[code];
       headers = {
         Connection: "close",
         "Content-Type": "text/html",
-        "Content-Length": Buffer.byteLength(message2),
+        "Content-Length": Buffer.byteLength(message3),
         ...headers
       };
       socket.once("finish", socket.destroy);
       socket.end(
         `HTTP/1.1 ${code} ${http.STATUS_CODES[code]}\r
-` + Object.keys(headers).map((h) => `${h}: ${headers[h]}`).join("\r\n") + "\r\n\r\n" + message2
+` + Object.keys(headers).map((h) => `${h}: ${headers[h]}`).join("\r\n") + "\r\n\r\n" + message3
       );
     }
-    function abortHandshakeOrEmitwsClientError(server2, req, socket, code, message2, headers) {
+    function abortHandshakeOrEmitwsClientError(server2, req, socket, code, message3, headers) {
       if (server2.listenerCount("wsClientError")) {
-        const err = new Error(message2);
+        const err = new Error(message3);
         Error.captureStackTrace(err, abortHandshakeOrEmitwsClientError);
         server2.emit("wsClientError", err, socket, req);
       } else {
-        abortHandshake(socket, code, message2, headers);
+        abortHandshake(socket, code, message3, headers);
       }
     }
   }
@@ -4801,6 +4801,170 @@ var init_bridge_images = __esm({
   }
 });
 
+// plugins/ezg-tools/src/shared/copy-doc.ts
+var COPY_DOC_VERSION;
+var init_copy_doc = __esm({
+  "plugins/ezg-tools/src/shared/copy-doc.ts"() {
+    "use strict";
+    COPY_DOC_VERSION = 1;
+  }
+});
+
+// plugins/ezg-tools/src/shared/copy-op.ts
+var COPY_READ_OP, COPY_WRITE_OP, COPY_READ_TIMEOUT_MS, COPY_WRITE_TIMEOUT_MS, COPY_RPC_MARGIN_MS, COPY_MAX_NODE_IDS, COPY_ENVELOPE_CHARS, DEFAULT_COPY_OPTIONS;
+var init_copy_op = __esm({
+  "plugins/ezg-tools/src/shared/copy-op.ts"() {
+    "use strict";
+    COPY_READ_OP = "copy.read";
+    COPY_WRITE_OP = "copy.write";
+    COPY_READ_TIMEOUT_MS = 12e4;
+    COPY_WRITE_TIMEOUT_MS = 3e5;
+    COPY_RPC_MARGIN_MS = 5e3;
+    COPY_MAX_NODE_IDS = 500;
+    COPY_ENVELOPE_CHARS = 4096;
+    DEFAULT_COPY_OPTIONS = {
+      placement: "right",
+      conflict: "rename",
+      tokens: "match",
+      libraryRefs: "import",
+      dryRun: false
+    };
+  }
+});
+
+// plugins/ezg-tools/src/shared/copy-op-parse.ts
+function nonEmpty(value) {
+  return typeof value === "string" && value.length > 0;
+}
+function optionalString(raw, key) {
+  const value = raw[key];
+  if (value === void 0) return void 0;
+  return nonEmpty(value) ? value : null;
+}
+function parsePlacement(value) {
+  if (value === "right" || value === "keep") return value;
+  if (!isRecord(value)) return null;
+  const { dx, dy } = value;
+  if (!isFiniteNumber(dx) || !isFiniteNumber(dy)) return null;
+  return { dx, dy };
+}
+function pickEnum(value, allowed, fallback) {
+  if (value === void 0) return fallback;
+  return typeof value === "string" && allowed.includes(value) ? value : null;
+}
+function parseOptions2(raw) {
+  if (!isRecord(raw)) return null;
+  const placement = raw.placement === void 0 ? DEFAULT_COPY_OPTIONS.placement : parsePlacement(raw.placement);
+  const conflict = pickEnum(
+    raw.conflict,
+    CONFLICTS,
+    DEFAULT_COPY_OPTIONS.conflict
+  );
+  const tokens = pickEnum(
+    raw.tokens,
+    TOKENS,
+    DEFAULT_COPY_OPTIONS.tokens
+  );
+  const libraryRefs = pickEnum(
+    raw.libraryRefs,
+    LIBRARY_REFS,
+    DEFAULT_COPY_OPTIONS.libraryRefs
+  );
+  const dryRun = raw.dryRun === void 0 ? DEFAULT_COPY_OPTIONS.dryRun : raw.dryRun;
+  const pageId = optionalString(raw, "pageId");
+  const pageName = optionalString(raw, "pageName");
+  const parentId = optionalString(raw, "parentId");
+  const owner = raw.owner;
+  if (!placement || !conflict || !tokens || !libraryRefs) return null;
+  if (typeof dryRun !== "boolean") return null;
+  if (pageId === null || pageName === null || parentId === null) return null;
+  if (owner !== void 0 && !(typeof owner === "string" && owner.length >= 1 && owner.length <= BUILD_OWNER_MAX)) {
+    return null;
+  }
+  const out = {
+    placement,
+    conflict,
+    tokens,
+    libraryRefs,
+    dryRun
+  };
+  if (pageId !== void 0) out.pageId = pageId;
+  else if (pageName !== void 0) out.pageName = pageName;
+  if (parentId !== void 0) out.parentId = parentId;
+  if (owner !== void 0) out.owner = owner;
+  return out;
+}
+function parseDoc(raw) {
+  if (!isRecord(raw) || raw.version !== COPY_DOC_VERSION) return null;
+  const keys = Object.keys(
+    COPY_DOC_CONTAINERS
+  );
+  for (const key of keys) {
+    const kind = COPY_DOC_CONTAINERS[key];
+    const value = raw[key];
+    if (kind === "array" ? !Array.isArray(value) : !isRecord(value)) return null;
+  }
+  return raw;
+}
+function parseCopyReadPayload(raw) {
+  if (!isRecord(raw)) return null;
+  const { nodeIds, mode, names: names2 } = raw;
+  if (!Array.isArray(nodeIds)) return null;
+  if (nodeIds.length < 1 || nodeIds.length > COPY_MAX_NODE_IDS) return null;
+  const seen = /* @__PURE__ */ new Set();
+  const ids = [];
+  for (const id of nodeIds) {
+    if (!nonEmpty(id)) return null;
+    if (!seen.has(id)) {
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  if (typeof mode !== "string" || !MODES.includes(mode)) return null;
+  const out = { nodeIds: ids, mode };
+  if (names2 !== void 0) {
+    if (!Array.isArray(names2)) return null;
+    for (const name of names2) if (!nonEmpty(name)) return null;
+    if (names2.length > 0) out.names = names2;
+  }
+  return out;
+}
+function parseCopyWritePayload(raw) {
+  if (!isRecord(raw)) return null;
+  const doc = parseDoc(raw.doc);
+  if (!doc) return null;
+  const options = parseOptions2(raw.options);
+  if (!options) return null;
+  return { doc, options };
+}
+var COPY_DOC_CONTAINERS, MODES, CONFLICTS, TOKENS, LIBRARY_REFS;
+var init_copy_op_parse = __esm({
+  "plugins/ezg-tools/src/shared/copy-op-parse.ts"() {
+    "use strict";
+    init_bridge_build_expect();
+    init_copy_doc();
+    init_copy_op();
+    init_values();
+    COPY_DOC_CONTAINERS = {
+      source: "object",
+      roots: "array",
+      units: "array",
+      nodes: "object",
+      remote: "object",
+      collections: "array",
+      variables: "array",
+      styles: "array",
+      images: "object",
+      fonts: "array",
+      warnings: "array"
+    };
+    MODES = ["components", "as-is"];
+    CONFLICTS = ["skip", "replace", "rename"];
+    TOKENS = ["match", "create", "inline"];
+    LIBRARY_REFS = ["import", "clone"];
+  }
+});
+
 // plugins/ezg-tools/src/shared/bridge-parse.ts
 function parseEval(raw) {
   if (!isRecord(raw)) return null;
@@ -4904,6 +5068,7 @@ var init_bridge_parse = __esm({
     init_bridge_fonts_check();
     init_bridge_snapshot();
     init_bridge_images();
+    init_copy_op_parse();
     init_bridge_ui_tunnel();
     init_values();
     EXPORT_FORMATS = [
@@ -4944,6 +5109,8 @@ var init_bridge_parse = __esm({
       "fonts.check": parseFontsCheckPayload,
       "doc.snapshot": parseDocSnapshotPayload,
       "images.get": parseImagesGetPayload,
+      "copy.read": parseCopyReadPayload,
+      "copy.write": parseCopyWritePayload,
       "ui.screenshot": parseUiScreenshot,
       "ui.msg": parseUiMsgPayload,
       status: parseEmpty,
@@ -4994,6 +5161,8 @@ var init_bridge_ops = __esm({
       "fonts.check": true,
       "doc.snapshot": true,
       "images.get": true,
+      "copy.read": true,
+      "copy.write": true,
       "ui.screenshot": true,
       "ui.msg": true,
       status: true,
@@ -5766,8 +5935,8 @@ function pagePatch(event) {
 function createFileRegistry(linkError = () => null) {
   const entries = /* @__PURE__ */ new Map();
   const list = () => [...entries.values()].map((f) => ({ ...f })).sort((a, b) => a.connectedAt - b.connectedAt);
-  const fail = (message2) => ({
-    error: `${message2}
+  const fail2 = (message3) => ({
+    error: `${message3}
 ${describeFiles(list())}`
   });
   function resolve3(target) {
@@ -5776,7 +5945,7 @@ ${describeFiles(list())}`
     if (t) {
       const byKey = all.filter((f) => f.fileKey === t);
       if (byKey.length > 1) {
-        return fail(
+        return fail2(
           `fileKey "${t}" matches several connected files. Pass clientId instead.`
         );
       }
@@ -5796,11 +5965,11 @@ ${describeFiles(list())}`
       };
     }
     if (t) {
-      return fail(
+      return fail2(
         `No connected file matches "${t}". Use clientId or fileKey from the list.`
       );
     }
-    return fail("Several files are connected. Pass fileKey or clientId.");
+    return fail2("Several files are connected. Pass fileKey or clientId.");
   }
   return {
     add(connectionId, file2, port) {
@@ -5838,10 +6007,10 @@ var init_files = __esm({
 // bridge-server/src/listen.ts
 import { createServer } from "node:http";
 function listenOnce(server2, port) {
-  return new Promise((resolve3, fail) => {
+  return new Promise((resolve3, fail2) => {
     server2.once("error", (err) => {
       if (err.code === "EADDRINUSE") resolve3("in-use");
-      else fail(err);
+      else fail2(err);
     });
     server2.listen(port, "127.0.0.1", () => resolve3("ok"));
   });
@@ -6441,104 +6610,104 @@ var init_en = __esm({
     init_ZodError();
     init_util();
     errorMap = (issue2, _ctx) => {
-      let message2;
+      let message3;
       switch (issue2.code) {
         case ZodIssueCode.invalid_type:
           if (issue2.received === ZodParsedType.undefined) {
-            message2 = "Required";
+            message3 = "Required";
           } else {
-            message2 = `Expected ${issue2.expected}, received ${issue2.received}`;
+            message3 = `Expected ${issue2.expected}, received ${issue2.received}`;
           }
           break;
         case ZodIssueCode.invalid_literal:
-          message2 = `Invalid literal value, expected ${JSON.stringify(issue2.expected, util.jsonStringifyReplacer)}`;
+          message3 = `Invalid literal value, expected ${JSON.stringify(issue2.expected, util.jsonStringifyReplacer)}`;
           break;
         case ZodIssueCode.unrecognized_keys:
-          message2 = `Unrecognized key(s) in object: ${util.joinValues(issue2.keys, ", ")}`;
+          message3 = `Unrecognized key(s) in object: ${util.joinValues(issue2.keys, ", ")}`;
           break;
         case ZodIssueCode.invalid_union:
-          message2 = `Invalid input`;
+          message3 = `Invalid input`;
           break;
         case ZodIssueCode.invalid_union_discriminator:
-          message2 = `Invalid discriminator value. Expected ${util.joinValues(issue2.options)}`;
+          message3 = `Invalid discriminator value. Expected ${util.joinValues(issue2.options)}`;
           break;
         case ZodIssueCode.invalid_enum_value:
-          message2 = `Invalid enum value. Expected ${util.joinValues(issue2.options)}, received '${issue2.received}'`;
+          message3 = `Invalid enum value. Expected ${util.joinValues(issue2.options)}, received '${issue2.received}'`;
           break;
         case ZodIssueCode.invalid_arguments:
-          message2 = `Invalid function arguments`;
+          message3 = `Invalid function arguments`;
           break;
         case ZodIssueCode.invalid_return_type:
-          message2 = `Invalid function return type`;
+          message3 = `Invalid function return type`;
           break;
         case ZodIssueCode.invalid_date:
-          message2 = `Invalid date`;
+          message3 = `Invalid date`;
           break;
         case ZodIssueCode.invalid_string:
           if (typeof issue2.validation === "object") {
             if ("includes" in issue2.validation) {
-              message2 = `Invalid input: must include "${issue2.validation.includes}"`;
+              message3 = `Invalid input: must include "${issue2.validation.includes}"`;
               if (typeof issue2.validation.position === "number") {
-                message2 = `${message2} at one or more positions greater than or equal to ${issue2.validation.position}`;
+                message3 = `${message3} at one or more positions greater than or equal to ${issue2.validation.position}`;
               }
             } else if ("startsWith" in issue2.validation) {
-              message2 = `Invalid input: must start with "${issue2.validation.startsWith}"`;
+              message3 = `Invalid input: must start with "${issue2.validation.startsWith}"`;
             } else if ("endsWith" in issue2.validation) {
-              message2 = `Invalid input: must end with "${issue2.validation.endsWith}"`;
+              message3 = `Invalid input: must end with "${issue2.validation.endsWith}"`;
             } else {
               util.assertNever(issue2.validation);
             }
           } else if (issue2.validation !== "regex") {
-            message2 = `Invalid ${issue2.validation}`;
+            message3 = `Invalid ${issue2.validation}`;
           } else {
-            message2 = "Invalid";
+            message3 = "Invalid";
           }
           break;
         case ZodIssueCode.too_small:
           if (issue2.type === "array")
-            message2 = `Array must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `more than`} ${issue2.minimum} element(s)`;
+            message3 = `Array must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `more than`} ${issue2.minimum} element(s)`;
           else if (issue2.type === "string")
-            message2 = `String must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `over`} ${issue2.minimum} character(s)`;
+            message3 = `String must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `over`} ${issue2.minimum} character(s)`;
           else if (issue2.type === "number")
-            message2 = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
+            message3 = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
           else if (issue2.type === "bigint")
-            message2 = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
+            message3 = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
           else if (issue2.type === "date")
-            message2 = `Date must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${new Date(Number(issue2.minimum))}`;
+            message3 = `Date must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${new Date(Number(issue2.minimum))}`;
           else
-            message2 = "Invalid input";
+            message3 = "Invalid input";
           break;
         case ZodIssueCode.too_big:
           if (issue2.type === "array")
-            message2 = `Array must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `less than`} ${issue2.maximum} element(s)`;
+            message3 = `Array must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `less than`} ${issue2.maximum} element(s)`;
           else if (issue2.type === "string")
-            message2 = `String must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `under`} ${issue2.maximum} character(s)`;
+            message3 = `String must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `under`} ${issue2.maximum} character(s)`;
           else if (issue2.type === "number")
-            message2 = `Number must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
+            message3 = `Number must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
           else if (issue2.type === "bigint")
-            message2 = `BigInt must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
+            message3 = `BigInt must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
           else if (issue2.type === "date")
-            message2 = `Date must be ${issue2.exact ? `exactly` : issue2.inclusive ? `smaller than or equal to` : `smaller than`} ${new Date(Number(issue2.maximum))}`;
+            message3 = `Date must be ${issue2.exact ? `exactly` : issue2.inclusive ? `smaller than or equal to` : `smaller than`} ${new Date(Number(issue2.maximum))}`;
           else
-            message2 = "Invalid input";
+            message3 = "Invalid input";
           break;
         case ZodIssueCode.custom:
-          message2 = `Invalid input`;
+          message3 = `Invalid input`;
           break;
         case ZodIssueCode.invalid_intersection_types:
-          message2 = `Intersection results could not be merged`;
+          message3 = `Intersection results could not be merged`;
           break;
         case ZodIssueCode.not_multiple_of:
-          message2 = `Number must be a multiple of ${issue2.multipleOf}`;
+          message3 = `Number must be a multiple of ${issue2.multipleOf}`;
           break;
         case ZodIssueCode.not_finite:
-          message2 = "Number must be finite";
+          message3 = "Number must be finite";
           break;
         default:
-          message2 = _ctx.defaultError;
+          message3 = _ctx.defaultError;
           util.assertNever(issue2);
       }
-      return { message: message2 };
+      return { message: message3 };
     };
     en_default = errorMap;
   }
@@ -6683,8 +6852,8 @@ var errorUtil;
 var init_errorUtil = __esm({
   "node_modules/zod/v3/helpers/errorUtil.js"() {
     (function(errorUtil2) {
-      errorUtil2.errToObj = (message2) => typeof message2 === "string" ? { message: message2 } : message2 || {};
-      errorUtil2.toString = (message2) => typeof message2 === "string" ? message2 : message2?.message;
+      errorUtil2.errToObj = (message3) => typeof message3 === "string" ? { message: message3 } : message3 || {};
+      errorUtil2.toString = (message3) => typeof message3 === "string" ? message3 : message3?.message;
     })(errorUtil || (errorUtil = {}));
   }
 });
@@ -6700,16 +6869,16 @@ function processCreateParams(params) {
   if (errorMap2)
     return { errorMap: errorMap2, description };
   const customMap = (iss, ctx2) => {
-    const { message: message2 } = params;
+    const { message: message3 } = params;
     if (iss.code === "invalid_enum_value") {
-      return { message: message2 ?? ctx2.defaultError };
+      return { message: message3 ?? ctx2.defaultError };
     }
     if (typeof ctx2.data === "undefined") {
-      return { message: message2 ?? required_error ?? ctx2.defaultError };
+      return { message: message3 ?? required_error ?? ctx2.defaultError };
     }
     if (iss.code !== "invalid_type")
       return { message: ctx2.defaultError };
-    return { message: message2 ?? invalid_type_error ?? ctx2.defaultError };
+    return { message: message3 ?? invalid_type_error ?? ctx2.defaultError };
   };
   return { errorMap: customMap, description };
 }
@@ -7026,14 +7195,14 @@ var init_types = __esm({
         const result = await (isAsync(maybeAsyncResult) ? maybeAsyncResult : Promise.resolve(maybeAsyncResult));
         return handleResult(ctx2, result);
       }
-      refine(check2, message2) {
+      refine(check2, message3) {
         const getIssueProperties = (val) => {
-          if (typeof message2 === "string" || typeof message2 === "undefined") {
-            return { message: message2 };
-          } else if (typeof message2 === "function") {
-            return message2(val);
+          if (typeof message3 === "string" || typeof message3 === "undefined") {
+            return { message: message3 };
+          } else if (typeof message3 === "function") {
+            return message3(val);
           } else {
-            return message2;
+            return message3;
           }
         };
         return this._refinement((val, ctx2) => {
@@ -7506,11 +7675,11 @@ var init_types = __esm({
         }
         return { status: status.value, value: input2.data };
       }
-      _regex(regex, validation, message2) {
+      _regex(regex, validation, message3) {
         return this.refinement((data) => regex.test(data), {
           validation,
           code: ZodIssueCode.invalid_string,
-          ...errorUtil.errToObj(message2)
+          ...errorUtil.errToObj(message3)
         });
       }
       _addCheck(check2) {
@@ -7519,37 +7688,37 @@ var init_types = __esm({
           checks: [...this._def.checks, check2]
         });
       }
-      email(message2) {
-        return this._addCheck({ kind: "email", ...errorUtil.errToObj(message2) });
+      email(message3) {
+        return this._addCheck({ kind: "email", ...errorUtil.errToObj(message3) });
       }
-      url(message2) {
-        return this._addCheck({ kind: "url", ...errorUtil.errToObj(message2) });
+      url(message3) {
+        return this._addCheck({ kind: "url", ...errorUtil.errToObj(message3) });
       }
-      emoji(message2) {
-        return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message2) });
+      emoji(message3) {
+        return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message3) });
       }
-      uuid(message2) {
-        return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message2) });
+      uuid(message3) {
+        return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message3) });
       }
-      nanoid(message2) {
-        return this._addCheck({ kind: "nanoid", ...errorUtil.errToObj(message2) });
+      nanoid(message3) {
+        return this._addCheck({ kind: "nanoid", ...errorUtil.errToObj(message3) });
       }
-      cuid(message2) {
-        return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message2) });
+      cuid(message3) {
+        return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message3) });
       }
-      cuid2(message2) {
-        return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message2) });
+      cuid2(message3) {
+        return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message3) });
       }
-      ulid(message2) {
-        return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(message2) });
+      ulid(message3) {
+        return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(message3) });
       }
-      base64(message2) {
-        return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message2) });
+      base64(message3) {
+        return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message3) });
       }
-      base64url(message2) {
+      base64url(message3) {
         return this._addCheck({
           kind: "base64url",
-          ...errorUtil.errToObj(message2)
+          ...errorUtil.errToObj(message3)
         });
       }
       jwt(options) {
@@ -7579,8 +7748,8 @@ var init_types = __esm({
           ...errorUtil.errToObj(options?.message)
         });
       }
-      date(message2) {
-        return this._addCheck({ kind: "date", message: message2 });
+      date(message3) {
+        return this._addCheck({ kind: "date", message: message3 });
       }
       time(options) {
         if (typeof options === "string") {
@@ -7596,14 +7765,14 @@ var init_types = __esm({
           ...errorUtil.errToObj(options?.message)
         });
       }
-      duration(message2) {
-        return this._addCheck({ kind: "duration", ...errorUtil.errToObj(message2) });
+      duration(message3) {
+        return this._addCheck({ kind: "duration", ...errorUtil.errToObj(message3) });
       }
-      regex(regex, message2) {
+      regex(regex, message3) {
         return this._addCheck({
           kind: "regex",
           regex,
-          ...errorUtil.errToObj(message2)
+          ...errorUtil.errToObj(message3)
         });
       }
       includes(value, options) {
@@ -7614,46 +7783,46 @@ var init_types = __esm({
           ...errorUtil.errToObj(options?.message)
         });
       }
-      startsWith(value, message2) {
+      startsWith(value, message3) {
         return this._addCheck({
           kind: "startsWith",
           value,
-          ...errorUtil.errToObj(message2)
+          ...errorUtil.errToObj(message3)
         });
       }
-      endsWith(value, message2) {
+      endsWith(value, message3) {
         return this._addCheck({
           kind: "endsWith",
           value,
-          ...errorUtil.errToObj(message2)
+          ...errorUtil.errToObj(message3)
         });
       }
-      min(minLength, message2) {
+      min(minLength, message3) {
         return this._addCheck({
           kind: "min",
           value: minLength,
-          ...errorUtil.errToObj(message2)
+          ...errorUtil.errToObj(message3)
         });
       }
-      max(maxLength, message2) {
+      max(maxLength, message3) {
         return this._addCheck({
           kind: "max",
           value: maxLength,
-          ...errorUtil.errToObj(message2)
+          ...errorUtil.errToObj(message3)
         });
       }
-      length(len, message2) {
+      length(len, message3) {
         return this._addCheck({
           kind: "length",
           value: len,
-          ...errorUtil.errToObj(message2)
+          ...errorUtil.errToObj(message3)
         });
       }
       /**
        * Equivalent to `.min(1)`
        */
-      nonempty(message2) {
-        return this.min(1, errorUtil.errToObj(message2));
+      nonempty(message3) {
+        return this.min(1, errorUtil.errToObj(message3));
       }
       trim() {
         return new _ZodString2({
@@ -7838,19 +8007,19 @@ var init_types = __esm({
         }
         return { status: status.value, value: input2.data };
       }
-      gte(value, message2) {
-        return this.setLimit("min", value, true, errorUtil.toString(message2));
+      gte(value, message3) {
+        return this.setLimit("min", value, true, errorUtil.toString(message3));
       }
-      gt(value, message2) {
-        return this.setLimit("min", value, false, errorUtil.toString(message2));
+      gt(value, message3) {
+        return this.setLimit("min", value, false, errorUtil.toString(message3));
       }
-      lte(value, message2) {
-        return this.setLimit("max", value, true, errorUtil.toString(message2));
+      lte(value, message3) {
+        return this.setLimit("max", value, true, errorUtil.toString(message3));
       }
-      lt(value, message2) {
-        return this.setLimit("max", value, false, errorUtil.toString(message2));
+      lt(value, message3) {
+        return this.setLimit("max", value, false, errorUtil.toString(message3));
       }
-      setLimit(kind, value, inclusive, message2) {
+      setLimit(kind, value, inclusive, message3) {
         return new _ZodNumber({
           ...this._def,
           checks: [
@@ -7859,7 +8028,7 @@ var init_types = __esm({
               kind,
               value,
               inclusive,
-              message: errorUtil.toString(message2)
+              message: errorUtil.toString(message3)
             }
           ]
         });
@@ -7870,68 +8039,68 @@ var init_types = __esm({
           checks: [...this._def.checks, check2]
         });
       }
-      int(message2) {
+      int(message3) {
         return this._addCheck({
           kind: "int",
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      positive(message2) {
+      positive(message3) {
         return this._addCheck({
           kind: "min",
           value: 0,
           inclusive: false,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      negative(message2) {
+      negative(message3) {
         return this._addCheck({
           kind: "max",
           value: 0,
           inclusive: false,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      nonpositive(message2) {
+      nonpositive(message3) {
         return this._addCheck({
           kind: "max",
           value: 0,
           inclusive: true,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      nonnegative(message2) {
+      nonnegative(message3) {
         return this._addCheck({
           kind: "min",
           value: 0,
           inclusive: true,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      multipleOf(value, message2) {
+      multipleOf(value, message3) {
         return this._addCheck({
           kind: "multipleOf",
           value,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      finite(message2) {
+      finite(message3) {
         return this._addCheck({
           kind: "finite",
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      safe(message2) {
+      safe(message3) {
         return this._addCheck({
           kind: "min",
           inclusive: true,
           value: Number.MIN_SAFE_INTEGER,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         })._addCheck({
           kind: "max",
           inclusive: true,
           value: Number.MAX_SAFE_INTEGER,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
       get minValue() {
@@ -8054,19 +8223,19 @@ var init_types = __esm({
         });
         return INVALID;
       }
-      gte(value, message2) {
-        return this.setLimit("min", value, true, errorUtil.toString(message2));
+      gte(value, message3) {
+        return this.setLimit("min", value, true, errorUtil.toString(message3));
       }
-      gt(value, message2) {
-        return this.setLimit("min", value, false, errorUtil.toString(message2));
+      gt(value, message3) {
+        return this.setLimit("min", value, false, errorUtil.toString(message3));
       }
-      lte(value, message2) {
-        return this.setLimit("max", value, true, errorUtil.toString(message2));
+      lte(value, message3) {
+        return this.setLimit("max", value, true, errorUtil.toString(message3));
       }
-      lt(value, message2) {
-        return this.setLimit("max", value, false, errorUtil.toString(message2));
+      lt(value, message3) {
+        return this.setLimit("max", value, false, errorUtil.toString(message3));
       }
-      setLimit(kind, value, inclusive, message2) {
+      setLimit(kind, value, inclusive, message3) {
         return new _ZodBigInt({
           ...this._def,
           checks: [
@@ -8075,7 +8244,7 @@ var init_types = __esm({
               kind,
               value,
               inclusive,
-              message: errorUtil.toString(message2)
+              message: errorUtil.toString(message3)
             }
           ]
         });
@@ -8086,43 +8255,43 @@ var init_types = __esm({
           checks: [...this._def.checks, check2]
         });
       }
-      positive(message2) {
+      positive(message3) {
         return this._addCheck({
           kind: "min",
           value: BigInt(0),
           inclusive: false,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      negative(message2) {
+      negative(message3) {
         return this._addCheck({
           kind: "max",
           value: BigInt(0),
           inclusive: false,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      nonpositive(message2) {
+      nonpositive(message3) {
         return this._addCheck({
           kind: "max",
           value: BigInt(0),
           inclusive: true,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      nonnegative(message2) {
+      nonnegative(message3) {
         return this._addCheck({
           kind: "min",
           value: BigInt(0),
           inclusive: true,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      multipleOf(value, message2) {
+      multipleOf(value, message3) {
         return this._addCheck({
           kind: "multipleOf",
           value,
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
       get minValue() {
@@ -8245,18 +8414,18 @@ var init_types = __esm({
           checks: [...this._def.checks, check2]
         });
       }
-      min(minDate, message2) {
+      min(minDate, message3) {
         return this._addCheck({
           kind: "min",
           value: minDate.getTime(),
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
-      max(maxDate, message2) {
+      max(maxDate, message3) {
         return this._addCheck({
           kind: "max",
           value: maxDate.getTime(),
-          message: errorUtil.toString(message2)
+          message: errorUtil.toString(message3)
         });
       }
       get minDate() {
@@ -8488,26 +8657,26 @@ var init_types = __esm({
       get element() {
         return this._def.type;
       }
-      min(minLength, message2) {
+      min(minLength, message3) {
         return new _ZodArray({
           ...this._def,
-          minLength: { value: minLength, message: errorUtil.toString(message2) }
+          minLength: { value: minLength, message: errorUtil.toString(message3) }
         });
       }
-      max(maxLength, message2) {
+      max(maxLength, message3) {
         return new _ZodArray({
           ...this._def,
-          maxLength: { value: maxLength, message: errorUtil.toString(message2) }
+          maxLength: { value: maxLength, message: errorUtil.toString(message3) }
         });
       }
-      length(len, message2) {
+      length(len, message3) {
         return new _ZodArray({
           ...this._def,
-          exactLength: { value: len, message: errorUtil.toString(message2) }
+          exactLength: { value: len, message: errorUtil.toString(message3) }
         });
       }
-      nonempty(message2) {
-        return this.min(1, message2);
+      nonempty(message3) {
+        return this.min(1, message3);
       }
     };
     ZodArray.create = (schema, params) => {
@@ -8624,17 +8793,17 @@ var init_types = __esm({
       get shape() {
         return this._def.shape();
       }
-      strict(message2) {
+      strict(message3) {
         errorUtil.errToObj;
         return new _ZodObject({
           ...this._def,
           unknownKeys: "strict",
-          ...message2 !== void 0 ? {
+          ...message3 !== void 0 ? {
             errorMap: (issue2, ctx2) => {
               const defaultError = this._def.errorMap?.(issue2, ctx2).message ?? ctx2.defaultError;
               if (issue2.code === "unrecognized_keys")
                 return {
-                  message: errorUtil.errToObj(message2).message ?? defaultError
+                  message: errorUtil.errToObj(message3).message ?? defaultError
                 };
               return {
                 message: defaultError
@@ -9352,23 +9521,23 @@ var init_types = __esm({
           return finalizeSet(elements);
         }
       }
-      min(minSize, message2) {
+      min(minSize, message3) {
         return new _ZodSet({
           ...this._def,
-          minSize: { value: minSize, message: errorUtil.toString(message2) }
+          minSize: { value: minSize, message: errorUtil.toString(message3) }
         });
       }
-      max(maxSize, message2) {
+      max(maxSize, message3) {
         return new _ZodSet({
           ...this._def,
-          maxSize: { value: maxSize, message: errorUtil.toString(message2) }
+          maxSize: { value: maxSize, message: errorUtil.toString(message3) }
         });
       }
-      size(size2, message2) {
-        return this.min(size2, message2).max(size2, message2);
+      size(size2, message3) {
+        return this.min(size2, message3).max(size2, message3);
       }
-      nonempty(message2) {
-        return this.min(1, message2);
+      nonempty(message3) {
+        return this.min(1, message3);
       }
     };
     ZodSet.create = (valueType, params) => {
@@ -10614,8 +10783,8 @@ function prefixIssues(path, issues) {
     return iss;
   });
 }
-function unwrapMessage(message2) {
-  return typeof message2 === "string" ? message2 : message2?.message;
+function unwrapMessage(message3) {
+  return typeof message3 === "string" ? message3 : message3?.message;
 }
 function attachSchema(issues, start, inst) {
   var _a3;
@@ -10633,7 +10802,7 @@ function finalizeIssue(iss, ctx2, config2) {
       iss.schema = iss.inst;
   }
   const schemaError = iss.schema !== iss.inst ? iss.schema?._zod.def?.error : void 0;
-  const message2 = iss.message ? iss.message : unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(schemaError?.(iss)) ?? unwrapMessage(ctx2?.error?.(iss)) ?? unwrapMessage(config2.customError?.(iss)) ?? unwrapMessage(config2.localeError?.(iss)) ?? "Invalid input";
+  const message3 = iss.message ? iss.message : unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(schemaError?.(iss)) ?? unwrapMessage(ctx2?.error?.(iss)) ?? unwrapMessage(config2.customError?.(iss)) ?? unwrapMessage(config2.localeError?.(iss)) ?? "Invalid input";
   const full = {};
   for (const k of Object.keys(iss)) {
     if (k === "inst" || k === "schema" || k === "continue" || k === "input" || k === "__proto__")
@@ -10641,7 +10810,7 @@ function finalizeIssue(iss, ctx2, config2) {
     full[k] = iss[k];
   }
   full.path ?? (full.path = []);
-  full.message = message2;
+  full.message = message3;
   if (ctx2?.reportInput) {
     full.input = iss.input;
   }
@@ -24522,8 +24691,8 @@ var init_compile = __esm({
     INVALID2 = /* @__PURE__ */ Symbol.for("zod.compile.invalid");
     FALLBACK_FLAG = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
     ZodCompileAsyncError = class extends Error {
-      constructor(message2 = "z.compile does not support async refinements, transforms, or checks") {
-        super(message2);
+      constructor(message3 = "z.compile does not support async refinements, transforms, or checks") {
+        super(message3);
         this.name = "ZodCompileAsyncError";
       }
     };
@@ -25675,12 +25844,12 @@ function initializeContext(params) {
     external: params?.external ?? void 0
   };
 }
-function handleUnrepresentable(schema, ctx2, json2, params, message2) {
-  const result = typeof ctx2.unrepresentable === "function" ? ctx2.unrepresentable({ zodSchema: schema, path: params.path, message: message2 }) : ctx2.unrepresentable;
+function handleUnrepresentable(schema, ctx2, json2, params, message3) {
+  const result = typeof ctx2.unrepresentable === "function" ? ctx2.unrepresentable({ zodSchema: schema, path: params.path, message: message3 }) : ctx2.unrepresentable;
   if (result === "any")
     return false;
   if (result === void 0 || result === "throw")
-    throw new Error(message2);
+    throw new Error(message3);
   Object.assign(json2, result);
   return true;
 }
@@ -32278,8 +32447,8 @@ var init_types2 = __esm({
       CreateTaskResultSchema
     ]);
     McpError = class _McpError extends Error {
-      constructor(code, message2, data) {
-        super(`MCP error ${code}: ${message2}`);
+      constructor(code, message3, data) {
+        super(`MCP error ${code}: ${message3}`);
         this.code = code;
         this.data = data;
         this.name = "McpError";
@@ -32287,19 +32456,19 @@ var init_types2 = __esm({
       /**
        * Factory method to create the appropriate error type based on the error code and data
        */
-      static fromError(code, message2, data) {
+      static fromError(code, message3, data) {
         if (code === ErrorCode.UrlElicitationRequired && data) {
           const errorData = data;
           if (errorData.elicitations) {
-            return new UrlElicitationRequiredError(errorData.elicitations, message2);
+            return new UrlElicitationRequiredError(errorData.elicitations, message3);
           }
         }
-        return new _McpError(code, message2, data);
+        return new _McpError(code, message3, data);
       }
     };
     UrlElicitationRequiredError = class extends McpError {
-      constructor(elicitations, message2 = `URL elicitation${elicitations.length > 1 ? "s" : ""} required`) {
-        super(ErrorCode.UrlElicitationRequired, message2, {
+      constructor(elicitations, message3 = `URL elicitation${elicitations.length > 1 ? "s" : ""} required`) {
+        super(ErrorCode.UrlElicitationRequired, message3, {
           elicitations
         });
       }
@@ -32872,7 +33041,7 @@ function escapeNonAlphaNumeric(source) {
   }
   return result;
 }
-function addFormat(schema, value, message2, refs) {
+function addFormat(schema, value, message3, refs) {
   if (schema.format || schema.anyOf?.some((x) => x.format)) {
     if (!schema.anyOf) {
       schema.anyOf = [];
@@ -32894,13 +33063,13 @@ function addFormat(schema, value, message2, refs) {
     }
     schema.anyOf.push({
       format: value,
-      ...message2 && refs.errorMessages && { errorMessage: { format: message2 } }
+      ...message3 && refs.errorMessages && { errorMessage: { format: message3 } }
     });
   } else {
-    setResponseValueAndErrors(schema, "format", value, message2, refs);
+    setResponseValueAndErrors(schema, "format", value, message3, refs);
   }
 }
-function addPattern2(schema, regex, message2, refs) {
+function addPattern2(schema, regex, message3, refs) {
   if (schema.pattern || schema.allOf?.some((x) => x.pattern)) {
     if (!schema.allOf) {
       schema.allOf = [];
@@ -32922,10 +33091,10 @@ function addPattern2(schema, regex, message2, refs) {
     }
     schema.allOf.push({
       pattern: stringifyRegExpWithFlags(regex, refs),
-      ...message2 && refs.errorMessages && { errorMessage: { pattern: message2 } }
+      ...message3 && refs.errorMessages && { errorMessage: { pattern: message3 } }
     });
   } else {
-    setResponseValueAndErrors(schema, "pattern", stringifyRegExpWithFlags(regex, refs), message2, refs);
+    setResponseValueAndErrors(schema, "pattern", stringifyRegExpWithFlags(regex, refs), message3, refs);
   }
 }
 function stringifyRegExpWithFlags(regex, refs) {
@@ -34012,15 +34181,15 @@ var init_protocol = __esm({
                 let queuedMessage;
                 while (queuedMessage = await this._taskMessageQueue.dequeue(taskId, extra.sessionId)) {
                   if (queuedMessage.type === "response" || queuedMessage.type === "error") {
-                    const message2 = queuedMessage.message;
-                    const requestId = message2.id;
+                    const message3 = queuedMessage.message;
+                    const requestId = message3.id;
                     const resolver = this._requestResolvers.get(requestId);
                     if (resolver) {
                       this._requestResolvers.delete(requestId);
                       if (queuedMessage.type === "response") {
-                        resolver(message2);
+                        resolver(message3);
                       } else {
-                        const errorMessage = message2;
+                        const errorMessage = message3;
                         const error62 = new McpError(errorMessage.error.code, errorMessage.error.message, errorMessage.error.data);
                         resolver(error62);
                       }
@@ -34159,16 +34328,16 @@ var init_protocol = __esm({
           this._onerror(error62);
         };
         const _onmessage = this._transport?.onmessage;
-        this._transport.onmessage = (message2, extra) => {
-          _onmessage?.(message2, extra);
-          if (isJSONRPCResultResponse(message2) || isJSONRPCErrorResponse(message2)) {
-            this._onresponse(message2);
-          } else if (isJSONRPCRequest(message2)) {
-            this._onrequest(message2, extra);
-          } else if (isJSONRPCNotification(message2)) {
-            this._onnotification(message2);
+        this._transport.onmessage = (message3, extra) => {
+          _onmessage?.(message3, extra);
+          if (isJSONRPCResultResponse(message3) || isJSONRPCErrorResponse(message3)) {
+            this._onresponse(message3);
+          } else if (isJSONRPCRequest(message3)) {
+            this._onrequest(message3, extra);
+          } else if (isJSONRPCNotification(message3)) {
+            this._onnotification(message3);
           } else {
-            this._onerror(new Error(`Unknown message type: ${JSON.stringify(message2)}`));
+            this._onerror(new Error(`Unknown message type: ${JSON.stringify(message3)}`));
           }
         };
         await this._transport.start();
@@ -34484,9 +34653,9 @@ var init_protocol = __esm({
        */
       request(request, resultSchema, options) {
         const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-        return new Promise((resolve3, reject2) => {
+        return new Promise((resolve3, reject3) => {
           const earlyReject = (error62) => {
-            reject2(error62);
+            reject3(error62);
           };
           if (!this._transport) {
             earlyReject(new Error("Not connected"));
@@ -34548,24 +34717,24 @@ var init_protocol = __esm({
               }
             }, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error63) => this._onerror(new Error(`Failed to send cancellation: ${error63}`)));
             const error62 = reason instanceof McpError ? reason : new McpError(ErrorCode.RequestTimeout, String(reason));
-            reject2(error62);
+            reject3(error62);
           };
           this._responseHandlers.set(messageId, (response) => {
             if (options?.signal?.aborted) {
               return;
             }
             if (response instanceof Error) {
-              return reject2(response);
+              return reject3(response);
             }
             try {
               const parseResult = safeParse2(resultSchema, response.result);
               if (!parseResult.success) {
-                reject2(parseResult.error);
+                reject3(parseResult.error);
               } else {
                 resolve3(parseResult.data);
               }
             } catch (error62) {
-              reject2(error62);
+              reject3(error62);
             }
           });
           options?.signal?.addEventListener("abort", () => {
@@ -34591,12 +34760,12 @@ var init_protocol = __esm({
               timestamp: Date.now()
             }).catch((error62) => {
               this._cleanupTimeout(messageId);
-              reject2(error62);
+              reject3(error62);
             });
           } else {
             this._transport.send(jsonrpcRequest, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error62) => {
               this._cleanupTimeout(messageId);
-              reject2(error62);
+              reject3(error62);
             });
           }
         });
@@ -34778,12 +34947,12 @@ var init_protocol = __esm({
        * the error appropriately (e.g., by failing the task, logging, etc.). The Protocol layer
        * simply propagates the error.
        */
-      async _enqueueTaskMessage(taskId, message2, sessionId) {
+      async _enqueueTaskMessage(taskId, message3, sessionId) {
         if (!this._taskStore || !this._taskMessageQueue) {
           throw new Error("Cannot enqueue task message: taskStore and taskMessageQueue are not configured");
         }
         const maxQueueSize = this._options?.maxTaskQueueSize;
-        await this._taskMessageQueue.enqueue(taskId, message2, sessionId, maxQueueSize);
+        await this._taskMessageQueue.enqueue(taskId, message3, sessionId, maxQueueSize);
       }
       /**
        * Clears the message queue for a task and rejects any pending request resolvers.
@@ -34793,9 +34962,9 @@ var init_protocol = __esm({
       async _clearTaskQueue(taskId, sessionId) {
         if (this._taskMessageQueue) {
           const messages = await this._taskMessageQueue.dequeueAll(taskId, sessionId);
-          for (const message2 of messages) {
-            if (message2.type === "request" && isJSONRPCRequest(message2.message)) {
-              const requestId = message2.message.id;
+          for (const message3 of messages) {
+            if (message3.type === "request" && isJSONRPCRequest(message3.message)) {
+              const requestId = message3.message.id;
               const resolver = this._requestResolvers.get(requestId);
               if (resolver) {
                 resolver(new McpError(ErrorCode.InternalError, "Task cancelled or completed"));
@@ -34823,15 +34992,15 @@ var init_protocol = __esm({
           }
         } catch {
         }
-        return new Promise((resolve3, reject2) => {
+        return new Promise((resolve3, reject3) => {
           if (signal.aborted) {
-            reject2(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
+            reject3(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
             return;
           }
           const timeoutId = setTimeout(resolve3, interval);
           signal.addEventListener("abort", () => {
             clearTimeout(timeoutId);
-            reject2(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
+            reject3(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
           }, { once: true });
         });
       }
@@ -36235,12 +36404,12 @@ var require_errors = __commonJS({
       }
       return [E.schemaPath, schPath];
     }
-    function extraErrorProps(cxt, { params, message: message2 }, keyValues) {
+    function extraErrorProps(cxt, { params, message: message3 }, keyValues) {
       const { keyword, data, schemaValue, it } = cxt;
       const { opts, propertyName, topSchemaRef, schemaPath } = it;
       keyValues.push([E.keyword, keyword], [E.params, typeof params == "function" ? params(cxt) : params || (0, codegen_1._)`{}`]);
       if (opts.messages) {
-        keyValues.push([E.message, typeof message2 == "function" ? message2(cxt) : message2]);
+        keyValues.push([E.message, typeof message3 == "function" ? message3(cxt) : message3]);
       }
       if (opts.verbose) {
         keyValues.push([E.schema, schemaValue], [E.parentSchema, (0, codegen_1._)`${topSchemaRef}${schemaPath}`], [names_1.default.data, data]);
@@ -36275,13 +36444,13 @@ var require_boolSchema = __commonJS({
       }
     }
     exports.topBoolOrEmptySchema = topBoolOrEmptySchema;
-    function boolOrEmptySchema(it, valid) {
+    function boolOrEmptySchema(it, valid2) {
       const { gen, schema } = it;
       if (schema === false) {
-        gen.var(valid, false);
+        gen.var(valid2, false);
         falseSchemaError(it);
       } else {
-        gen.var(valid, true);
+        gen.var(valid2, true);
       }
     }
     exports.boolOrEmptySchema = boolOrEmptySchema;
@@ -36662,15 +36831,15 @@ var require_code2 = __commonJS({
     exports.usePattern = usePattern;
     function validateArray(cxt) {
       const { gen, data, keyword, it } = cxt;
-      const valid = gen.name("valid");
+      const valid2 = gen.name("valid");
       if (it.allErrors) {
         const validArr = gen.let("valid", true);
         validateItems(() => gen.assign(validArr, false));
         return validArr;
       }
-      gen.var(valid, true);
+      gen.var(valid2, true);
       validateItems(() => gen.break());
-      return valid;
+      return valid2;
       function validateItems(notValid) {
         const len = gen.const("len", (0, codegen_1._)`${data}.length`);
         gen.forRange("i", 0, len, (i) => {
@@ -36678,8 +36847,8 @@ var require_code2 = __commonJS({
             keyword,
             dataProp: i,
             dataPropType: util_1.Type.Num
-          }, valid);
-          gen.if((0, codegen_1.not)(valid), notValid);
+          }, valid2);
+          gen.if((0, codegen_1.not)(valid2), notValid);
         });
       }
     }
@@ -36691,7 +36860,7 @@ var require_code2 = __commonJS({
       const alwaysValid = schema.some((sch) => (0, util_1.alwaysValidSchema)(it, sch));
       if (alwaysValid && !it.opts.unevaluated)
         return;
-      const valid = gen.let("valid", false);
+      const valid2 = gen.let("valid", false);
       const schValid = gen.name("_valid");
       gen.block(() => schema.forEach((_sch, i) => {
         const schCxt = cxt.subschema({
@@ -36699,12 +36868,12 @@ var require_code2 = __commonJS({
           schemaProp: i,
           compositeRule: true
         }, schValid);
-        gen.assign(valid, (0, codegen_1._)`${valid} || ${schValid}`);
+        gen.assign(valid2, (0, codegen_1._)`${valid2} || ${schValid}`);
         const merged = cxt.mergeValidEvaluated(schCxt, schValid);
         if (!merged)
-          gen.if((0, codegen_1.not)(valid));
+          gen.if((0, codegen_1.not)(valid2));
       }));
-      cxt.result(valid, () => cxt.reset(), () => cxt.error(true));
+      cxt.result(valid2, () => cxt.reset(), () => cxt.error(true));
     }
     exports.validateUnion = validateUnion;
   }
@@ -36726,15 +36895,15 @@ var require_keyword = __commonJS({
       const schemaRef = useKeyword(gen, keyword, macroSchema);
       if (it.opts.validateSchema !== false)
         it.self.validateSchema(macroSchema, true);
-      const valid = gen.name("valid");
+      const valid2 = gen.name("valid");
       cxt.subschema({
         schema: macroSchema,
         schemaPath: codegen_1.nil,
         errSchemaPath: `${it.errSchemaPath}/${keyword}`,
         topSchemaRef: schemaRef,
         compositeRule: true
-      }, valid);
-      cxt.pass(valid, () => cxt.error(true));
+      }, valid2);
+      cxt.pass(valid2, () => cxt.error(true));
     }
     exports.macroKeywordCode = macroKeywordCode;
     function funcKeywordCode(cxt, def) {
@@ -36743,9 +36912,9 @@ var require_keyword = __commonJS({
       checkAsyncKeyword(it, def);
       const validate2 = !$data && def.compile ? def.compile.call(it.self, schema, parentSchema, it) : def.validate;
       const validateRef = useKeyword(gen, keyword, validate2);
-      const valid = gen.let("valid");
-      cxt.block$data(valid, validateKeyword);
-      cxt.ok((_a3 = def.valid) !== null && _a3 !== void 0 ? _a3 : valid);
+      const valid2 = gen.let("valid");
+      cxt.block$data(valid2, validateKeyword);
+      cxt.ok((_a3 = def.valid) !== null && _a3 !== void 0 ? _a3 : valid2);
       function validateKeyword() {
         if (def.errors === false) {
           assignValid();
@@ -36761,7 +36930,7 @@ var require_keyword = __commonJS({
       }
       function validateAsync3() {
         const ruleErrs = gen.let("ruleErrs", null);
-        gen.try(() => assignValid((0, codegen_1._)`await `), (e) => gen.assign(valid, false).if((0, codegen_1._)`${e} instanceof ${it.ValidationError}`, () => gen.assign(ruleErrs, (0, codegen_1._)`${e}.errors`), () => gen.throw(e)));
+        gen.try(() => assignValid((0, codegen_1._)`await `), (e) => gen.assign(valid2, false).if((0, codegen_1._)`${e} instanceof ${it.ValidationError}`, () => gen.assign(ruleErrs, (0, codegen_1._)`${e}.errors`), () => gen.throw(e)));
         return ruleErrs;
       }
       function validateSync() {
@@ -36773,11 +36942,11 @@ var require_keyword = __commonJS({
       function assignValid(_await = def.async ? (0, codegen_1._)`await ` : codegen_1.nil) {
         const passCxt = it.opts.passContext ? names_1.default.this : names_1.default.self;
         const passSchema = !("compile" in def && !$data || def.schema === false);
-        gen.assign(valid, (0, codegen_1._)`${_await}${(0, code_1.callValidateCode)(cxt, validateRef, passCxt, passSchema)}`, def.modifying);
+        gen.assign(valid2, (0, codegen_1._)`${_await}${(0, code_1.callValidateCode)(cxt, validateRef, passCxt, passSchema)}`, def.modifying);
       }
       function reportErrs(errors) {
         var _a4;
-        gen.if((0, codegen_1.not)((_a4 = def.valid) !== null && _a4 !== void 0 ? _a4 : valid), errors);
+        gen.if((0, codegen_1.not)((_a4 = def.valid) !== null && _a4 !== void 0 ? _a4 : valid2), errors);
       }
     }
     exports.funcKeywordCode = funcKeywordCode;
@@ -36814,8 +36983,8 @@ var require_keyword = __commonJS({
         throw new Error(`parent schema must have dependencies of ${keyword}: ${deps.join(",")}`);
       }
       if (def.validateSchema) {
-        const valid = def.validateSchema(schema[keyword]);
-        if (!valid) {
+        const valid2 = def.validateSchema(schema[keyword]);
+        if (!valid2) {
           const msg = `keyword "${keyword}" value is invalid at path "${errSchemaPath}": ` + self.errorsText(def.validateSchema.errors);
           if (opts.validateSchema === "log")
             self.logger.error(msg);
@@ -37275,15 +37444,15 @@ var require_validate = __commonJS({
       const schId = typeof schema == "object" && schema[opts.schemaId];
       return schId && (opts.code.source || opts.code.process) ? (0, codegen_1._)`/*# sourceURL=${schId} */` : codegen_1.nil;
     }
-    function subschemaCode(it, valid) {
+    function subschemaCode(it, valid2) {
       if (isSchemaObj(it)) {
         checkKeywords(it);
         if (schemaCxtHasRules(it)) {
-          subSchemaObjCode(it, valid);
+          subSchemaObjCode(it, valid2);
           return;
         }
       }
-      (0, boolSchema_1.boolOrEmptySchema)(it, valid);
+      (0, boolSchema_1.boolOrEmptySchema)(it, valid2);
     }
     function schemaCxtHasRules({ schema, self }) {
       if (typeof schema == "boolean")
@@ -37296,7 +37465,7 @@ var require_validate = __commonJS({
     function isSchemaObj(it) {
       return typeof it.schema != "boolean";
     }
-    function subSchemaObjCode(it, valid) {
+    function subSchemaObjCode(it, valid2) {
       const { schema, gen, opts } = it;
       if (opts.$comment && schema.$comment)
         commentKeyword(it);
@@ -37304,7 +37473,7 @@ var require_validate = __commonJS({
       checkAsyncSchema(it);
       const errsCount = gen.const("_errs", names_1.default.errors);
       typeAndKeywords(it, errsCount);
-      gen.var(valid, (0, codegen_1._)`${errsCount} === ${names_1.default.errors}`);
+      gen.var(valid2, (0, codegen_1._)`${errsCount} === ${names_1.default.errors}`);
     }
     function checkKeywords(it) {
       (0, util_1.checkUnknownRules)(it);
@@ -37571,24 +37740,24 @@ var require_validate = __commonJS({
         else
           this.params = obj;
       }
-      block$data(valid, codeBlock, $dataValid = codegen_1.nil) {
+      block$data(valid2, codeBlock, $dataValid = codegen_1.nil) {
         this.gen.block(() => {
-          this.check$data(valid, $dataValid);
+          this.check$data(valid2, $dataValid);
           codeBlock();
         });
       }
-      check$data(valid = codegen_1.nil, $dataValid = codegen_1.nil) {
+      check$data(valid2 = codegen_1.nil, $dataValid = codegen_1.nil) {
         if (!this.$data)
           return;
         const { gen, schemaCode, schemaType, def } = this;
         gen.if((0, codegen_1.or)((0, codegen_1._)`${schemaCode} === undefined`, $dataValid));
-        if (valid !== codegen_1.nil)
-          gen.assign(valid, true);
+        if (valid2 !== codegen_1.nil)
+          gen.assign(valid2, true);
         if (schemaType.length || def.validateSchema) {
           gen.elseIf(this.invalid$data());
           this.$dataError();
-          if (valid !== codegen_1.nil)
-            gen.assign(valid, false);
+          if (valid2 !== codegen_1.nil)
+            gen.assign(valid2, false);
         }
         gen.else();
       }
@@ -37612,12 +37781,12 @@ var require_validate = __commonJS({
           return codegen_1.nil;
         }
       }
-      subschema(appl, valid) {
+      subschema(appl, valid2) {
         const subschema = (0, subschema_1.getSubschema)(this.it, appl);
         (0, subschema_1.extendSubschemaData)(subschema, this.it, appl);
         (0, subschema_1.extendSubschemaMode)(subschema, appl);
         const nextContext = { ...this.it, ...subschema, items: void 0, props: void 0 };
-        subschemaCode(nextContext, valid);
+        subschemaCode(nextContext, valid2);
         return nextContext;
       }
       mergeEvaluated(schemaCxt, toName) {
@@ -37631,10 +37800,10 @@ var require_validate = __commonJS({
           it.items = util_1.mergeEvaluated.items(gen, schemaCxt.items, it.items, toName);
         }
       }
-      mergeValidEvaluated(schemaCxt, valid) {
+      mergeValidEvaluated(schemaCxt, valid2) {
         const { it, gen } = this;
         if (it.opts.unevaluated && (it.props !== true || it.items !== true)) {
-          gen.if(valid, () => this.mergeEvaluated(schemaCxt, codegen_1.Name));
+          gen.if(valid2, () => this.mergeEvaluated(schemaCxt, codegen_1.Name));
           return true;
         }
       }
@@ -39268,10 +39437,10 @@ var require_core = __commonJS({
         } else {
           v = this.compile(schemaKeyRef);
         }
-        const valid = v(data);
+        const valid2 = v(data);
         if (!("$async" in v))
           this.errors = v.errors;
-        return valid;
+        return valid2;
       }
       compile(schema, _meta) {
         const sch = this._addSchema(schema, _meta);
@@ -39368,15 +39537,15 @@ var require_core = __commonJS({
           this.errors = null;
           return true;
         }
-        const valid = this.validate($schema, schema);
-        if (!valid && throwOrLogError) {
-          const message2 = "schema is invalid: " + this.errorsText();
+        const valid2 = this.validate($schema, schema);
+        if (!valid2 && throwOrLogError) {
+          const message3 = "schema is invalid: " + this.errorsText();
           if (this.opts.validateSchema === "log")
-            this.logger.error(message2);
+            this.logger.error(message3);
           else
-            throw new Error(message2);
+            throw new Error(message3);
         }
-        return valid;
+        return valid2;
       }
       // Get compiled schema by `key` or `ref`.
       // (`key` that was passed to `addSchema` or full schema reference - `schema.$id` or resolved id)
@@ -39769,16 +39938,16 @@ var require_ref = __commonJS({
         }
         function inlineRefSchema(sch) {
           const schName = gen.scopeValue("schema", opts.code.source === true ? { ref: sch, code: (0, codegen_1.stringify)(sch) } : { ref: sch });
-          const valid = gen.name("valid");
+          const valid2 = gen.name("valid");
           const schCxt = cxt.subschema({
             schema: sch,
             dataTypes: [],
             schemaPath: codegen_1.nil,
             topSchemaRef: schName,
             errSchemaPath: $ref
-          }, valid);
+          }, valid2);
           cxt.mergeEvaluated(schCxt);
-          cxt.ok(valid);
+          cxt.ok(valid2);
         }
       }
     };
@@ -39798,19 +39967,19 @@ var require_ref = __commonJS({
       function callAsyncRef() {
         if (!env.$async)
           throw new Error("async schema referenced by sync schema");
-        const valid = gen.let("valid");
+        const valid2 = gen.let("valid");
         gen.try(() => {
           gen.code((0, codegen_1._)`await ${(0, code_1.callValidateCode)(cxt, v, passCxt)}`);
           addEvaluatedFrom(v);
           if (!allErrors)
-            gen.assign(valid, true);
+            gen.assign(valid2, true);
         }, (e) => {
           gen.if((0, codegen_1._)`!(${e} instanceof ${it.ValidationError})`, () => gen.throw(e));
           addErrorsFrom(e);
           if (!allErrors)
-            gen.assign(valid, false);
+            gen.assign(valid2, false);
         });
-        cxt.ok(valid);
+        cxt.ok(valid2);
       }
       function callSyncRef() {
         cxt.result((0, code_1.callValidateCode)(cxt, v, passCxt), () => addEvaluatedFrom(v), () => addErrorsFrom(v));
@@ -40015,9 +40184,9 @@ var require_pattern = __commonJS({
         if ($data) {
           const { regExp } = it.opts.code;
           const regExpCode = regExp.code === "new RegExp" ? (0, codegen_1._)`new RegExp` : (0, util_1.useFunc)(gen, regExp);
-          const valid = gen.let("valid");
-          gen.try(() => gen.assign(valid, (0, codegen_1._)`${regExpCode}(${schemaCode}, ${u}).test(${data})`), () => gen.assign(valid, false));
-          cxt.fail$data((0, codegen_1._)`!${valid}`);
+          const valid2 = gen.let("valid");
+          gen.try(() => gen.assign(valid2, (0, codegen_1._)`${regExpCode}(${schemaCode}, ${u}).test(${data})`), () => gen.assign(valid2, false));
+          cxt.fail$data((0, codegen_1._)`!${valid2}`);
         } else {
           const regExp = (0, code_1.usePattern)(cxt, schema);
           cxt.fail$data((0, codegen_1._)`!${regExp}.test(${data})`);
@@ -40108,9 +40277,9 @@ var require_required = __commonJS({
         function exitOnErrorMode() {
           const missing = gen.let("missing");
           if (useLoop || $data) {
-            const valid = gen.let("valid", true);
-            cxt.block$data(valid, () => loopUntilMissing(missing, valid));
-            cxt.ok(valid);
+            const valid2 = gen.let("valid", true);
+            cxt.block$data(valid2, () => loopUntilMissing(missing, valid2));
+            cxt.ok(valid2);
           } else {
             gen.if((0, code_1.checkMissingProp)(cxt, schema, missing));
             (0, code_1.reportMissingProp)(cxt, missing);
@@ -40123,11 +40292,11 @@ var require_required = __commonJS({
             gen.if((0, code_1.noPropertyInData)(gen, data, prop, opts.ownProperties), () => cxt.error());
           });
         }
-        function loopUntilMissing(missing, valid) {
+        function loopUntilMissing(missing, valid2) {
           cxt.setParams({ missingProperty: missing });
           gen.forOf(missing, schemaCode, () => {
-            gen.assign(valid, (0, code_1.propertyInData)(gen, data, missing, opts.ownProperties));
-            gen.if((0, codegen_1.not)(valid), () => {
+            gen.assign(valid2, (0, code_1.propertyInData)(gen, data, missing, opts.ownProperties));
+            gen.if((0, codegen_1.not)(valid2), () => {
               cxt.error();
               gen.break();
             });
@@ -40202,15 +40371,15 @@ var require_uniqueItems = __commonJS({
         const { gen, data, $data, schema, parentSchema, schemaCode, it } = cxt;
         if (!$data && !schema)
           return;
-        const valid = gen.let("valid");
+        const valid2 = gen.let("valid");
         const itemTypes = parentSchema.items ? (0, dataType_1.getSchemaTypes)(parentSchema.items) : [];
-        cxt.block$data(valid, validateUniqueItems, (0, codegen_1._)`${schemaCode} === false`);
-        cxt.ok(valid);
+        cxt.block$data(valid2, validateUniqueItems, (0, codegen_1._)`${schemaCode} === false`);
+        cxt.ok(valid2);
         function validateUniqueItems() {
           const i = gen.let("i", (0, codegen_1._)`${data}.length`);
           const j = gen.let("j");
           cxt.setParams({ i, j });
-          gen.assign(valid, true);
+          gen.assign(valid2, true);
           gen.if((0, codegen_1._)`${i} > 1`, () => (canOptimize() ? loopN : loopN2)(i, j));
         }
         function canOptimize() {
@@ -40228,7 +40397,7 @@ var require_uniqueItems = __commonJS({
             gen.if((0, codegen_1._)`typeof ${indices}[${item}] == "number"`, () => {
               gen.assign(j, (0, codegen_1._)`${indices}[${item}]`);
               cxt.error();
-              gen.assign(valid, false).break();
+              gen.assign(valid2, false).break();
             }).code((0, codegen_1._)`${indices}[${item}] = ${i}`);
           });
         }
@@ -40237,7 +40406,7 @@ var require_uniqueItems = __commonJS({
           const outer = gen.name("outer");
           gen.label(outer).for((0, codegen_1._)`;${i}--;`, () => gen.for((0, codegen_1._)`${j} = ${i}; ${j}--;`, () => gen.if((0, codegen_1._)`${eql}(${data}[${i}], ${data}[${j}])`, () => {
             cxt.error();
-            gen.assign(valid, false).break(outer);
+            gen.assign(valid2, false).break(outer);
           })));
         }
       }
@@ -40299,20 +40468,20 @@ var require_enum = __commonJS({
         const useLoop = schema.length >= it.opts.loopEnum;
         let eql;
         const getEql = () => eql !== null && eql !== void 0 ? eql : eql = (0, util_1.useFunc)(gen, equal_1.default);
-        let valid;
+        let valid2;
         if (useLoop || $data) {
-          valid = gen.let("valid");
-          cxt.block$data(valid, loopEnum);
+          valid2 = gen.let("valid");
+          cxt.block$data(valid2, loopEnum);
         } else {
           if (!Array.isArray(schema))
             throw new Error("ajv implementation error");
           const vSchema = gen.const("vSchema", schemaCode);
-          valid = (0, codegen_1.or)(...schema.map((_x, i) => equalCode(vSchema, i)));
+          valid2 = (0, codegen_1.or)(...schema.map((_x, i) => equalCode(vSchema, i)));
         }
-        cxt.pass(valid);
+        cxt.pass(valid2);
         function loopEnum() {
-          gen.assign(valid, false);
-          gen.forOf("v", schemaCode, (v) => gen.if((0, codegen_1._)`${getEql()}(${data}, ${v})`, () => gen.assign(valid, true).break()));
+          gen.assign(valid2, false);
+          gen.forOf("v", schemaCode, (v) => gen.if((0, codegen_1._)`${getEql()}(${data}, ${v})`, () => gen.assign(valid2, true).break()));
         }
         function equalCode(vSchema, i) {
           const sch = schema[i];
@@ -40398,15 +40567,15 @@ var require_additionalItems = __commonJS({
         cxt.setParams({ len: items.length });
         cxt.pass((0, codegen_1._)`${len} <= ${items.length}`);
       } else if (typeof schema == "object" && !(0, util_1.alwaysValidSchema)(it, schema)) {
-        const valid = gen.var("valid", (0, codegen_1._)`${len} <= ${items.length}`);
-        gen.if((0, codegen_1.not)(valid), () => validateItems(valid));
-        cxt.ok(valid);
+        const valid2 = gen.var("valid", (0, codegen_1._)`${len} <= ${items.length}`);
+        gen.if((0, codegen_1.not)(valid2), () => validateItems(valid2));
+        cxt.ok(valid2);
       }
-      function validateItems(valid) {
+      function validateItems(valid2) {
         gen.forRange("i", items.length, len, (i) => {
-          cxt.subschema({ keyword, dataProp: i, dataPropType: util_1.Type.Num }, valid);
+          cxt.subschema({ keyword, dataProp: i, dataPropType: util_1.Type.Num }, valid2);
           if (!it.allErrors)
-            gen.if((0, codegen_1.not)(valid), () => gen.break());
+            gen.if((0, codegen_1.not)(valid2), () => gen.break());
         });
       }
     }
@@ -40445,7 +40614,7 @@ var require_items = __commonJS({
       if (it.opts.unevaluated && schArr.length && it.items !== true) {
         it.items = util_1.mergeEvaluated.items(gen, schArr.length, it.items);
       }
-      const valid = gen.name("valid");
+      const valid2 = gen.name("valid");
       const len = gen.const("len", (0, codegen_1._)`${data}.length`);
       schArr.forEach((sch, i) => {
         if ((0, util_1.alwaysValidSchema)(it, sch))
@@ -40454,8 +40623,8 @@ var require_items = __commonJS({
           keyword,
           schemaProp: i,
           dataProp: i
-        }, valid));
-        cxt.ok(valid);
+        }, valid2));
+        cxt.ok(valid2);
       });
       function checkStrictTuple(sch) {
         const { opts, errSchemaPath } = it;
@@ -40572,18 +40741,18 @@ var require_contains = __commonJS({
           return;
         }
         it.items = true;
-        const valid = gen.name("valid");
+        const valid2 = gen.name("valid");
         if (max === void 0 && min === 1) {
-          validateItems(valid, () => gen.if(valid, () => gen.break()));
+          validateItems(valid2, () => gen.if(valid2, () => gen.break()));
         } else if (min === 0) {
-          gen.let(valid, true);
+          gen.let(valid2, true);
           if (max !== void 0)
             gen.if((0, codegen_1._)`${data}.length > 0`, validateItemsWithCount);
         } else {
-          gen.let(valid, false);
+          gen.let(valid2, false);
           validateItemsWithCount();
         }
-        cxt.result(valid, () => cxt.reset());
+        cxt.result(valid2, () => cxt.reset());
         function validateItemsWithCount() {
           const schValid = gen.name("_valid");
           const count = gen.let("count", 0);
@@ -40603,13 +40772,13 @@ var require_contains = __commonJS({
         function checkLimits(count) {
           gen.code((0, codegen_1._)`${count}++`);
           if (max === void 0) {
-            gen.if((0, codegen_1._)`${count} >= ${min}`, () => gen.assign(valid, true).break());
+            gen.if((0, codegen_1._)`${count} >= ${min}`, () => gen.assign(valid2, true).break());
           } else {
-            gen.if((0, codegen_1._)`${count} > ${max}`, () => gen.assign(valid, false).break());
+            gen.if((0, codegen_1._)`${count} > ${max}`, () => gen.assign(valid2, false).break());
             if (min === 1)
-              gen.assign(valid, true);
+              gen.assign(valid2, true);
             else
-              gen.if((0, codegen_1._)`${count} >= ${min}`, () => gen.assign(valid, true));
+              gen.if((0, codegen_1._)`${count} >= ${min}`, () => gen.assign(valid2, true));
           }
         }
       }
@@ -40691,20 +40860,20 @@ var require_dependencies = __commonJS({
     exports.validatePropertyDeps = validatePropertyDeps;
     function validateSchemaDeps(cxt, schemaDeps = cxt.schema) {
       const { gen, data, keyword, it } = cxt;
-      const valid = gen.name("valid");
+      const valid2 = gen.name("valid");
       for (const prop in schemaDeps) {
         if ((0, util_1.alwaysValidSchema)(it, schemaDeps[prop]))
           continue;
         gen.if(
           (0, code_1.propertyInData)(gen, data, prop, it.opts.ownProperties),
           () => {
-            const schCxt = cxt.subschema({ keyword, schemaProp: prop }, valid);
-            cxt.mergeValidEvaluated(schCxt, valid);
+            const schCxt = cxt.subschema({ keyword, schemaProp: prop }, valid2);
+            cxt.mergeValidEvaluated(schCxt, valid2);
           },
-          () => gen.var(valid, true)
+          () => gen.var(valid2, true)
           // TODO var
         );
-        cxt.ok(valid);
+        cxt.ok(valid2);
       }
     }
     exports.validateSchemaDeps = validateSchemaDeps;
@@ -40732,7 +40901,7 @@ var require_propertyNames = __commonJS({
         const { gen, schema, data, it } = cxt;
         if ((0, util_1.alwaysValidSchema)(it, schema))
           return;
-        const valid = gen.name("valid");
+        const valid2 = gen.name("valid");
         gen.forIn("key", data, (key) => {
           cxt.setParams({ propertyName: key });
           cxt.subschema({
@@ -40741,14 +40910,14 @@ var require_propertyNames = __commonJS({
             dataTypes: ["string"],
             propertyName: key,
             compositeRule: true
-          }, valid);
-          gen.if((0, codegen_1.not)(valid), () => {
+          }, valid2);
+          gen.if((0, codegen_1.not)(valid2), () => {
             cxt.error(true);
             if (!it.allErrors)
               gen.break();
           });
         });
-        cxt.ok(valid);
+        cxt.ok(valid2);
       }
     };
     exports.default = def;
@@ -40826,21 +40995,21 @@ var require_additionalProperties = __commonJS({
             return;
           }
           if (typeof schema == "object" && !(0, util_1.alwaysValidSchema)(it, schema)) {
-            const valid = gen.name("valid");
+            const valid2 = gen.name("valid");
             if (opts.removeAdditional === "failing") {
-              applyAdditionalSchema(key, valid, false);
-              gen.if((0, codegen_1.not)(valid), () => {
+              applyAdditionalSchema(key, valid2, false);
+              gen.if((0, codegen_1.not)(valid2), () => {
                 cxt.reset();
                 deleteAdditional(key);
               });
             } else {
-              applyAdditionalSchema(key, valid);
+              applyAdditionalSchema(key, valid2);
               if (!allErrors)
-                gen.if((0, codegen_1.not)(valid), () => gen.break());
+                gen.if((0, codegen_1.not)(valid2), () => gen.break());
             }
           }
         }
-        function applyAdditionalSchema(key, valid, errors) {
+        function applyAdditionalSchema(key, valid2, errors) {
           const subschema = {
             keyword: "additionalProperties",
             dataProp: key,
@@ -40853,7 +41022,7 @@ var require_additionalProperties = __commonJS({
               allErrors: false
             });
           }
-          cxt.subschema(subschema, valid);
+          cxt.subschema(subschema, valid2);
         }
       }
     };
@@ -40889,7 +41058,7 @@ var require_properties = __commonJS({
         const properties = allProps.filter((p) => !(0, util_1.alwaysValidSchema)(it, schema[p]));
         if (properties.length === 0)
           return;
-        const valid = gen.name("valid");
+        const valid2 = gen.name("valid");
         for (const prop of properties) {
           if (hasDefault(prop)) {
             applyPropertySchema(prop);
@@ -40897,11 +41066,11 @@ var require_properties = __commonJS({
             gen.if((0, code_1.propertyInData)(gen, data, prop, it.opts.ownProperties));
             applyPropertySchema(prop);
             if (!it.allErrors)
-              gen.else().var(valid, true);
+              gen.else().var(valid2, true);
             gen.endIf();
           }
           cxt.it.definedProperties.add(prop);
-          cxt.ok(valid);
+          cxt.ok(valid2);
         }
         function hasDefault(prop) {
           return it.opts.useDefaults && !it.compositeRule && schema[prop].default !== void 0;
@@ -40911,7 +41080,7 @@ var require_properties = __commonJS({
             keyword: "properties",
             schemaProp: prop,
             dataProp: prop
-          }, valid);
+          }, valid2);
         }
       }
     };
@@ -40941,7 +41110,7 @@ var require_patternProperties = __commonJS({
           return;
         }
         const checkProperties = opts.strictSchema && !opts.allowMatchingProperties && parentSchema.properties;
-        const valid = gen.name("valid");
+        const valid2 = gen.name("valid");
         if (it.props !== true && !(it.props instanceof codegen_1.Name)) {
           it.props = (0, util_2.evaluatedPropsToName)(gen, it.props);
         }
@@ -40954,9 +41123,9 @@ var require_patternProperties = __commonJS({
             if (it.allErrors) {
               validateProperties(pat);
             } else {
-              gen.var(valid, true);
+              gen.var(valid2, true);
               validateProperties(pat);
-              gen.if(valid);
+              gen.if(valid2);
             }
           }
         }
@@ -40977,12 +41146,12 @@ var require_patternProperties = __commonJS({
                   schemaProp: pat,
                   dataProp: key,
                   dataPropType: util_2.Type.Str
-                }, valid);
+                }, valid2);
               }
               if (it.opts.unevaluated && props !== true) {
                 gen.assign((0, codegen_1._)`${props}[${key}]`, true);
               } else if (!alwaysValid && !it.allErrors) {
-                gen.if((0, codegen_1.not)(valid), () => gen.break());
+                gen.if((0, codegen_1.not)(valid2), () => gen.break());
               }
             });
           });
@@ -41009,14 +41178,14 @@ var require_not = __commonJS({
           cxt.fail();
           return;
         }
-        const valid = gen.name("valid");
+        const valid2 = gen.name("valid");
         cxt.subschema({
           keyword: "not",
           compositeRule: true,
           createErrors: false,
           allErrors: false
-        }, valid);
-        cxt.failResult(valid, () => cxt.reset(), () => cxt.error());
+        }, valid2);
+        cxt.failResult(valid2, () => cxt.reset(), () => cxt.error());
       },
       error: { message: "must NOT be valid" }
     };
@@ -41064,12 +41233,12 @@ var require_oneOf = __commonJS({
         if (it.opts.discriminator && parentSchema.discriminator)
           return;
         const schArr = schema;
-        const valid = gen.let("valid", false);
+        const valid2 = gen.let("valid", false);
         const passing = gen.let("passing", null);
         const schValid = gen.name("_valid");
         cxt.setParams({ passing });
         gen.block(validateOneOf);
-        cxt.result(valid, () => cxt.reset(), () => cxt.error(true));
+        cxt.result(valid2, () => cxt.reset(), () => cxt.error(true));
         function validateOneOf() {
           schArr.forEach((sch, i) => {
             let schCxt;
@@ -41083,10 +41252,10 @@ var require_oneOf = __commonJS({
               }, schValid);
             }
             if (i > 0) {
-              gen.if((0, codegen_1._)`${schValid} && ${valid}`).assign(valid, false).assign(passing, (0, codegen_1._)`[${passing}, ${i}]`).else();
+              gen.if((0, codegen_1._)`${schValid} && ${valid2}`).assign(valid2, false).assign(passing, (0, codegen_1._)`[${passing}, ${i}]`).else();
             }
             gen.if(schValid, () => {
-              gen.assign(valid, true);
+              gen.assign(valid2, true);
               gen.assign(passing, i);
               if (schCxt)
                 cxt.mergeEvaluated(schCxt, codegen_1.Name);
@@ -41112,12 +41281,12 @@ var require_allOf = __commonJS({
         const { gen, schema, it } = cxt;
         if (!Array.isArray(schema))
           throw new Error("ajv implementation error");
-        const valid = gen.name("valid");
+        const valid2 = gen.name("valid");
         schema.forEach((sch, i) => {
           if ((0, util_1.alwaysValidSchema)(it, sch))
             return;
-          const schCxt = cxt.subschema({ keyword: "allOf", schemaProp: i }, valid);
-          cxt.ok(valid);
+          const schCxt = cxt.subschema({ keyword: "allOf", schemaProp: i }, valid2);
+          cxt.ok(valid2);
           cxt.mergeEvaluated(schCxt);
         });
       }
@@ -41151,7 +41320,7 @@ var require_if = __commonJS({
         const hasElse = hasSchema(it, "else");
         if (!hasThen && !hasElse)
           return;
-        const valid = gen.let("valid", true);
+        const valid2 = gen.let("valid", true);
         const schValid = gen.name("_valid");
         validateIf();
         cxt.reset();
@@ -41164,7 +41333,7 @@ var require_if = __commonJS({
         } else {
           gen.if((0, codegen_1.not)(schValid), validateClause("else"));
         }
-        cxt.pass(valid, () => cxt.error(true));
+        cxt.pass(valid2, () => cxt.error(true));
         function validateIf() {
           const schCxt = cxt.subschema({
             keyword: "if",
@@ -41177,8 +41346,8 @@ var require_if = __commonJS({
         function validateClause(keyword, ifClause) {
           return () => {
             const schCxt = cxt.subschema({ keyword }, schValid);
-            gen.assign(valid, schValid);
-            cxt.mergeValidEvaluated(schCxt, valid);
+            gen.assign(valid2, schValid);
+            cxt.mergeValidEvaluated(schCxt, valid2);
             if (ifClause)
               gen.assign(ifClause, (0, codegen_1._)`${keyword}`);
             else
@@ -41453,16 +41622,16 @@ var require_discriminator = __commonJS({
           throw new Error("discriminator: mapping is not supported");
         if (!oneOf)
           throw new Error("discriminator: requires oneOf keyword");
-        const valid = gen.let("valid", false);
+        const valid2 = gen.let("valid", false);
         const tag = gen.const("tag", (0, codegen_1._)`${data}${(0, codegen_1.getProperty)(tagName)}`);
         gen.if((0, codegen_1._)`typeof ${tag} == "string"`, () => validateMapping(), () => cxt.error(false, { discrError: types_1.DiscrError.Tag, tag, tagName }));
-        cxt.ok(valid);
+        cxt.ok(valid2);
         function validateMapping() {
           const mapping = getMapping();
           gen.if(false);
           for (const tagValue in mapping) {
             gen.elseIf((0, codegen_1._)`${tag} === ${tagValue}`);
-            gen.assign(valid, applyTagSchema(mapping[tagValue]));
+            gen.assign(valid2, applyTagSchema(mapping[tagValue]));
           }
           gen.else();
           cxt.error(false, { discrError: types_1.DiscrError.Mapping, tag, tagName });
@@ -42123,8 +42292,8 @@ var init_ajv_provider = __esm({
       getValidator(schema) {
         const ajvValidator = "$id" in schema && typeof schema.$id === "string" ? this._ajv.getSchema(schema.$id) ?? this._ajv.compile(schema) : this._ajv.compile(schema);
         return (input2) => {
-          const valid = ajvValidator(input2);
-          if (valid) {
+          const valid2 = ajvValidator(input2);
+          if (valid2) {
             return {
               valid: true,
               data: input2,
@@ -43708,8 +43877,8 @@ var init_mcp = __esm({
 function deserializeMessage(line) {
   return JSONRPCMessageSchema.parse(JSON.parse(line));
 }
-function serializeMessage(message2) {
-  return JSON.stringify(message2) + "\n";
+function serializeMessage(message3) {
+  return JSON.stringify(message3) + "\n";
 }
 var STDIO_DEFAULT_MAX_BUFFER_SIZE, ReadBuffer;
 var init_stdio = __esm({
@@ -43787,11 +43956,11 @@ var init_stdio2 = __esm({
       processReadBuffer() {
         while (true) {
           try {
-            const message2 = this._readBuffer.readMessage();
-            if (message2 === null) {
+            const message3 = this._readBuffer.readMessage();
+            if (message3 === null) {
               break;
             }
-            this.onmessage?.(message2);
+            this.onmessage?.(message3);
           } catch (error62) {
             this.onerror?.(error62);
           }
@@ -43807,9 +43976,9 @@ var init_stdio2 = __esm({
         this._readBuffer.clear();
         this.onclose?.();
       }
-      send(message2) {
+      send(message3) {
         return new Promise((resolve3) => {
-          const json2 = serializeMessage(message2);
+          const json2 = serializeMessage(message3);
           if (this._stdout.write(json2)) {
             resolve3();
           } else {
@@ -44105,13 +44274,14 @@ var init_context = __esm({
       fontsCheck: "fonts_check",
       docSnapshot: "doc_snapshot",
       imagesGet: "images_get",
-      jobWait: "job_wait"
+      jobWait: "job_wait",
+      copy: "copy"
     };
     BridgeCallError = class extends Error {
       code;
       remote;
-      constructor(code, message2, remote) {
-        super(message2);
+      constructor(code, message3, remote) {
+        super(message3);
         this.name = "BridgeCallError";
         this.code = code;
         this.remote = remote;
@@ -44152,14 +44322,14 @@ function createRpc(send) {
   }
   return {
     call(connectionId, op, payload, timeoutMs) {
-      return new Promise((resolve3, reject2) => {
+      return new Promise((resolve3, reject3) => {
         const id = String(++counter);
         const entry = {
           connectionId,
           op,
           startedAt: Date.now(),
           resolve: resolve3,
-          reject: reject2,
+          reject: reject3,
           timer: void 0,
           deadline: Date.now() + timeoutMs
         };
@@ -44170,7 +44340,7 @@ function createRpc(send) {
         } catch (e) {
           clearTimeout(entry.timer);
           pending.delete(id);
-          reject2(
+          reject3(
             new BridgeCallError(
               "closed",
               e instanceof Error ? e.message : "Figma file disconnected"
@@ -44400,8 +44570,8 @@ function imageBlocks(images) {
   }
   return out;
 }
-function errorResult(message2, hint) {
-  const joined = hint ? message2 + "\nHint: " + hint : message2;
+function errorResult(message3, hint) {
+  const joined = hint ? message3 + "\nHint: " + hint : message3;
   return { isError: true, content: [text(cap(joined))] };
 }
 function fromBridgeError(e, hint) {
@@ -44421,8 +44591,8 @@ function fromCallError(e) {
         return fromBridgeError(e.remote ?? { message: e.message });
     }
   }
-  const message2 = e instanceof Error ? e.message : String(e);
-  return errorResult("Unexpected error: " + message2);
+  const message3 = e instanceof Error ? e.message : String(e);
+  return errorResult("Unexpected error: " + message3);
 }
 function withNotes(result, notes) {
   const extra = notes.filter(Boolean).map(text);
@@ -44600,7 +44770,14 @@ var init_tool_registry = __esm({
     init_zod();
     init_job_store();
     init_tool_result();
-    ASYNC_TOOLS = ["eval", "build", "export", "upload", "run"];
+    ASYNC_TOOLS = [
+      "eval",
+      "build",
+      "export",
+      "upload",
+      "run",
+      "copy"
+    ];
     ASYNC_NOTE = "call job_wait with this jobId";
     asyncField = boolean2().optional().describe(
       "Return {jobId} at once and keep working; fetch the result with job_wait."
@@ -44974,8 +45151,923 @@ var init_claim = __esm({
   }
 });
 
+// bridge-server/src/copy-summary.ts
+function whole(n) {
+  return Number.isFinite(n) ? Math.round(n) : 0;
+}
+function firstEntries(record2, max) {
+  return Object.fromEntries(Object.entries(record2).slice(0, max));
+}
+function cutText(text2, max) {
+  if (text2.length <= max) return text2;
+  const code = text2.charCodeAt(max - 1);
+  const splitsPair = code >= 55296 && code <= 56319;
+  return text2.slice(0, splitsPair ? max - 1 : max);
+}
+function fileJson(file2) {
+  return {
+    fileKey: file2.fileKey,
+    fileName: file2.fileName,
+    clientId: file2.clientId
+  };
+}
+function conflictJson(entry) {
+  const out = {
+    name: cutText(entry.name, COPY_NAME_CHARS),
+    action: entry.action,
+    sourceId: entry.sourceId
+  };
+  if (entry.targetId !== void 0) out.targetId = entry.targetId;
+  if (entry.newName !== void 0)
+    out.newName = cutText(entry.newName, COPY_NAME_CHARS);
+  return out;
+}
+function mergeTimings(server2, writeTimings) {
+  const entries = Object.entries(server2).map(([k, v]) => [
+    k,
+    whole(v)
+  ]);
+  for (const [phase, ms] of Object.entries(writeTimings))
+    entries.push([`write.${phase}`, whole(ms)]);
+  return Object.fromEntries(entries);
+}
+function verifyJson(report) {
+  const pairs = report.pairs.map((p) => {
+    const out = {
+      name: cutText(p.name, COPY_NAME_CHARS),
+      sourceId: p.sourceId,
+      targetId: p.targetId,
+      ssim: p.ssim
+    };
+    if (p.note !== void 0) out.note = cutText(p.note, COPY_NAME_CHARS);
+    return out;
+  });
+  return { pairs, min: report.min, ms: whole(report.ms) };
+}
+function readCounts(read2) {
+  return {
+    nodes: read2.nodes,
+    units: read2.units,
+    images: read2.images,
+    imageChars: read2.imageChars
+  };
+}
+function buildCopySummary(input2) {
+  const { write } = input2;
+  const idMap = write.dryRun ? {} : write.idMap;
+  const out = {
+    dryRun: write.dryRun,
+    source: fileJson(input2.source),
+    target: fileJson(input2.target),
+    pageId: write.pageId,
+    counts: {
+      ...write.counts,
+      variables: { ...write.counts.variables },
+      styles: { ...write.counts.styles },
+      read: readCounts(input2.read)
+    },
+    conflicts: write.conflicts.slice(0, COPY_CONFLICTS_MAX).map(conflictJson),
+    conflictsTotal: write.conflicts.length,
+    idMap: firstEntries(idMap, COPY_MAP_MAX),
+    idMapTotal: Object.keys(idMap).length,
+    warnings: write.warnings.slice(0, COPY_WARNINGS_MAX).map((w) => cutText(w, COPY_WARNING_CHARS)),
+    warningsTotal: write.warnings.length,
+    timings: mergeTimings(input2.timings, write.timings)
+  };
+  if (input2.verify) out.verify = verifyJson(input2.verify);
+  return out;
+}
+var COPY_MAP_MAX, COPY_WARNINGS_MAX, COPY_CONFLICTS_MAX, COPY_WARNING_CHARS, COPY_NAME_CHARS;
+var init_copy_summary = __esm({
+  "bridge-server/src/copy-summary.ts"() {
+    "use strict";
+    COPY_MAP_MAX = 500;
+    COPY_WARNINGS_MAX = 100;
+    COPY_CONFLICTS_MAX = 100;
+    COPY_WARNING_CHARS = 500;
+    COPY_NAME_CHARS = 80;
+  }
+});
+
+// bridge-server/src/png-decode.ts
+import { inflateSync } from "node:zlib";
+function fail(reason) {
+  throw new Error("png: " + reason);
+}
+function walkChunks(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+  const out = {
+    first: void 0,
+    plte: void 0,
+    trns: void 0,
+    idat: []
+  };
+  let offset = 8;
+  while (true) {
+    const left = bytes.length - offset;
+    if (left === 0 && out.first) break;
+    if (left < 12) fail("truncated data");
+    const length = view.getUint32(offset);
+    if (12 + length > left) fail("truncated data");
+    const type = String.fromCharCode(...bytes.subarray(offset + 4, offset + 8));
+    const data = bytes.subarray(offset + 8, offset + 8 + length);
+    offset += 12 + length;
+    out.first ??= { type, data };
+    if (type === "PLTE") out.plte ??= data;
+    else if (type === "tRNS") out.trns ??= data;
+    else if (type === "IDAT") out.idat.push(data);
+    else if (type === "IEND") break;
+  }
+  return out;
+}
+function paeth(a, b, c) {
+  const pa = Math.abs(b - c);
+  const pb = Math.abs(a - c);
+  const pc = Math.abs(a + b - 2 * c);
+  if (pa <= pb && pa <= pc) return a;
+  return pb <= pc ? b : c;
+}
+function unfilter(buf, height, rowBytes, bpp) {
+  const stride = rowBytes + 1;
+  for (let y = 0; y < height; y++) {
+    const filter = buf[y * stride];
+    if (filter > 4) fail(`bad filter type ${filter}`);
+  }
+  for (let y = 0; y < height; y++) {
+    const row = y * stride + 1;
+    const prev = y === 0 ? -1 : row - stride;
+    const filter = buf[row - 1];
+    if (filter === 0) continue;
+    for (let x = 0; x < rowBytes; x++) {
+      const left = x >= bpp ? buf[row + x - bpp] : 0;
+      const up = prev < 0 ? 0 : buf[prev + x];
+      const upLeft = prev < 0 || x < bpp ? 0 : buf[prev + x - bpp];
+      let predictor = left;
+      if (filter === 2) predictor = up;
+      else if (filter === 3) predictor = left + up >> 1;
+      else if (filter === 4) predictor = paeth(left, up, upLeft);
+      buf[row + x] = buf[row + x] + predictor & 255;
+    }
+  }
+}
+function toRgba(src, out, width, height, color, chunks) {
+  const channels = CHANNELS[color];
+  const stride = width * channels + 1;
+  const plte = chunks.plte ?? new Uint8Array(0);
+  const trns = chunks.trns ?? new Uint8Array(0);
+  const entries = Math.floor(plte.length / 3);
+  for (let y = 0; y < height; y++) {
+    let s = y * stride + 1;
+    let d = y * width * 4;
+    for (let x = 0; x < width; x++, s += channels, d += 4) {
+      if (color === 6) {
+        out.set(src.subarray(s, s + 4), d);
+      } else if (color === 2) {
+        out.set(src.subarray(s, s + 3), d);
+        out[d + 3] = 255;
+      } else if (color === 3) {
+        const index = src[s];
+        if (index >= entries) fail("palette index out of range");
+        out.set(plte.subarray(index * 3, index * 3 + 3), d);
+        out[d + 3] = index < trns.length ? trns[index] : 255;
+      } else {
+        out[d] = out[d + 1] = out[d + 2] = src[s];
+        out[d + 3] = color === 4 ? src[s + 1] : 255;
+      }
+    }
+  }
+}
+function inflateRows(idat, expected) {
+  let raw;
+  try {
+    raw = inflateSync(Buffer.concat(idat), { maxOutputLength: expected });
+  } catch (error62) {
+    const code = error62.code;
+    fail(code === "Z_BUF_ERROR" ? "truncated data" : "bad compressed data");
+  }
+  if (raw.length < expected) fail("truncated data");
+  return raw;
+}
+function decodePng(bytes) {
+  if (bytes.length < 8 || SIGNATURE.some((b, i) => bytes[i] !== b)) {
+    fail("bad signature");
+  }
+  const chunks = walkChunks(bytes);
+  const { first } = chunks;
+  if (!first || first.type !== "IHDR" || first.data.length !== 13) {
+    fail("bad header");
+  }
+  const h = new DataView(first.data.buffer, first.data.byteOffset, 13);
+  const width = h.getUint32(0);
+  const height = h.getUint32(4);
+  const depth = first.data[8];
+  const color = first.data[9];
+  if (first.data[10] !== 0 || first.data[11] !== 0) fail("bad header");
+  if (width === 0 || height === 0) fail("bad size");
+  if (width * height > MAX_PIXELS) fail("image too large");
+  if (first.data[12] !== 0) fail("interlace not supported");
+  if (depth === 16) fail("16-bit not supported");
+  if (depth !== 8) fail(`unsupported bit depth ${depth}`);
+  if (!(color in CHANNELS)) fail(`unsupported color type ${color}`);
+  if (color === 3 && !chunks.plte) fail("missing palette");
+  if (chunks.idat.length === 0) fail("truncated data");
+  const channels = CHANNELS[color];
+  const rowBytes = width * channels;
+  const raw = inflateRows(chunks.idat, height * (rowBytes + 1));
+  unfilter(raw, height, rowBytes, channels);
+  const data = new Uint8Array(width * height * 4);
+  toRgba(raw, data, width, height, color, chunks);
+  return { width, height, data };
+}
+var MAX_PIXELS, SIGNATURE, CHANNELS;
+var init_png_decode = __esm({
+  "bridge-server/src/png-decode.ts"() {
+    "use strict";
+    MAX_PIXELS = 2 ** 25;
+    SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
+    CHANNELS = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
+  }
+});
+
+// bridge-server/src/tools/export-files.ts
+import { writeFile } from "node:fs/promises";
+import { isAbsolute, join as join2, relative, resolve } from "node:path";
+function safeFileName(name) {
+  let out = name.replace(/[^A-Za-z0-9._ -]/g, "-").replace(/-{2,}/g, "-").replace(EDGE_JUNK, "").slice(0, MAX_NAME_CHARS).replace(EDGE_JUNK, "");
+  if (!out) out = "node";
+  if (RESERVED_NAME.test(out.split(".")[0].trim())) out = "_" + out;
+  return out;
+}
+function exportFileName(file2) {
+  const id = file2.nodeId.replace(/[:;]/g, "-");
+  return `${safeFileName(file2.name)}--${id}.${EXPORT_EXTENSIONS[file2.format]}`;
+}
+function resolveInside(outDir, fileName) {
+  const root = resolve(outDir);
+  const target = resolve(join2(root, fileName));
+  const rel = relative(root, target);
+  if (!rel || rel.startsWith("..") || isAbsolute(rel)) return null;
+  return target;
+}
+function failure2(nodeId, error62) {
+  return { failed: { nodeId, error: error62 } };
+}
+async function writeExported(outDir, file2) {
+  const legacyError = file2.error;
+  if (legacyError) return failure2(file2.nodeId, legacyError);
+  let data;
+  if (file2.base64) data = Buffer.from(file2.base64, "base64");
+  else if (file2.text) data = Buffer.from(file2.text, "utf8");
+  else return failure2(file2.nodeId, "plugin returned no data");
+  const path = resolveInside(outDir, exportFileName(file2));
+  if (!path) return failure2(file2.nodeId, "file name resolves outside outDir");
+  try {
+    await writeFile(path, data);
+  } catch (e) {
+    return failure2(file2.nodeId, e instanceof Error ? e.message : String(e));
+  }
+  return { written: { nodeId: file2.nodeId, path, bytes: data.length } };
+}
+var EXPORT_EXTENSIONS, MAX_NAME_CHARS, RESERVED_NAME, EDGE_JUNK;
+var init_export_files = __esm({
+  "bridge-server/src/tools/export-files.ts"() {
+    "use strict";
+    EXPORT_EXTENSIONS = {
+      PNG: "png",
+      JPG: "jpg",
+      SVG: "svg",
+      PDF: "pdf",
+      JSON: "json"
+    };
+    MAX_NAME_CHARS = 80;
+    RESERVED_NAME = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
+    EDGE_JUNK = /^[-. ]+|[-. ]+$/g;
+  }
+});
+
+// bridge-server/src/tools/export.ts
+import { mkdir } from "node:fs/promises";
+import { isAbsolute as isAbsolute2 } from "node:path";
+async function collect(slot2, outDir, id, res) {
+  slot2.warnings.push(...res.warnings ?? []);
+  const reported = res.failed ?? [];
+  slot2.failed.push(...reported);
+  if (!res.files.length && !reported.length)
+    slot2.failed.push({ nodeId: id, error: "plugin returned no file" });
+  for (const f of res.files) {
+    const out = await writeExported(outDir, f);
+    if ("written" in out) slot2.written.push(out.written);
+    else slot2.failed.push(out.failed);
+  }
+}
+function errorText(e) {
+  const block = fromCallError(e).content[0];
+  return block.type === "text" ? block.text : String(e);
+}
+var EXPORT_LIMITS, RASTER, inputSchema, registerExport;
+var init_export = __esm({
+  "bridge-server/src/tools/export.ts"() {
+    "use strict";
+    init_zod();
+    init_bridge_ops();
+    init_bridge_export();
+    init_bridge_parse();
+    init_context();
+    init_tool_result();
+    init_export_files();
+    init_export_files();
+    EXPORT_LIMITS = {
+      minScale: 0.1,
+      maxScale: 4,
+      callTimeoutMs: 6e4,
+      inFlight: 2
+    };
+    RASTER = ["PNG", "JPG"];
+    inputSchema = {
+      fileKey: external_exports.string().optional(),
+      nodeIds: external_exports.array(external_exports.string()).min(1).max(EXPORT_MAX_NODES),
+      format: external_exports.enum(EXPORT_FORMATS),
+      scale: external_exports.number().min(EXPORT_LIMITS.minScale).max(EXPORT_LIMITS.maxScale).optional(),
+      contentsOnly: external_exports.boolean().optional(),
+      useAbsoluteBounds: external_exports.boolean().optional(),
+      width: external_exports.number().optional(),
+      height: external_exports.number().optional(),
+      colorProfile: external_exports.enum(["DOCUMENT", "SRGB", "DISPLAY_P3_V4"]).optional(),
+      outDir: external_exports.string()
+    };
+    registerExport = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.export,
+        {
+          title: "Export nodes to disk",
+          description: `Renders nodes of the open Figma file and writes them as files to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes, and per-node failures in failed. At most ${EXPORT_MAX_NODES} nodeIds per call. scale applies to PNG and JPG only. width or height (PNG and JPG, not with scale) sets the output size in px and keeps the aspect ratio. contentsOnly:false includes content clipped by a frame, useAbsoluteBounds uses the full bounds including strokes and effects, colorProfile picks the color space. warnings lists suspect results (tiny file, hidden node). Existing files with the same name are overwritten, so use a fresh outDir.`,
+          inputSchema
+        },
+        async ({
+          fileKey: fileKey5,
+          nodeIds,
+          format,
+          scale,
+          width,
+          height,
+          outDir,
+          ...rest
+        }) => {
+          if (!isAbsolute2(outDir))
+            return errorResult(
+              "outDir must be an absolute path",
+              "The tool does not expand ~ or relative paths."
+            );
+          if (width !== void 0 && height !== void 0)
+            return errorResult("width and height cannot be used together");
+          const sized = width ?? height;
+          const options = parseExportOptions({
+            ...rest,
+            format,
+            scale,
+            ...sized !== void 0 && {
+              size: {
+                type: width !== void 0 ? "WIDTH" : "HEIGHT",
+                value: sized
+              }
+            }
+          });
+          if (typeof options === "string") return errorResult(options);
+          const ids = [...new Set(nodeIds)];
+          const resolved = ctx2.files.resolve(fileKey5);
+          if ("error" in resolved) return errorResult(resolved.error);
+          const { file: file2, note } = resolved;
+          try {
+            await mkdir(outDir, { recursive: true });
+          } catch (e) {
+            return errorResult(
+              "Cannot create outDir: " + (e instanceof Error ? e.message : String(e))
+            );
+          }
+          const payloadScale = RASTER.includes(format) && scale !== void 0 ? { scale } : {};
+          const slots = ids.map(() => ({
+            written: [],
+            failed: [],
+            warnings: []
+          }));
+          let next = 0;
+          let closed = false;
+          let thrown;
+          const worker = async () => {
+            while (!closed && next < ids.length) {
+              const i = next++;
+              const id = ids[i];
+              try {
+                const res = await ctx2.rpc.call(
+                  file2.connectionId,
+                  "export",
+                  { nodeIds: [id], format, ...payloadScale, ...options },
+                  EXPORT_LIMITS.callTimeoutMs
+                );
+                await collect(slots[i], outDir, id, res);
+              } catch (e) {
+                thrown = e;
+                const text2 = errorText(e);
+                slots[i].failed.push({ nodeId: id, error: text2 });
+                if (e instanceof BridgeCallError && e.code === "closed") {
+                  closed = true;
+                  for (; next < ids.length; next++)
+                    slots[next].failed.push({ nodeId: ids[next], error: text2 });
+                }
+              }
+            }
+          };
+          await Promise.all(
+            Array.from(
+              { length: Math.min(EXPORT_LIMITS.inFlight, ids.length) },
+              worker
+            )
+          );
+          const written = slots.flatMap((s) => s.written);
+          const failed = slots.flatMap((s) => s.failed);
+          const warnings = slots.flatMap((s) => s.warnings);
+          if (!written.length) {
+            if (failed.length === 1 && thrown !== void 0)
+              return fromCallError(thrown);
+            const lines = failed.map((f) => `${f.nodeId}: ${f.error}`).join("\n");
+            return errorResult(
+              "Nothing was exported.\n" + lines,
+              "Check the node ids with view_get, then try again."
+            );
+          }
+          return jsonResult(
+            { outDir, written, failed, ...warnings.length && { warnings } },
+            note
+          );
+        }
+      );
+    };
+  }
+});
+
+// plugins/ezg-tools/src/shared/ssim.ts
+function valid(img) {
+  const { width, height, data } = img;
+  if (!Number.isInteger(width) || !Number.isInteger(height)) return false;
+  if (width <= 0 || height <= 0) return false;
+  return data.length === width * height * 4;
+}
+function luma(data, index) {
+  const alpha = data[index + 3];
+  const rest = 255 * (255 - alpha);
+  const r = (data[index] * alpha + rest) / 255;
+  const g = (data[index + 1] * alpha + rest) / 255;
+  const b = (data[index + 2] * alpha + rest) / 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+function windowSsim(a, b, x0, y0, x1, y1) {
+  const width = a.width;
+  const count = (x1 - x0) * (y1 - y0);
+  let sumA = 0;
+  let sumB = 0;
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      const index = (y * width + x) * 4;
+      sumA += luma(a.data, index);
+      sumB += luma(b.data, index);
+    }
+  }
+  const meanA = sumA / count;
+  const meanB = sumB / count;
+  let varA = 0;
+  let varB = 0;
+  let cov = 0;
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      const index = (y * width + x) * 4;
+      const da = luma(a.data, index) - meanA;
+      const db = luma(b.data, index) - meanB;
+      varA += da * da;
+      varB += db * db;
+      cov += da * db;
+    }
+  }
+  varA /= count;
+  varB /= count;
+  cov /= count;
+  return (2 * meanA * meanB + C1) * (2 * cov + C2) / ((meanA * meanA + meanB * meanB + C1) * (varA + varB + C2));
+}
+function ssim(a, b) {
+  if (!valid(a) || !valid(b)) return null;
+  if (a.width !== b.width || a.height !== b.height) return null;
+  let total = 0;
+  let windows = 0;
+  for (let y = 0; y < a.height; y += WINDOW) {
+    const y1 = Math.min(y + WINDOW, a.height);
+    for (let x = 0; x < a.width; x += WINDOW) {
+      const x1 = Math.min(x + WINDOW, a.width);
+      total += windowSsim(a, b, x, y, x1, y1);
+      windows++;
+    }
+  }
+  return total / windows;
+}
+var WINDOW, C1, C2;
+var init_ssim = __esm({
+  "plugins/ezg-tools/src/shared/ssim.ts"() {
+    "use strict";
+    WINDOW = 8;
+    C1 = (0.01 * 255) ** 2;
+    C2 = (0.03 * 255) ** 2;
+  }
+});
+
+// bridge-server/src/copy-verify.ts
+async function exportSide(ctx2, file2, ids) {
+  const side = { files: /* @__PURE__ */ new Map(), failed: /* @__PURE__ */ new Map(), halt: null };
+  try {
+    const reply = await ctx2.rpc.call(
+      file2.connectionId,
+      "export",
+      { nodeIds: ids, format: "PNG", scale: 1 },
+      EXPORT_LIMITS.callTimeoutMs
+    );
+    for (const f of reply.files) side.files.set(f.nodeId, f);
+    for (const f of reply.failed) {
+      side.failed.set(f.nodeId, f.error);
+      if (f.error.startsWith(STUCK_PREFIX)) side.halt = "stuck";
+    }
+  } catch (error62) {
+    const message3 = error62 instanceof Error ? error62.message : String(error62);
+    const stuck = error62 instanceof BridgeCallError && error62.code === "remote" && codeOf(error62.remote?.data) === "EXPORT_STUCK";
+    side.halt = stuck ? "stuck" : "rpc: " + message3;
+    for (const id of ids) side.failed.set(id, message3);
+  }
+  return side;
+}
+function decodeSide(side, id) {
+  const file2 = side.files.get(id);
+  if (!file2) return { reason: side.failed.get(id) ?? "no file returned" };
+  if (!file2.base64) return { reason: "no PNG data" };
+  try {
+    return { image: decodePng(Buffer.from(file2.base64, "base64")) };
+  } catch (error62) {
+    return { reason: error62 instanceof Error ? error62.message : String(error62) };
+  }
+}
+function scorePair(pair, source, target) {
+  const a = decodeSide(source, pair.sourceId);
+  const b = decodeSide(target, pair.targetId);
+  if ("image" in a && "image" in b) {
+    const { image: x } = a;
+    const { image: y } = b;
+    if (x.width !== y.width || x.height !== y.height) {
+      const size2 = `size ${x.width}x${x.height} vs ${y.width}x${y.height}`;
+      return { ...pair, ssim: 0, note: size2 };
+    }
+    const score = ssim(x, y);
+    return score === null ? { ...pair, ssim: null, note: "not comparable" } : { ...pair, ssim: score };
+  }
+  const notes = [];
+  if ("reason" in a) notes.push("source: " + a.reason);
+  if ("reason" in b) notes.push("target: " + b.reason);
+  return { ...pair, ssim: null, note: notes.join("; ") };
+}
+async function verifyCopy(ctx2, source, target, pairs, limit) {
+  const started = performance.now();
+  const count = Number.isNaN(limit) ? 0 : Math.min(VERIFY_MAX, Math.max(0, Math.floor(limit)));
+  const wanted = pairs.slice(0, count);
+  const scores = [];
+  for (let from = 0; from < wanted.length; from += EXPORT_MAX_NODES) {
+    const batch = wanted.slice(from, from + EXPORT_MAX_NODES);
+    const [src, tgt] = await Promise.all([
+      exportSide(ctx2, source, [...new Set(batch.map((p) => p.sourceId))]),
+      exportSide(ctx2, target, [...new Set(batch.map((p) => p.targetId))])
+    ]);
+    for (const pair of batch) scores.push(scorePair(pair, src, tgt));
+    const halted = src.halt ? "source " + src.halt : tgt.halt ? "target " + tgt.halt : null;
+    if (halted) {
+      const note = `skipped: export stopped (${halted})`;
+      for (const pair of wanted.slice(from + batch.length)) {
+        scores.push({ ...pair, ssim: null, note });
+      }
+      break;
+    }
+  }
+  const real = scores.flatMap((s) => s.ssim === null ? [] : [s.ssim]);
+  const min = real.length ? Math.min(...real) : null;
+  return { pairs: scores, min, ms: Math.round(performance.now() - started) };
+}
+var VERIFY_DEFAULT, VERIFY_MAX, STUCK_PREFIX;
+var init_copy_verify = __esm({
+  "bridge-server/src/copy-verify.ts"() {
+    "use strict";
+    init_context();
+    init_png_decode();
+    init_export();
+    init_bridge_error_codes();
+    init_bridge_ops();
+    init_bridge_parse();
+    init_ssim();
+    VERIFY_DEFAULT = 20;
+    VERIFY_MAX = 200;
+    STUCK_PREFIX = "export is stuck";
+  }
+});
+
+// plugins/ezg-tools/src/shared/copy-url.ts
+function readNodeId(query) {
+  for (const pair of query.split("&")) {
+    const eq = pair.indexOf("=");
+    if (eq < 0 || pair.slice(0, eq) !== "node-id") continue;
+    let value;
+    try {
+      value = decodeURIComponent(pair.slice(eq + 1));
+    } catch (_) {
+      return void 0;
+    }
+    return NODE_ID.test(value) ? value.replace("-", ":") : void 0;
+  }
+  return void 0;
+}
+function parseFigmaUrl(input2) {
+  const text2 = input2.trim();
+  const origin = ORIGIN.exec(text2);
+  if (!origin) return null;
+  const match = PATH.exec(text2.slice(origin[0].length));
+  if (!match) return null;
+  const link3 = { fileKey: match[1] };
+  if (match[2]) link3.branchKey = match[2];
+  const nodeId = match[3] ? readNodeId(match[3]) : void 0;
+  if (nodeId) link3.nodeId = nodeId;
+  return link3;
+}
+var ORIGIN, KEY, PATH, NODE_ID, linkFileKey;
+var init_copy_url = __esm({
+  "plugins/ezg-tools/src/shared/copy-url.ts"() {
+    "use strict";
+    ORIGIN = /^https:\/\/(?:www\.)?figma\.com(?=\/)/i;
+    KEY = "[0-9A-Za-z]{22,128}";
+    PATH = new RegExp(
+      `^/(?:design|file|proto|board)/(${KEY})(?:/branch/(${KEY}))?(?=[/?#]|$)[^?#]*(?:\\?([^#]*))?(?:#.*)?$`
+    );
+    NODE_ID = /^\d+[-:]\d+$/;
+    linkFileKey = (link3) => link3.branchKey ?? link3.fileKey;
+  }
+});
+
+// bridge-server/src/copy-run.ts
+function reject2(text2, hint) {
+  throw errorResult(text2, hint);
+}
+function parseFrom(from, extra = []) {
+  const link3 = parseFigmaUrl(from);
+  if (!link3 && (/^http/i.test(from) || from.includes("figma.com")))
+    reject2("from: the link is not a supported Figma file link");
+  const trimmed = [link3?.nodeId ?? "", ...extra].map((s) => s.trim());
+  const ids = [...new Set(trimmed)].filter(Boolean);
+  if (ids.length > COPY_MAX_NODE_IDS)
+    reject2(`${ids.length} nodeIds is over the limit of ${COPY_MAX_NODE_IDS}`);
+  const unusable = !link3?.nodeId && /[?&]node-id=/.test(from);
+  if (!ids.length) reject2(unusable ? UNUSABLE_NODE_ID : NO_NODE_IDS);
+  return { key: link3 ? linkFileKey(link3) : from, ids };
+}
+function resolveEnd(ctx2, side, key) {
+  const found = ctx2.files.resolve(key);
+  if ("error" in found) reject2(`${side}: ${found.error}`);
+  if (found.note) reject2(`${side} ${key} is not connected`, NOT_CONNECTED2);
+  return found.file;
+}
+function buildOptions(input2) {
+  const { placement, conflict, tokens, libraryRefs, dryRun } = input2;
+  const page = input2.page?.trim() ?? "";
+  const owner = input2.owner?.trim();
+  if (owner && owner.length > BUILD_OWNER_MAX)
+    reject2(`owner is longer than ${BUILD_OWNER_MAX} chars`);
+  const parentId = input2.parentId?.trim();
+  const pageKey = /^\d+:\d+$/.test(page) ? "pageId" : "pageName";
+  const given = { placement, conflict, tokens, libraryRefs, dryRun, owner };
+  const extra = { parentId, [pageKey]: page };
+  const defined = Object.entries({ ...given, ...extra }).filter(
+    ([, v]) => v !== void 0 && v !== ""
+  );
+  return { ...DEFAULT_COPY_OPTIONS, ...Object.fromEntries(defined) };
+}
+async function lap(side, file2, call) {
+  const started = performance.now();
+  try {
+    return { value: await call, ms: performance.now() - started };
+  } catch (e) {
+    const remote = e instanceof BridgeCallError ? e.remote : void 0;
+    if (!remote?.message.startsWith("unknown op: copy.")) throw fromCallError(e);
+    const where = `(${side} file "${file2.fileName}")`;
+    throw errorResult(`${remote.message} ${where}`, COPY_OLD_PLUGIN_HINT);
+  }
+}
+async function startCheckpoint(ctx2, id, name) {
+  const title = `Before copy from ${name}`.replace(/\s+/g, " ").slice(0, 100);
+  const started = performance.now();
+  try {
+    await ctx2.rpc.call(
+      id,
+      "history.checkpoint",
+      { title },
+      CHECKPOINT_TIMEOUT_MS
+    );
+    return { ms: performance.now() - started };
+  } catch (e) {
+    return { ms: performance.now() - started, error: message(e) };
+  }
+}
+function payloadProblem(payload, max) {
+  let size2;
+  try {
+    size2 = JSON.stringify(payload).length;
+  } catch (e) {
+    if (!(e instanceof RangeError)) throw e;
+    return `The copy payload is too large to serialize (limit ${max} chars)`;
+  }
+  return size2 > max ? `The copy payload is ${size2} chars, over ${max}` : null;
+}
+function verifyPairs(doc, idMap, limit) {
+  if (!(limit >= 1)) return [];
+  const has = (id) => Object.hasOwn(doc.nodes, id);
+  const wanted = new Set(doc.units);
+  for (const unit of doc.units) {
+    const node2 = has(unit) ? doc.nodes[unit] : void 0;
+    if (node2?.type === "COMPONENT_SET")
+      for (const child2 of node2.children ?? []) wanted.add(child2);
+  }
+  const pairs = [];
+  for (const [sourceId, targetId] of Object.entries(idMap)) {
+    if (pairs.length >= Math.floor(limit)) break;
+    if (has(sourceId) && wanted.has(sourceId))
+      pairs.push({ name: doc.nodes[sourceId].name, sourceId, targetId });
+  }
+  return pairs;
+}
+async function runCopy(ctx2, input2, given = {}) {
+  const started = performance.now();
+  const deps = {
+    verify: given.verify ?? verifyCopy,
+    maxPayloadChars: given.maxPayloadChars ?? ASSEMBLED_MAX_CHARS - COPY_ENVELOPE_CHARS
+  };
+  try {
+    const [from, to] = [input2.from, input2.to].map((s) => s.trim());
+    if (!from || !to) reject2("from and to must not be empty");
+    const { key, ids } = parseFrom(from, input2.nodeIds);
+    const source = resolveEnd(ctx2, "source", key);
+    const target = resolveEnd(ctx2, "target", to);
+    if (source.connectionId === target.connectionId)
+      reject2("source and target are the same file");
+    const options = buildOptions(input2);
+    const names2 = (input2.names ?? []).filter((n) => n !== "");
+    const readPayload = {
+      nodeIds: ids,
+      mode: input2.mode ?? "components",
+      ...names2.length ? { names: names2 } : {}
+    };
+    const sid = source.connectionId;
+    const readCall = lap(
+      "source",
+      source,
+      ctx2.rpc.call(sid, COPY_READ_OP, readPayload, READ_RPC_MS)
+    );
+    const skipCheckpoint = input2.dryRun === true || input2.checkpoint === false;
+    const checkpointCall = skipCheckpoint ? null : startCheckpoint(ctx2, target.connectionId, source.fileName);
+    const read2 = await readCall;
+    const warnings = [];
+    const checkpoint = checkpointCall ? await checkpointCall : null;
+    if (checkpoint?.error)
+      warnings.push(
+        `checkpoint failed: ${checkpoint.error}; the copy ran without a restore point`
+      );
+    const { doc } = read2.value;
+    const writePayload = { doc, options };
+    const problem = payloadProblem(writePayload, deps.maxPayloadChars);
+    if (problem) reject2(problem, TOO_BIG_HINT);
+    const tid = target.connectionId;
+    const sent = await lap(
+      "target",
+      target,
+      ctx2.rpc.call(tid, COPY_WRITE_OP, writePayload, WRITE_RPC_MS)
+    );
+    const total = performance.now() - started;
+    const result = sent.value;
+    const writeMs = Object.values(result.timings).filter(Number.isFinite).reduce((a, b) => a + b, 0);
+    const timings = {
+      read: read2.ms,
+      ...checkpoint ? { checkpoint: checkpoint.ms } : {},
+      write: writeMs,
+      transfer: Math.max(0, sent.ms - writeMs),
+      total
+    };
+    let verified;
+    const { verify } = input2;
+    const limit = verify === true ? VERIFY_DEFAULT : Math.min(VERIFY_MAX, Math.floor(Number(verify ?? NaN)));
+    if (input2.dryRun !== true && limit >= 1) {
+      const pairs = verifyPairs(doc, result.idMap, limit);
+      const verifyStarted = performance.now();
+      try {
+        verified = await deps.verify(ctx2, source, target, pairs, limit);
+      } catch (e) {
+        warnings.push(`verify failed: ${message(e)}`);
+      }
+      timings.verify = performance.now() - verifyStarted;
+    }
+    const warn = [...warnings, ...doc.warnings, ...result.warnings];
+    return jsonResult(
+      buildCopySummary({
+        source,
+        target,
+        read: read2.value.stats,
+        write: { ...result, warnings: warn },
+        timings,
+        verify: verified
+      })
+    );
+  } catch (e) {
+    return isResult(e) ? e : fromCallError(e);
+  }
+}
+var COPY_OLD_PLUGIN_HINT, CHECKPOINT_TIMEOUT_MS, READ_RPC_MS, WRITE_RPC_MS, NOT_CONNECTED2, NO_NODE_IDS, TOO_BIG_HINT, UNUSABLE_NODE_ID, message, isResult;
+var init_copy_run = __esm({
+  "bridge-server/src/copy-run.ts"() {
+    "use strict";
+    init_context();
+    init_copy_summary();
+    init_copy_verify();
+    init_tool_result();
+    init_bridge_build_expect();
+    init_bridge_chunk();
+    init_copy_op();
+    init_copy_op();
+    init_copy_url();
+    COPY_OLD_PLUGIN_HINT = "This Figma file runs an older EZG Tools. Re-run the installer and restart Figma.";
+    CHECKPOINT_TIMEOUT_MS = 3e4;
+    READ_RPC_MS = COPY_READ_TIMEOUT_MS + COPY_RPC_MARGIN_MS;
+    WRITE_RPC_MS = COPY_WRITE_TIMEOUT_MS + COPY_RPC_MARGIN_MS;
+    NOT_CONNECTED2 = "Call files and pass a fileKey or clientId from the list.";
+    NO_NODE_IDS = "No node ids. Pass nodeIds or a link with node-id.";
+    TOO_BIG_HINT = "Copy fewer nodeIds, or pass names to pick units.";
+    UNUSABLE_NODE_ID = "The node id in the link was not usable (for example an instance sublayer). Pass nodeIds.";
+    message = (e) => e instanceof Error ? e.message : String(e);
+    isResult = (e) => typeof e === "object" && e !== null && "content" in e;
+  }
+});
+
+// bridge-server/src/tools/copy.ts
+var DESCRIPTION3, copyInputSchema, registerCopy;
+var init_copy = __esm({
+  "bridge-server/src/tools/copy.ts"() {
+    "use strict";
+    init_zod();
+    init_bridge_build_expect();
+    init_copy_op();
+    init_context();
+    init_copy_run();
+    DESCRIPTION3 = "Copies components, component sets or subtrees from one connected Figma file to another in one call. Both files must be open with EZG Tools connected; files lists them. from accepts a Figma link, a fileKey or a clientId, and a link gives the node id. to is the fileKey or the clientId of the destination file; a link is not valid for to. At least one node is required: a from link with a node-id, or nodeIds. A call with no node returns an error. mode is components (default) or as-is. Defaults: mode components, conflict rename, tokens match, libraryRefs import, placement right, checkpoint on. One undo reverts the copy, and a failure rolls it back. The result is an id map, counts, warnings and timings. It holds no node data. verify scores SSIM between the source and the copy.";
+    copyInputSchema = {
+      from: external_exports.string().min(1).describe("Source: a Figma link, a fileKey or a clientId from files."),
+      nodeIds: external_exports.array(external_exports.string()).max(COPY_MAX_NODE_IDS).optional().describe("Source node ids to copy, added to the node-id of a from link."),
+      to: external_exports.string().min(1).describe("Destination: a fileKey or a clientId from files. Not a link."),
+      page: external_exports.string().optional().describe("Destination page id or name. Default: the current page."),
+      parentId: external_exports.string().optional().describe("Destination parent node id. Overrides page."),
+      placement: external_exports.union([
+        external_exports.enum(["right", "keep"]),
+        external_exports.object({ dx: external_exports.number(), dy: external_exports.number() })
+      ]).optional().describe(
+        "right: left edge at the next free x (default). keep: source positions. { dx, dy }: offset from the source positions."
+      ),
+      mode: external_exports.enum(["components", "as-is"]).optional().describe("components (default) or as-is."),
+      conflict: external_exports.enum(["skip", "replace", "rename"]).optional().describe(
+        "Same-named unit on the destination page: skip, replace or rename (default)."
+      ),
+      tokens: external_exports.enum(["match", "create", "inline"]).optional().describe(
+        "Variables and styles: match by name (default), create new, or inline the values."
+      ),
+      libraryRefs: external_exports.enum(["import", "clone"]).optional().describe(
+        "Library components, styles and variables: import by key (default) or clone."
+      ),
+      dryRun: external_exports.boolean().optional().describe("Read and check only. Writes nothing."),
+      owner: external_exports.string().min(1).max(BUILD_OWNER_MAX).optional().describe("Claim owner for the destination nodes."),
+      checkpoint: external_exports.boolean().optional().describe("Save a restore point on the destination first. Default true."),
+      verify: external_exports.union([external_exports.boolean(), external_exports.number().int().min(1).max(200)]).optional().describe(
+        "Score SSIM for this many pairs (true = default count, max 200)."
+      ),
+      names: external_exports.array(external_exports.string()).optional().describe("Pick units by name instead of by node id.")
+    };
+    registerCopy = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.copy,
+        {
+          title: "Copy between files",
+          description: DESCRIPTION3,
+          inputSchema: copyInputSchema
+        },
+        (args) => runCopy(ctx2, args)
+      );
+    };
+  }
+});
+
 // bridge-server/src/tools/describe.ts
-var DESCRIBE_TIMEOUT_MS, DESCRIBE_OLD_PLUGIN_HINT, DESCRIPTION3, describeInputSchema, registerDescribe;
+var DESCRIBE_TIMEOUT_MS, DESCRIBE_OLD_PLUGIN_HINT, DESCRIPTION4, describeInputSchema, registerDescribe;
 var init_describe = __esm({
   "bridge-server/src/tools/describe.ts"() {
     "use strict";
@@ -44985,7 +46077,7 @@ var init_describe = __esm({
     init_tool_result();
     DESCRIBE_TIMEOUT_MS = 6e4;
     DESCRIBE_OLD_PLUGIN_HINT = "reopen the EZG Tools plugin to update it";
-    DESCRIPTION3 = "Reads a compact tree: names, types, boxes, layout, bound tokens, text and component props. Use it before editing a screen instead of writing an eval walker.";
+    DESCRIPTION4 = "Reads a compact tree: names, types, boxes, layout, bound tokens, text and component props. Use it before editing a screen instead of writing an eval walker.";
     describeInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -44999,7 +46091,7 @@ var init_describe = __esm({
     registerDescribe = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.describe,
-        { description: DESCRIPTION3, inputSchema: describeInputSchema },
+        { description: DESCRIPTION4, inputSchema: describeInputSchema },
         async ({ fileKey: fileKey5, nodeIds, depth, maxNodes }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -45047,7 +46139,7 @@ function failureNotes2(d) {
   const kept = "kept: " + d.kept.slice(0, EVAL_KEPT_MAX).join(", ") + (d.kept.length > EVAL_KEPT_MAX ? ` (+${d.kept.length - EVAL_KEPT_MAX} more)` : "");
   return [at, kept, EVAL_PARTIAL_HINT];
 }
-var EVAL_TIMEOUT_DEFAULT_MS, EVAL_TIMEOUT_MIN_MS, EVAL_TIMEOUT_MAX_MS, EVAL_RPC_MARGIN_MS, EVAL_PARTIAL_HINT, EVAL_NOTHING_KEPT_NOTE, EVAL_KEPT_MAX, EVAL_STILL_RUNNING_HINT, PROTOTYPES_NOTE, DESCRIPTION4, evalInputSchema, registerEval;
+var EVAL_TIMEOUT_DEFAULT_MS, EVAL_TIMEOUT_MIN_MS, EVAL_TIMEOUT_MAX_MS, EVAL_RPC_MARGIN_MS, EVAL_PARTIAL_HINT, EVAL_NOTHING_KEPT_NOTE, EVAL_KEPT_MAX, EVAL_STILL_RUNNING_HINT, PROTOTYPES_NOTE, DESCRIPTION5, evalInputSchema, registerEval;
 var init_eval = __esm({
   "bridge-server/src/tools/eval.ts"() {
     "use strict";
@@ -45064,7 +46156,7 @@ var init_eval = __esm({
     EVAL_KEPT_MAX = 20;
     EVAL_STILL_RUNNING_HINT = "call status until busy is false, then check recent for its outcome before you retry";
     PROTOTYPES_NOTE = "node.query(), node.matches(), node.set() and node.screenshot() are not available in this file; call query(node, selector), matches(node, selector), set(node, props) and screenshot(node) instead";
-    DESCRIPTION4 = `Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot, and the kit object (tokens, text, components, variants, auto layout), are passed as parameters; user code runs in an inner function, so it may declare its own names. args (any JSON, up to ${EVAL_ARGS_MAX_CHARS} characters, separate from the code cap) is passed to the code as the args parameter, so data never has to be pasted into code. One call is one undo step. Not atomic by default: a failed run may leave partial changes. Pass atomic: true to remove the nodes the call created when it fails (edits to existing nodes stay). Pass pageId to put new top-level nodes on that page. On timeoutMs the call is cancelled: the code stops at its next figma, kit or helper call (signal.cancelled and signal.throwIfCancelled() let long loops check), atomic removes what it created, and the error says where it was. If it does not stop within ${EVAL_CANCEL_GRACE_MS / 1e3} s, the error says it is still running; call status until busy is false before you retry. The result reports elapsed time, queue time and depth, slow font loads and created node ids. Load the ezg-figma-bridge skill first.`;
+    DESCRIPTION5 = `Runs Plugin API code (async function body, top-level await and return) in the connected Figma file. The figma and console globals are available, and the helpers query, matches, set, createAutoLayout and screenshot, and the kit object (tokens, text, components, variants, auto layout), are passed as parameters; user code runs in an inner function, so it may declare its own names. args (any JSON, up to ${EVAL_ARGS_MAX_CHARS} characters, separate from the code cap) is passed to the code as the args parameter, so data never has to be pasted into code. One call is one undo step. Not atomic by default: a failed run may leave partial changes. Pass atomic: true to remove the nodes the call created when it fails (edits to existing nodes stay). Pass pageId to put new top-level nodes on that page. On timeoutMs the call is cancelled: the code stops at its next figma, kit or helper call (signal.cancelled and signal.throwIfCancelled() let long loops check), atomic removes what it created, and the error says where it was. If it does not stop within ${EVAL_CANCEL_GRACE_MS / 1e3} s, the error says it is still running; call status until busy is false before you retry. The result reports elapsed time, queue time and depth, slow font loads and created node ids. Load the ezg-figma-bridge skill first.`;
     evalInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -45080,7 +46172,7 @@ var init_eval = __esm({
     registerEval = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.eval,
-        { description: DESCRIPTION4, inputSchema: evalInputSchema },
+        { description: DESCRIPTION5, inputSchema: evalInputSchema },
         async ({ fileKey: fileKey5, code, description, timeoutMs, atomic, pageId, args }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -45133,9 +46225,9 @@ var init_eval = __esm({
 });
 
 // bridge-server/src/tools/doc-snapshot.ts
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname as dirname2, isAbsolute } from "node:path";
-var DOC_SNAPSHOT_OLD_PLUGIN_HINT, DESCRIPTION5, docSnapshotInputSchema, registerDocSnapshot;
+import { mkdir as mkdir2, writeFile as writeFile2 } from "node:fs/promises";
+import { dirname as dirname2, isAbsolute as isAbsolute3 } from "node:path";
+var DOC_SNAPSHOT_OLD_PLUGIN_HINT, DESCRIPTION6, docSnapshotInputSchema, registerDocSnapshot;
 var init_doc_snapshot = __esm({
   "bridge-server/src/tools/doc-snapshot.ts"() {
     "use strict";
@@ -45144,7 +46236,7 @@ var init_doc_snapshot = __esm({
     init_context();
     init_tool_result();
     DOC_SNAPSHOT_OLD_PLUGIN_HINT = "reopen the EZG Tools plugin to update it";
-    DESCRIPTION5 = "Writes the open Figma file as one JSON file at outPath, the same shape as GET /v1/files/:key?geometry=paths (no text outlines). Takes every page unless pageIds is given. Use it for a Unity import or offline reading. Returns path, bytes, name, pages, nodes and ms, not the JSON. An existing file at outPath is overwritten.";
+    DESCRIPTION6 = "Writes the open Figma file as one JSON file at outPath, the same shape as GET /v1/files/:key?geometry=paths (no text outlines). Takes every page unless pageIds is given. Use it for a Unity import or offline reading. Returns path, bytes, name, pages, nodes and ms, not the JSON. An existing file at outPath is overwritten.";
     docSnapshotInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -45157,11 +46249,11 @@ var init_doc_snapshot = __esm({
         TOOL_NAMES.docSnapshot,
         {
           title: "Snapshot the document to disk",
-          description: DESCRIPTION5,
+          description: DESCRIPTION6,
           inputSchema: docSnapshotInputSchema
         },
         async ({ fileKey: fileKey5, pageIds, outPath }) => {
-          if (!isAbsolute(outPath))
+          if (!isAbsolute3(outPath))
             return errorResult("outPath must be an absolute path");
           if (!outPath.endsWith(".json"))
             return errorResult("outPath must end in .json");
@@ -45175,8 +46267,8 @@ var init_doc_snapshot = __esm({
               payload,
               SNAPSHOT_TIMEOUT_MS
             );
-            await mkdir(dirname2(outPath), { recursive: true });
-            await writeFile(outPath, res.text);
+            await mkdir2(dirname2(outPath), { recursive: true });
+            await writeFile2(outPath, res.text);
             return jsonResult(
               {
                 path: outPath,
@@ -45313,224 +46405,8 @@ var init_events2 = __esm({
   }
 });
 
-// bridge-server/src/tools/export-files.ts
-import { writeFile as writeFile2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute2, join as join2, relative, resolve } from "node:path";
-function safeFileName(name) {
-  let out = name.replace(/[^A-Za-z0-9._ -]/g, "-").replace(/-{2,}/g, "-").replace(EDGE_JUNK, "").slice(0, MAX_NAME_CHARS).replace(EDGE_JUNK, "");
-  if (!out) out = "node";
-  if (RESERVED_NAME.test(out.split(".")[0].trim())) out = "_" + out;
-  return out;
-}
-function exportFileName(file2) {
-  const id = file2.nodeId.replace(/[:;]/g, "-");
-  return `${safeFileName(file2.name)}--${id}.${EXPORT_EXTENSIONS[file2.format]}`;
-}
-function resolveInside(outDir, fileName) {
-  const root = resolve(outDir);
-  const target = resolve(join2(root, fileName));
-  const rel = relative(root, target);
-  if (!rel || rel.startsWith("..") || isAbsolute2(rel)) return null;
-  return target;
-}
-function failure2(nodeId, error62) {
-  return { failed: { nodeId, error: error62 } };
-}
-async function writeExported(outDir, file2) {
-  const legacyError = file2.error;
-  if (legacyError) return failure2(file2.nodeId, legacyError);
-  let data;
-  if (file2.base64) data = Buffer.from(file2.base64, "base64");
-  else if (file2.text) data = Buffer.from(file2.text, "utf8");
-  else return failure2(file2.nodeId, "plugin returned no data");
-  const path = resolveInside(outDir, exportFileName(file2));
-  if (!path) return failure2(file2.nodeId, "file name resolves outside outDir");
-  try {
-    await writeFile2(path, data);
-  } catch (e) {
-    return failure2(file2.nodeId, e instanceof Error ? e.message : String(e));
-  }
-  return { written: { nodeId: file2.nodeId, path, bytes: data.length } };
-}
-var EXPORT_EXTENSIONS, MAX_NAME_CHARS, RESERVED_NAME, EDGE_JUNK;
-var init_export_files = __esm({
-  "bridge-server/src/tools/export-files.ts"() {
-    "use strict";
-    EXPORT_EXTENSIONS = {
-      PNG: "png",
-      JPG: "jpg",
-      SVG: "svg",
-      PDF: "pdf",
-      JSON: "json"
-    };
-    MAX_NAME_CHARS = 80;
-    RESERVED_NAME = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
-    EDGE_JUNK = /^[-. ]+|[-. ]+$/g;
-  }
-});
-
-// bridge-server/src/tools/export.ts
-import { mkdir as mkdir2 } from "node:fs/promises";
-import { isAbsolute as isAbsolute3 } from "node:path";
-async function collect(slot2, outDir, id, res) {
-  slot2.warnings.push(...res.warnings ?? []);
-  const reported = res.failed ?? [];
-  slot2.failed.push(...reported);
-  if (!res.files.length && !reported.length)
-    slot2.failed.push({ nodeId: id, error: "plugin returned no file" });
-  for (const f of res.files) {
-    const out = await writeExported(outDir, f);
-    if ("written" in out) slot2.written.push(out.written);
-    else slot2.failed.push(out.failed);
-  }
-}
-function errorText(e) {
-  const block = fromCallError(e).content[0];
-  return block.type === "text" ? block.text : String(e);
-}
-var EXPORT_LIMITS, RASTER, inputSchema, registerExport;
-var init_export = __esm({
-  "bridge-server/src/tools/export.ts"() {
-    "use strict";
-    init_zod();
-    init_bridge_ops();
-    init_bridge_export();
-    init_bridge_parse();
-    init_context();
-    init_tool_result();
-    init_export_files();
-    init_export_files();
-    EXPORT_LIMITS = {
-      minScale: 0.1,
-      maxScale: 4,
-      callTimeoutMs: 6e4,
-      inFlight: 2
-    };
-    RASTER = ["PNG", "JPG"];
-    inputSchema = {
-      fileKey: external_exports.string().optional(),
-      nodeIds: external_exports.array(external_exports.string()).min(1).max(EXPORT_MAX_NODES),
-      format: external_exports.enum(EXPORT_FORMATS),
-      scale: external_exports.number().min(EXPORT_LIMITS.minScale).max(EXPORT_LIMITS.maxScale).optional(),
-      contentsOnly: external_exports.boolean().optional(),
-      useAbsoluteBounds: external_exports.boolean().optional(),
-      width: external_exports.number().optional(),
-      height: external_exports.number().optional(),
-      colorProfile: external_exports.enum(["DOCUMENT", "SRGB", "DISPLAY_P3_V4"]).optional(),
-      outDir: external_exports.string()
-    };
-    registerExport = (server2, ctx2) => {
-      server2.registerTool(
-        TOOL_NAMES.export,
-        {
-          title: "Export nodes to disk",
-          description: `Renders nodes of the open Figma file and writes them as files to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes, and per-node failures in failed. At most ${EXPORT_MAX_NODES} nodeIds per call. scale applies to PNG and JPG only. width or height (PNG and JPG, not with scale) sets the output size in px and keeps the aspect ratio. contentsOnly:false includes content clipped by a frame, useAbsoluteBounds uses the full bounds including strokes and effects, colorProfile picks the color space. warnings lists suspect results (tiny file, hidden node). Existing files with the same name are overwritten, so use a fresh outDir.`,
-          inputSchema
-        },
-        async ({
-          fileKey: fileKey5,
-          nodeIds,
-          format,
-          scale,
-          width,
-          height,
-          outDir,
-          ...rest
-        }) => {
-          if (!isAbsolute3(outDir))
-            return errorResult(
-              "outDir must be an absolute path",
-              "The tool does not expand ~ or relative paths."
-            );
-          if (width !== void 0 && height !== void 0)
-            return errorResult("width and height cannot be used together");
-          const sized = width ?? height;
-          const options = parseExportOptions({
-            ...rest,
-            format,
-            scale,
-            ...sized !== void 0 && {
-              size: {
-                type: width !== void 0 ? "WIDTH" : "HEIGHT",
-                value: sized
-              }
-            }
-          });
-          if (typeof options === "string") return errorResult(options);
-          const ids = [...new Set(nodeIds)];
-          const resolved = ctx2.files.resolve(fileKey5);
-          if ("error" in resolved) return errorResult(resolved.error);
-          const { file: file2, note } = resolved;
-          try {
-            await mkdir2(outDir, { recursive: true });
-          } catch (e) {
-            return errorResult(
-              "Cannot create outDir: " + (e instanceof Error ? e.message : String(e))
-            );
-          }
-          const payloadScale = RASTER.includes(format) && scale !== void 0 ? { scale } : {};
-          const slots = ids.map(() => ({
-            written: [],
-            failed: [],
-            warnings: []
-          }));
-          let next = 0;
-          let closed = false;
-          let thrown;
-          const worker = async () => {
-            while (!closed && next < ids.length) {
-              const i = next++;
-              const id = ids[i];
-              try {
-                const res = await ctx2.rpc.call(
-                  file2.connectionId,
-                  "export",
-                  { nodeIds: [id], format, ...payloadScale, ...options },
-                  EXPORT_LIMITS.callTimeoutMs
-                );
-                await collect(slots[i], outDir, id, res);
-              } catch (e) {
-                thrown = e;
-                const text2 = errorText(e);
-                slots[i].failed.push({ nodeId: id, error: text2 });
-                if (e instanceof BridgeCallError && e.code === "closed") {
-                  closed = true;
-                  for (; next < ids.length; next++)
-                    slots[next].failed.push({ nodeId: ids[next], error: text2 });
-                }
-              }
-            }
-          };
-          await Promise.all(
-            Array.from(
-              { length: Math.min(EXPORT_LIMITS.inFlight, ids.length) },
-              worker
-            )
-          );
-          const written = slots.flatMap((s) => s.written);
-          const failed = slots.flatMap((s) => s.failed);
-          const warnings = slots.flatMap((s) => s.warnings);
-          if (!written.length) {
-            if (failed.length === 1 && thrown !== void 0)
-              return fromCallError(thrown);
-            const lines = failed.map((f) => `${f.nodeId}: ${f.error}`).join("\n");
-            return errorResult(
-              "Nothing was exported.\n" + lines,
-              "Check the node ids with view_get, then try again."
-            );
-          }
-          return jsonResult(
-            { outDir, written, failed, ...warnings.length && { warnings } },
-            note
-          );
-        }
-      );
-    };
-  }
-});
-
 // bridge-server/src/tools/fonts-check.ts
-var FONTS_CHECK_TIMEOUT_MS, FONTS_CHECK_OLD_PLUGIN_HINT, FONTS_CHECK_EMPTY_HINT, FONTS_CHECK_OP, DESCRIPTION6, fontsCheckInputSchema, registerFontsCheck;
+var FONTS_CHECK_TIMEOUT_MS, FONTS_CHECK_OLD_PLUGIN_HINT, FONTS_CHECK_EMPTY_HINT, FONTS_CHECK_OP, DESCRIPTION7, fontsCheckInputSchema, registerFontsCheck;
 var init_fonts_check = __esm({
   "bridge-server/src/tools/fonts-check.ts"() {
     "use strict";
@@ -45541,7 +46417,7 @@ var init_fonts_check = __esm({
     FONTS_CHECK_OLD_PLUGIN_HINT = "reopen the EZG Tools plugin to update it";
     FONTS_CHECK_EMPTY_HINT = "pass at least one of fonts, nodeIds or textStyles";
     FONTS_CHECK_OP = "fonts.check";
-    DESCRIPTION6 = 'Lists fonts a build or a subtree needs that this Figma user does not have. The bridge cannot install fonts. Sources: fonts (labels "Family Style", e.g. "Inter Bold"), text nodes under nodeIds, and every local text style when textStyles is true. Pass at least one. Returns needed (count of distinct fonts checked), missing (labels not available) and availableCount.';
+    DESCRIPTION7 = 'Lists fonts a build or a subtree needs that this Figma user does not have. The bridge cannot install fonts. Sources: fonts (labels "Family Style", e.g. "Inter Bold"), text nodes under nodeIds, and every local text style when textStyles is true. Pass at least one. Returns needed (count of distinct fonts checked), missing (labels not available) and availableCount.';
     fontsCheckInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -45553,7 +46429,7 @@ var init_fonts_check = __esm({
     registerFontsCheck = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.fontsCheck,
-        { description: DESCRIPTION6, inputSchema: fontsCheckInputSchema },
+        { description: DESCRIPTION7, inputSchema: fontsCheckInputSchema },
         async ({ fileKey: fileKey5, fonts, nodeIds, textStyles }) => {
           const payload = {
             ...fonts?.length ? { fonts } : {},
@@ -45676,7 +46552,7 @@ async function writeImage(outDir, hash2, base643) {
   }
   return { written: { hash: hash2, path, bytes: data.length } };
 }
-var DESCRIPTION7, OLD_PLUGIN_HINT, inputSchema2, registerImagesGet;
+var DESCRIPTION8, OLD_PLUGIN_HINT, inputSchema2, registerImagesGet;
 var init_images_get = __esm({
   "bridge-server/src/tools/images-get.ts"() {
     "use strict";
@@ -45685,7 +46561,7 @@ var init_images_get = __esm({
     init_context();
     init_tool_result();
     init_export_files();
-    DESCRIPTION7 = `Reads image fills of the open Figma file and writes each as <hash>.<ext> to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes. hashes are the imageHash of an IMAGE paint (REST imageRef); the bytes are the original upload, not a render. missing lists hashes the file does not hold, failed lists per-image errors. At most ${IMAGES_GET_MAX_HASHES} hashes per call; split bigger lists. Existing files with the same name are overwritten.`;
+    DESCRIPTION8 = `Reads image fills of the open Figma file and writes each as <hash>.<ext> to outDir on the machine that runs Claude Code. Returns the file paths, not the bytes. hashes are the imageHash of an IMAGE paint (REST imageRef); the bytes are the original upload, not a render. missing lists hashes the file does not hold, failed lists per-image errors. At most ${IMAGES_GET_MAX_HASHES} hashes per call; split bigger lists. Existing files with the same name are overwritten.`;
     OLD_PLUGIN_HINT = "The EZG Tools plugin in Figma is older than this server. Reopen the plugin to update it, then retry.";
     inputSchema2 = {
       fileKey: external_exports.string().optional(),
@@ -45697,7 +46573,7 @@ var init_images_get = __esm({
         TOOL_NAMES.imagesGet,
         {
           title: "Save image fills to disk",
-          description: DESCRIPTION7,
+          description: DESCRIPTION8,
           inputSchema: inputSchema2
         },
         async ({ fileKey: fileKey5, hashes, outDir }) => {
@@ -46012,7 +46888,7 @@ var init_inventory_view = __esm({
 });
 
 // bridge-server/src/tools/inventory.ts
-var INVENTORY_TIMEOUT_MS, INVENTORY_OLD_PLUGIN_HINT, DESCRIPTION8, inventoryInputSchema, registerInventory;
+var INVENTORY_TIMEOUT_MS, INVENTORY_OLD_PLUGIN_HINT, DESCRIPTION9, inventoryInputSchema, registerInventory;
 var init_inventory = __esm({
   "bridge-server/src/tools/inventory.ts"() {
     "use strict";
@@ -46023,7 +46899,7 @@ var init_inventory = __esm({
     init_inventory_view();
     INVENTORY_TIMEOUT_MS = 6e4;
     INVENTORY_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use inventory";
-    DESCRIPTION8 = `Lists what the connected Figma file holds in one call: pages (id, name, child count), variables (collections with modes, and each variable with type, scopes and first-mode value), styles (text, paint, effect, grid) and components (component sets and components with their property keys and friendly names, which kit.props in eval accepts). pageIds narrows which pages are loaded for components. Use name (case-insensitive substring) and include to narrow large files; a section that hits the item cap is listed in truncated. Reads live data every call. The default view is compact: variable ids and scopes, style ids, component descriptions and full property objects are left out (components list props as one line each). detail adds them back: ids, scopes, descriptions, props. The result is capped near ${INVENTORY_MAX_CHARS} characters; cut sections are listed in truncated, so narrow with name, include or pageIds.`;
+    DESCRIPTION9 = `Lists what the connected Figma file holds in one call: pages (id, name, child count), variables (collections with modes, and each variable with type, scopes and first-mode value), styles (text, paint, effect, grid) and components (component sets and components with their property keys and friendly names, which kit.props in eval accepts). pageIds narrows which pages are loaded for components. Use name (case-insensitive substring) and include to narrow large files; a section that hits the item cap is listed in truncated. Reads live data every call. The default view is compact: variable ids and scopes, style ids, component descriptions and full property objects are left out (components list props as one line each). detail adds them back: ids, scopes, descriptions, props. The result is capped near ${INVENTORY_MAX_CHARS} characters; cut sections are listed in truncated, so narrow with name, include or pageIds.`;
     inventoryInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -46036,7 +46912,7 @@ var init_inventory = __esm({
     registerInventory = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.inventory,
-        { description: DESCRIPTION8, inputSchema: inventoryInputSchema },
+        { description: DESCRIPTION9, inputSchema: inventoryInputSchema },
         async ({ fileKey: fileKey5, include, pageIds, name, detail }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -46072,7 +46948,7 @@ function registerJobWait(store, now = Date.now) {
   return (server2) => {
     server2.registerTool(
       TOOL_NAMES.jobWait,
-      { description: DESCRIPTION9, inputSchema: jobWaitInputSchema },
+      { description: DESCRIPTION10, inputSchema: jobWaitInputSchema },
       async ({ jobId, timeoutMs }) => {
         const entry = await store.wait(jobId, timeoutMs ?? JOB_WAIT_DEFAULT_MS);
         if (!entry) return errorResult(`no job ${jobId} (jobs are kept 30 min)`);
@@ -46095,7 +46971,7 @@ function registerJobWait(store, now = Date.now) {
     );
   };
 }
-var JOB_WAIT_DEFAULT_MS, JOB_WAIT_MAX_MS, DESCRIPTION9, jobWaitInputSchema;
+var JOB_WAIT_DEFAULT_MS, JOB_WAIT_MAX_MS, DESCRIPTION10, jobWaitInputSchema;
 var init_job = __esm({
   "bridge-server/src/tools/job.ts"() {
     "use strict";
@@ -46104,7 +46980,7 @@ var init_job = __esm({
     init_tool_result();
     JOB_WAIT_DEFAULT_MS = 6e4;
     JOB_WAIT_MAX_MS = 12e4;
-    DESCRIPTION9 = "Waits for a background call started with async: true. Returns that call's own result with a first note job <id> (<tool>) took <s> s, or {jobId, state: running, ms} after timeoutMs (default 60000, max 120000): call job_wait again. The result stays available for 30 minutes and is returned on every call until then. At most 50 jobs are kept.";
+    DESCRIPTION10 = "Waits for a background call started with async: true. Returns that call's own result with a first note job <id> (<tool>) took <s> s, or {jobId, state: running, ms} after timeoutMs (default 60000, max 120000): call job_wait again. The result stays available for 30 minutes and is returned on every call until then. At most 50 jobs are kept.";
     jobWaitInputSchema = {
       jobId: external_exports.string().min(1).describe("Job id, for example j3."),
       timeoutMs: external_exports.number().int().min(0).max(JOB_WAIT_MAX_MS).optional().describe(
@@ -46127,7 +47003,7 @@ function summarize(entries) {
   }
   return { count: entries.length, totalMs, byTool };
 }
-var JOURNAL_LIMIT_MIN, JOURNAL_LIMIT_MAX, JOURNAL_OFF_NOTE, DESCRIPTION10, journalInputSchema, compact, registerJournal;
+var JOURNAL_LIMIT_MIN, JOURNAL_LIMIT_MAX, JOURNAL_OFF_NOTE, DESCRIPTION11, journalInputSchema, compact, registerJournal;
 var init_journal2 = __esm({
   "bridge-server/src/tools/journal.ts"() {
     "use strict";
@@ -46138,7 +47014,7 @@ var init_journal2 = __esm({
     JOURNAL_LIMIT_MIN = 1;
     JOURNAL_LIMIT_MAX = 1e3;
     JOURNAL_OFF_NOTE = "the journal is off (EZG_FIGMA_BRIDGE_JOURNAL=off); nothing is recorded";
-    DESCRIPTION10 = "Returns the tool-call journal: one metadata entry per call (time, session, tool, file, label, duration, ok, error head, byte sizes, stats) plus per-tool totals. The journal never stores eval code or results. session is current (default), all, or a session id; entries from other sessions may belong to other projects.";
+    DESCRIPTION11 = "Returns the tool-call journal: one metadata entry per call (time, session, tool, file, label, duration, ok, error head, byte sizes, stats) plus per-tool totals. The journal never stores eval code or results. session is current (default), all, or a session id; entries from other sessions may belong to other projects.";
     journalInputSchema = {
       session: external_exports.string().min(1).optional(),
       since: external_exports.number().int().min(0).optional(),
@@ -46149,7 +47025,7 @@ var init_journal2 = __esm({
     registerJournal = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.journal,
-        { description: DESCRIPTION10, inputSchema: journalInputSchema },
+        { description: DESCRIPTION11, inputSchema: journalInputSchema },
         ({ session: session2, since, tool, limit }) => {
           const { journal: journal2, session: current } = ctx2.journal;
           const scope = session2 === void 0 ? "current" : session2;
@@ -46177,7 +47053,7 @@ var init_journal2 = __esm({
 });
 
 // bridge-server/src/tools/lint.ts
-var LINT_TIMEOUT_MS, LINT_OLD_PLUGIN_HINT, LINT_INVALID_HINT, DESCRIPTION11, lintInputSchema, registerLint;
+var LINT_TIMEOUT_MS, LINT_OLD_PLUGIN_HINT, LINT_INVALID_HINT, DESCRIPTION12, lintInputSchema, registerLint;
 var init_lint = __esm({
   "bridge-server/src/tools/lint.ts"() {
     "use strict";
@@ -46189,7 +47065,7 @@ var init_lint = __esm({
     LINT_TIMEOUT_MS = 12e4;
     LINT_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use lint";
     LINT_INVALID_HINT = 'options shapes: "name-pattern" {pattern, flags?, types?}; clip {allow?}; "safe-zone" {top?, bottom?, left?, right?, frame?{width,height}, types?, names?}; "grid-style" {styleId?, frame?{width,height}}; "unbound-number" {fields?}; overflow {tolerance?}; reuse {min?}; fix {clip?, styles?, rename?}';
-    DESCRIPTION11 = 'Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more. fix applies safe fixes to the findings in the same call (one undo step), then lints again: clip true unclips clip findings; styles true binds unbound-color and text-no-style nodes to the one local paint or text style with exactly the same values; rename {old: new} renames generic-name and name-pattern findings by exact name. The report then has fixes {fixed, skipped}. detail "summary" (default) returns per-rule groups {rule, count, examples, nodeIds} and a total instead of every finding; detail "full" returns every finding and counts.';
+    DESCRIPTION12 = 'Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more. fix applies safe fixes to the findings in the same call (one undo step), then lints again: clip true unclips clip findings; styles true binds unbound-color and text-no-style nodes to the one local paint or text style with exactly the same values; rename {old: new} renames generic-name and name-pattern findings by exact name. The report then has fixes {fixed, skipped}. detail "summary" (default) returns per-rule groups {rule, count, examples, nodeIds} and a total instead of every finding; detail "full" returns every finding and counts.';
     lintInputSchema = {
       fileKey: external_exports.string().optional(),
       nodeIds: external_exports.array(external_exports.string()).optional(),
@@ -46208,7 +47084,7 @@ var init_lint = __esm({
     registerLint = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.lint,
-        { description: DESCRIPTION11, inputSchema: lintInputSchema },
+        { description: DESCRIPTION12, inputSchema: lintInputSchema },
         async ({ fileKey: fileKey5, detail, ...rest }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -46338,7 +47214,7 @@ function lookup(value, segments) {
   return cur;
 }
 function resolveRefs(args, results, step) {
-  const fail = (ref) => {
+  const fail2 = (ref) => {
     const prefix = step === void 0 ? "" : `step ${step}: `;
     throw new RunRefError(`${prefix}${ref} not found`);
   };
@@ -46348,10 +47224,10 @@ function resolveRefs(args, results, step) {
       const m = REF.exec(v);
       if (!m) return v;
       const name = m[1];
-      if (!Object.hasOwn(results, name)) return fail(v);
+      if (!Object.hasOwn(results, name)) return fail2(v);
       const segments = m[2] ? m[2].slice(1).split(".") : [];
       const found = lookup(results[name], segments);
-      return found === void 0 ? fail(v) : found;
+      return found === void 0 ? fail2(v) : found;
     }
     if (Array.isArray(v)) return v.map(walk2);
     if (isRecord5(v)) {
@@ -46405,7 +47281,7 @@ function registerRun(registry3) {
   return (server2) => {
     server2.registerTool(
       TOOL_NAMES.run,
-      { description: DESCRIPTION12, inputSchema: runInputSchema },
+      { description: DESCRIPTION13, inputSchema: runInputSchema },
       async ({ fileKey: fileKey5, steps: raw, continueOnError }) => {
         const steps = parseSteps(raw);
         if (typeof steps === "string") return errorResult(steps);
@@ -46459,7 +47335,7 @@ function registerRun(registry3) {
     );
   };
 }
-var RUN_STEP_MAX_CHARS, DESCRIPTION12, runInputSchema, textOf;
+var RUN_STEP_MAX_CHARS, DESCRIPTION13, runInputSchema, textOf;
 var init_run = __esm({
   "bridge-server/src/tools/run.ts"() {
     "use strict";
@@ -46469,7 +47345,7 @@ var init_run = __esm({
     init_run_refs();
     init_tool_result();
     RUN_STEP_MAX_CHARS = 2e4;
-    DESCRIPTION12 = `Runs up to ${RUN_MAX_STEPS} tool steps in order in one call, so build, lint and export cost one round trip. Each step is {tool, args?, as?}; tool is one of ${RUN_TOOLS.join(", ")}. The steps call the same tools with the same validation. A string arg that is exactly $name or $name.a.0.b is replaced by that path in the result of the earlier step whose as is name (write $$text for a literal $text). Steps get fileKey unless they set their own. The run stops at the first failing step unless continueOnError is true. Returns {steps:[{tool, as?, ok, ms, result|error}]}, each step capped near ${RUN_STEP_MAX_CHARS} characters (as refs still see the full result), plus every image the steps returned. Inner calls are not journaled one by one.`;
+    DESCRIPTION13 = `Runs up to ${RUN_MAX_STEPS} tool steps in order in one call, so build, lint and export cost one round trip. Each step is {tool, args?, as?}; tool is one of ${RUN_TOOLS.join(", ")}. The steps call the same tools with the same validation. A string arg that is exactly $name or $name.a.0.b is replaced by that path in the result of the earlier step whose as is name (write $$text for a literal $text). Steps get fileKey unless they set their own. The run stops at the first failing step unless continueOnError is true. Returns {steps:[{tool, as?, ok, ms, result|error}]}, each step capped near ${RUN_STEP_MAX_CHARS} characters (as refs still see the full result), plus every image the steps returned. Inner calls are not journaled one by one.`;
     runInputSchema = {
       fileKey: string2().min(1).optional().describe("Default fileKey for steps that do not set their own."),
       steps: array(unknown()).describe("Steps: [{tool, args?, as?}], run in order."),
@@ -46480,7 +47356,7 @@ var init_run = __esm({
 });
 
 // bridge-server/src/tools/status.ts
-var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION13, statusInputSchema, registerStatus;
+var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION14, statusInputSchema, registerStatus;
 var init_status = __esm({
   "bridge-server/src/tools/status.ts"() {
     "use strict";
@@ -46489,7 +47365,7 @@ var init_status = __esm({
     init_tool_result();
     STATUS_TIMEOUT_MS = 5e3;
     STATUS_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use status";
-    DESCRIPTION13 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
+    DESCRIPTION14 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
     statusInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -46498,7 +47374,7 @@ var init_status = __esm({
     registerStatus = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.status,
-        { description: DESCRIPTION13, inputSchema: statusInputSchema },
+        { description: DESCRIPTION14, inputSchema: statusInputSchema },
         async ({ fileKey: fileKey5 }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -46676,7 +47552,7 @@ async function readUrl(raw) {
   if (!res.ok) throw new Error(`http ${res.status}`);
   return toItem(stem(segment), await readBody(res));
 }
-function message(e) {
+function message2(e) {
   if (e instanceof Error) {
     if (e.name === "TimeoutError") return "request timed out";
     const code = e.code;
@@ -46696,7 +47572,7 @@ async function readUploads(sources) {
       try {
         return { item: await run2(s), failed: void 0 };
       } catch (e) {
-        return { item: void 0, failed: { name: s, error: message(e) } };
+        return { item: void 0, failed: { name: s, error: message2(e) } };
       }
     })
   );
@@ -46971,6 +47847,7 @@ var init_mcp2 = __esm({
     init_authoring();
     init_build();
     init_claim();
+    init_copy();
     init_describe();
     init_eval();
     init_doc_snapshot();
@@ -47059,6 +47936,7 @@ var init_mcp2 = __esm({
       registerFontsCheck,
       registerDocSnapshot,
       registerImagesGet,
+      registerCopy,
       registerJobWait(registry2.jobs),
       registerRun(registry2)
     ]) {

@@ -1510,7 +1510,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var isDesktopHost = () => HOST === "desktop";
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.47" : "dev";
+  var BUILD_VERSION = true ? "0.1.48" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -2411,6 +2411,142 @@ input[type=range]:focus-visible::-moz-range-thumb {
     return { hashes: [...new Set(hashes)] };
   }
 
+  // plugins/ezg-tools/src/shared/copy-doc.ts
+  var COPY_DOC_VERSION = 1;
+
+  // plugins/ezg-tools/src/shared/copy-op.ts
+  var COPY_MAX_NODE_IDS = 500;
+  var DEFAULT_COPY_OPTIONS = {
+    placement: "right",
+    conflict: "rename",
+    tokens: "match",
+    libraryRefs: "import",
+    dryRun: false
+  };
+
+  // plugins/ezg-tools/src/shared/copy-op-parse.ts
+  var COPY_DOC_CONTAINERS = {
+    source: "object",
+    roots: "array",
+    units: "array",
+    nodes: "object",
+    remote: "object",
+    collections: "array",
+    variables: "array",
+    styles: "array",
+    images: "object",
+    fonts: "array",
+    warnings: "array"
+  };
+  var MODES = ["components", "as-is"];
+  var CONFLICTS = ["skip", "replace", "rename"];
+  var TOKENS = ["match", "create", "inline"];
+  var LIBRARY_REFS = ["import", "clone"];
+  function nonEmpty2(value) {
+    return typeof value === "string" && value.length > 0;
+  }
+  function optionalString(raw, key) {
+    const value = raw[key];
+    if (value === void 0) return void 0;
+    return nonEmpty2(value) ? value : null;
+  }
+  function parsePlacement(value) {
+    if (value === "right" || value === "keep") return value;
+    if (!isRecord(value)) return null;
+    const { dx, dy } = value;
+    if (!isFiniteNumber(dx) || !isFiniteNumber(dy)) return null;
+    return { dx, dy };
+  }
+  function pickEnum(value, allowed, fallback) {
+    if (value === void 0) return fallback;
+    return typeof value === "string" && allowed.includes(value) ? value : null;
+  }
+  function parseOptions2(raw) {
+    if (!isRecord(raw)) return null;
+    const placement = raw.placement === void 0 ? DEFAULT_COPY_OPTIONS.placement : parsePlacement(raw.placement);
+    const conflict = pickEnum(
+      raw.conflict,
+      CONFLICTS,
+      DEFAULT_COPY_OPTIONS.conflict
+    );
+    const tokens = pickEnum(
+      raw.tokens,
+      TOKENS,
+      DEFAULT_COPY_OPTIONS.tokens
+    );
+    const libraryRefs = pickEnum(
+      raw.libraryRefs,
+      LIBRARY_REFS,
+      DEFAULT_COPY_OPTIONS.libraryRefs
+    );
+    const dryRun = raw.dryRun === void 0 ? DEFAULT_COPY_OPTIONS.dryRun : raw.dryRun;
+    const pageId = optionalString(raw, "pageId");
+    const pageName = optionalString(raw, "pageName");
+    const parentId = optionalString(raw, "parentId");
+    const owner = raw.owner;
+    if (!placement || !conflict || !tokens || !libraryRefs) return null;
+    if (typeof dryRun !== "boolean") return null;
+    if (pageId === null || pageName === null || parentId === null) return null;
+    if (owner !== void 0 && !(typeof owner === "string" && owner.length >= 1 && owner.length <= BUILD_OWNER_MAX)) {
+      return null;
+    }
+    const out = {
+      placement,
+      conflict,
+      tokens,
+      libraryRefs,
+      dryRun
+    };
+    if (pageId !== void 0) out.pageId = pageId;
+    else if (pageName !== void 0) out.pageName = pageName;
+    if (parentId !== void 0) out.parentId = parentId;
+    if (owner !== void 0) out.owner = owner;
+    return out;
+  }
+  function parseDoc(raw) {
+    if (!isRecord(raw) || raw.version !== COPY_DOC_VERSION) return null;
+    const keys = Object.keys(
+      COPY_DOC_CONTAINERS
+    );
+    for (const key of keys) {
+      const kind = COPY_DOC_CONTAINERS[key];
+      const value = raw[key];
+      if (kind === "array" ? !Array.isArray(value) : !isRecord(value)) return null;
+    }
+    return raw;
+  }
+  function parseCopyReadPayload(raw) {
+    if (!isRecord(raw)) return null;
+    const { nodeIds, mode, names } = raw;
+    if (!Array.isArray(nodeIds)) return null;
+    if (nodeIds.length < 1 || nodeIds.length > COPY_MAX_NODE_IDS) return null;
+    const seen = /* @__PURE__ */ new Set();
+    const ids = [];
+    for (const id of nodeIds) {
+      if (!nonEmpty2(id)) return null;
+      if (!seen.has(id)) {
+        seen.add(id);
+        ids.push(id);
+      }
+    }
+    if (typeof mode !== "string" || !MODES.includes(mode)) return null;
+    const out = { nodeIds: ids, mode };
+    if (names !== void 0) {
+      if (!Array.isArray(names)) return null;
+      for (const name of names) if (!nonEmpty2(name)) return null;
+      if (names.length > 0) out.names = names;
+    }
+    return out;
+  }
+  function parseCopyWritePayload(raw) {
+    if (!isRecord(raw)) return null;
+    const doc = parseDoc(raw.doc);
+    if (!doc) return null;
+    const options2 = parseOptions2(raw.options);
+    if (!options2) return null;
+    return { doc, options: options2 };
+  }
+
   // plugins/ezg-tools/src/shared/bridge-parse.ts
   var EXPORT_FORMATS = [
     "PNG",
@@ -2533,6 +2669,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "fonts.check": parseFontsCheckPayload,
     "doc.snapshot": parseDocSnapshotPayload,
     "images.get": parseImagesGetPayload,
+    "copy.read": parseCopyReadPayload,
+    "copy.write": parseCopyWritePayload,
     "ui.screenshot": parseUiScreenshot,
     "ui.msg": parseUiMsgPayload,
     status: parseEmpty,
@@ -2563,6 +2701,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "fonts.check": true,
     "doc.snapshot": true,
     "images.get": true,
+    "copy.read": true,
+    "copy.write": true,
     "ui.screenshot": true,
     "ui.msg": true,
     status: true,

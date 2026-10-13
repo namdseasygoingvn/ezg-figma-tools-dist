@@ -18,6 +18,7 @@ Use the bridge for:
 - exporting nodes to disk on this machine
 - reading the whole file as REST JSON, or image fill bytes
 - plugin data, and big files
+- copying components or nodes from one open file into another
 - Dev Mode codegen snippets and text review rules
 
 Keep using the official Figma MCP server for `get_design_context`, `search_design_system`, `get_libraries`, `upload_assets`, `create_new_file`, `generate_figma_design`, Code Connect, FigJam and Slides.
@@ -253,6 +254,37 @@ Use `run` when the next step does not need your judgment. If a step's output dec
 - `owner` is the label of your claim, as in `build`. A parent (or, for `fill`, a `nodeId`) claimed by another owner fails with `CLAIMED`.
 - An old plugin answers `unknown op: upload`; ask the user to reopen the EZG Tools plugin.
 
+## copy
+
+`{from, nodeIds?, to, page?, parentId?, placement?, mode?, names?, conflict?, tokens?, libraryRefs?, dryRun?, checkpoint?, verify?, owner?, async?}`. One call copies main components, component sets or any subtree from one open file into another. `from` and `to` are required, and `to` is the destination.
+
+- Fidelity is full: vector networks, live instances relinked to the copied mains, component properties, variables and styles.
+- Both files are open in Figma, and each runs the EZG Tools plugin with the MCP tab connected. `files` must list both.
+- `from`: a Figma link, a `fileKey` or a `clientId` of the source file. A link also gives the node: `node-id=12-8883` is `12:8883`. `nodeIds` adds more ids, at most 500 entries. Give at least one node, from the link or from `nodeIds`, or the call fails. The source must be connected: the copy never reads through the network.
+- `to`: the `fileKey` or `clientId` of the destination file. It is never a link. Source and destination must be two different files.
+- Destination: `page` (id or name) or `parentId`. Default: the destination file's current page. `parentId` wins over `page`.
+- `placement`: `right` (default: the copied group goes right of the page content), `keep` (source positions), or `{dx, dy}`.
+- `mode`: `components` (default) builds units (main components and sets) and their closure, and `names` keeps only the units with an exact name. `as-is` takes the selected nodes as the roots, turns a selected variant into its set, and ignores `names` with a warning.
+- `conflict` applies to same-named main components and sets on the destination page only. `rename` (default) builds the copy with a free name. `skip` reuses the existing unit. `replace` builds the copy, swaps every instance of the old unit to it, then removes the old unit.
+- `tokens` applies to variables and styles. `match` (default) reuses a destination entity with the same name and creates it when missing. It never edits existing values. `create` always creates. `inline` binds nothing and writes the resolved value.
+- `libraryRefs`: `import` (default) imports library components, styles and variables by key. A failed import is built from the copy and gives a warning. `clone` always builds from the copy.
+- `dryRun` reads the source and reports the plan. It writes nothing, takes no checkpoint and skips `verify`. Use it first on a big page.
+- `checkpoint` is `true` by default: a checkpoint of the destination is taken while the source is read. `false` skips it.
+- `verify` is off by default. `true` compares 20 source and copy pairs by SSIM. A number sets the pair count, from 1 to 200. Verify time is reported apart from the copy time.
+- `owner` is the label of your claim, as in `build`. A destination parent claimed by another owner fails with `CLAIMED`, and so does a node that `replace` changes. A dry run skips the destination check.
+- The result is a summary: counts, an id map (units, variants and roots only), conflicts, up to 100 warnings and timings. Serialized nodes never enter the chat.
+- One copy is one undo step in the destination file. A failed copy rolls back by itself.
+- Limits: the payload is at most about 256 MiB of text (256 MiB minus 4 KiB, counted in characters). A larger page stops with a clear error before any write. Conflicts are page-scoped. No Figma REST API and no token. Fonts the destination user lacks fall back to the same family Regular, then to Inter Regular, each with a warning.
+- An "unknown op" error means one of the two plugins is old. Ask the user to reopen it.
+
+### Copy from another file
+
+1. `files`: both files are listed.
+2. `copy` with `dryRun: true`: read the counts and warnings.
+3. `copy` with `verify: true`, plus `async: true` and `job_wait` for a big page.
+4. Read `verify` scores, `warnings` and `conflicts` in the result.
+5. If the result is wrong, `undo` with `fileKey` set to the `to` file.
+
 ## Many agents, one file
 
 Several agents (for example subagents of one Claude Code session) can work in one file. They share one MCP server, so the `owner` label tells them apart.
@@ -272,7 +304,7 @@ Several agents (for example subagents of one Claude Code session) can work in on
 - A claim covers the node and everything under it. Claim the top frame of your work.
 - A claim expires after `ttlMs` (default 10 min, max 60 min). A successful `build` or `upload` with your `owner` renews it. The plugin is not told when a session ends, so rely on the expiry.
 - `release: true` gives up the listed nodes.
-- Only `build` and `upload` check claims. They fail with `CLAIMED`, and nothing is created.
+- Only `build`, `upload` and `copy` check claims. They fail with `CLAIMED`, and nothing is created.
 
 ## describe
 
@@ -288,7 +320,7 @@ Several agents (for example subagents of one Claude Code session) can work in on
 
 ## async and job_wait
 
-`eval`, `build`, `export`, `upload` and `run` accept `async: true`. The call returns `{jobId, tool}` at once and the work goes on in the queue.
+`eval`, `build`, `export`, `upload`, `run` and `copy` accept `async: true`. The call returns `{jobId, tool}` at once and the work goes on in the queue.
 
 - `job_wait` `{jobId, timeoutMs?}` returns the job's own result with a first note `job j3 (eval) took 4.2 s`. After `timeoutMs` (default 60 s, max 120 s) it answers `{jobId, state: "running", ms}`: call it again.
 - Jobs live in server memory for 30 min, at most 50. A server restart loses them. An unknown id is an error (`no job j3 ...`).
