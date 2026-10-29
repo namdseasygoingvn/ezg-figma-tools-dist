@@ -1510,7 +1510,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var isDesktopHost = () => HOST === "desktop";
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.52" : "dev";
+  var BUILD_VERSION = true ? "0.1.53" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -2293,6 +2293,22 @@ input[type=range]:focus-visible::-moz-range-thumb {
     if (nodeIds.length === 0 && !out.release) return null;
     return out;
   }
+  var nonEmpty2 = (v) => typeof v === "string" && v !== "";
+  function parseClaimsSyncPayload(raw) {
+    if (typeof raw !== "object" || raw === null) return null;
+    const r = raw;
+    if (!Array.isArray(r.claims)) return null;
+    const claims = [];
+    for (const c of r.claims) {
+      if (typeof c !== "object" || c === null) return null;
+      const { key, owner, nodeId, expiresInMs } = c;
+      if (!nonEmpty2(key) || !nonEmpty2(owner) || !nonEmpty2(nodeId)) return null;
+      if (typeof expiresInMs !== "number" || !Number.isFinite(expiresInMs))
+        return null;
+      if (expiresInMs > 0) claims.push({ key, owner, nodeId, expiresInMs });
+    }
+    return { claims };
+  }
 
   // plugins/ezg-tools/src/shared/bridge-describe.ts
   var DESCRIBE_DEPTH_DEFAULT = 3;
@@ -2442,13 +2458,13 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var CONFLICTS = ["skip", "replace", "rename"];
   var TOKENS = ["match", "create", "inline"];
   var LIBRARY_REFS = ["import", "clone"];
-  function nonEmpty2(value) {
+  function nonEmpty3(value) {
     return typeof value === "string" && value.length > 0;
   }
   function optionalString(raw, key) {
     const value = raw[key];
     if (value === void 0) return void 0;
-    return nonEmpty2(value) ? value : null;
+    return nonEmpty3(value) ? value : null;
   }
   function parsePlacement(value) {
     if (value === "right" || value === "keep") return value;
@@ -2523,7 +2539,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const seen = /* @__PURE__ */ new Set();
     const ids = [];
     for (const id of nodeIds) {
-      if (!nonEmpty2(id)) return null;
+      if (!nonEmpty3(id)) return null;
       if (!seen.has(id)) {
         seen.add(id);
         ids.push(id);
@@ -2533,7 +2549,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
     const out = { nodeIds: ids, mode };
     if (names !== void 0) {
       if (!Array.isArray(names)) return null;
-      for (const name of names) if (!nonEmpty2(name)) return null;
+      for (const name of names) if (!nonEmpty3(name)) return null;
       if (names.length > 0) out.names = names;
     }
     return out;
@@ -2674,7 +2690,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "ui.screenshot": parseUiScreenshot,
     "ui.msg": parseUiMsgPayload,
     status: parseEmpty,
-    cancel: (raw) => isRecord(raw) && nonEmptyStr3(raw.id) ? { id: raw.id } : null
+    cancel: (raw) => isRecord(raw) && nonEmptyStr3(raw.id) ? { id: raw.id } : null,
+    "claims-sync": parseClaimsSyncPayload
   };
 
   // plugins/ezg-tools/src/shared/bridge-ops.ts
@@ -2706,7 +2723,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
     "ui.screenshot": true,
     "ui.msg": true,
     status: true,
-    cancel: true
+    cancel: true,
+    "claims-sync": true
   };
   var BRIDGE_OPS = Object.keys(
     OP_TABLE
@@ -2766,7 +2784,8 @@ input[type=range]:focus-visible::-moz-range-thumb {
       editorType: v.editorType,
       pageId: v.pageId,
       pageName: v.pageName,
-      user
+      user,
+      ...Number.isInteger(v.sessionId) ? { sessionId: v.sessionId } : {}
     };
   }
   function toBridgeError(v) {

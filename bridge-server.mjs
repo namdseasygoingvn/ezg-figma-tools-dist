@@ -4597,6 +4597,80 @@ var init_bridge_upload = __esm({
 });
 
 // plugins/ezg-tools/src/shared/bridge-claims.ts
+function createClaimRegistry(now = Date.now) {
+  const entries = /* @__PURE__ */ new Map();
+  const sweep = () => {
+    const t = now();
+    for (const [id, e] of entries) if (e.expiresAt <= t) entries.delete(id);
+  };
+  const view = (key, nodeId, e) => ({
+    nodeId,
+    owner: e.owner,
+    mine: e.key === key,
+    expiresInMs: e.expiresAt - now()
+  });
+  const list = (key) => {
+    sweep();
+    return [...entries].map(([id, e]) => view(key, id, e));
+  };
+  return {
+    claim(key, owner, ids, ttlMs) {
+      sweep();
+      const ttl = clampTtl(ttlMs);
+      const granted = [];
+      const conflicts = [];
+      for (const id of new Set(ids)) {
+        const held = entries.get(id);
+        if (held && held.key !== key) {
+          conflicts.push(view(key, id, held));
+          continue;
+        }
+        entries.set(id, { key, owner, ttlMs: ttl, expiresAt: now() + ttl });
+        granted.push(id);
+      }
+      return { granted, conflicts, claims: list(key) };
+    },
+    release(key, ids) {
+      sweep();
+      const only = ids ? new Set(ids) : null;
+      for (const [id, e] of entries)
+        if (e.key === key && (!only || only.has(id))) entries.delete(id);
+    },
+    blocker(key, ancestorIds) {
+      sweep();
+      for (const id of ancestorIds) {
+        const e = entries.get(id);
+        if (e && e.key !== key) return view(key, id, e);
+      }
+      return null;
+    },
+    renew(key) {
+      sweep();
+      for (const e of entries.values())
+        if (e.key === key) e.expiresAt = now() + e.ttlMs;
+    },
+    snapshot() {
+      sweep();
+      return [...entries].map(([nodeId, e]) => ({
+        key: e.key,
+        owner: e.owner,
+        nodeId,
+        expiresInMs: e.expiresAt - now()
+      }));
+    },
+    replaceAll(next) {
+      entries.clear();
+      for (const { key, owner, nodeId, expiresInMs } of next) {
+        if (!Number.isFinite(expiresInMs) || expiresInMs <= 0) continue;
+        const ttlMs = Math.min(expiresInMs, CLAIM_TTL_MAX_MS);
+        entries.delete(nodeId);
+        entries.set(nodeId, { key, owner, ttlMs, expiresAt: now() + ttlMs });
+      }
+      return entries.size;
+    },
+    list
+  };
+}
 function parseClaimPayload(raw) {
   if (typeof raw !== "object" || raw === null) return null;
   const r = raw;
@@ -4620,12 +4694,30 @@ function parseClaimPayload(raw) {
   if (nodeIds.length === 0 && !out.release) return null;
   return out;
 }
-var CLAIM_TTL_DEFAULT_MS, CLAIM_TTL_MAX_MS;
+function parseClaimsSyncPayload(raw) {
+  if (typeof raw !== "object" || raw === null) return null;
+  const r = raw;
+  if (!Array.isArray(r.claims)) return null;
+  const claims = [];
+  for (const c of r.claims) {
+    if (typeof c !== "object" || c === null) return null;
+    const { key, owner, nodeId, expiresInMs } = c;
+    if (!nonEmpty(key) || !nonEmpty(owner) || !nonEmpty(nodeId)) return null;
+    if (typeof expiresInMs !== "number" || !Number.isFinite(expiresInMs))
+      return null;
+    if (expiresInMs > 0) claims.push({ key, owner, nodeId, expiresInMs });
+  }
+  return { claims };
+}
+var CLAIM_TTL_DEFAULT_MS, CLAIM_TTL_MAX_MS, ownerKey, clampTtl, nonEmpty;
 var init_bridge_claims = __esm({
   "plugins/ezg-tools/src/shared/bridge-claims.ts"() {
     "use strict";
     CLAIM_TTL_DEFAULT_MS = 10 * 6e4;
     CLAIM_TTL_MAX_MS = 60 * 6e4;
+    ownerKey = (scope, owner) => `${scope}#${owner ?? ""}`;
+    clampTtl = (ttlMs) => Number.isFinite(ttlMs) && ttlMs > 0 ? Math.min(ttlMs, CLAIM_TTL_MAX_MS) : CLAIM_TTL_DEFAULT_MS;
+    nonEmpty = (v) => typeof v === "string" && v !== "";
   }
 });
 
@@ -4833,13 +4925,13 @@ var init_copy_op = __esm({
 });
 
 // plugins/ezg-tools/src/shared/copy-op-parse.ts
-function nonEmpty(value) {
+function nonEmpty2(value) {
   return typeof value === "string" && value.length > 0;
 }
 function optionalString(raw, key) {
   const value = raw[key];
   if (value === void 0) return void 0;
-  return nonEmpty(value) ? value : null;
+  return nonEmpty2(value) ? value : null;
 }
 function parsePlacement(value) {
   if (value === "right" || value === "keep") return value;
@@ -4914,7 +5006,7 @@ function parseCopyReadPayload(raw) {
   const seen = /* @__PURE__ */ new Set();
   const ids = [];
   for (const id of nodeIds) {
-    if (!nonEmpty(id)) return null;
+    if (!nonEmpty2(id)) return null;
     if (!seen.has(id)) {
       seen.add(id);
       ids.push(id);
@@ -4924,7 +5016,7 @@ function parseCopyReadPayload(raw) {
   const out = { nodeIds: ids, mode };
   if (names2 !== void 0) {
     if (!Array.isArray(names2)) return null;
-    for (const name of names2) if (!nonEmpty(name)) return null;
+    for (const name of names2) if (!nonEmpty2(name)) return null;
     if (names2.length > 0) out.names = names2;
   }
   return out;
@@ -5114,7 +5206,8 @@ var init_bridge_parse = __esm({
       "ui.screenshot": parseUiScreenshot,
       "ui.msg": parseUiMsgPayload,
       status: parseEmpty,
-      cancel: (raw) => isRecord(raw) && nonEmptyStr3(raw.id) ? { id: raw.id } : null
+      cancel: (raw) => isRecord(raw) && nonEmptyStr3(raw.id) ? { id: raw.id } : null,
+      "claims-sync": parseClaimsSyncPayload
     };
   }
 });
@@ -5166,7 +5259,8 @@ var init_bridge_ops = __esm({
       "ui.screenshot": true,
       "ui.msg": true,
       status: true,
-      cancel: true
+      cancel: true,
+      "claims-sync": true
     };
     BRIDGE_OPS = Object.keys(
       OP_TABLE
@@ -5236,7 +5330,8 @@ function toFileInfo(v) {
     editorType: v.editorType,
     pageId: v.pageId,
     pageName: v.pageName,
-    user
+    user,
+    ...Number.isInteger(v.sessionId) ? { sessionId: v.sessionId } : {}
   };
 }
 function toBridgeError(v) {
@@ -5489,6 +5584,87 @@ var init_bridge_chunk = __esm({
   }
 });
 
+// bridge-server/src/lane-wire.ts
+function toHelloName(v) {
+  return isString2(v) && v.length >= 1 && v.length <= HELLO_NAME_MAX ? v : void 0;
+}
+function toCaps2(v) {
+  return Array.isArray(v) && v.every(isString2) ? v : void 0;
+}
+function toLaneSlot(v) {
+  if (!isRecord4(v) || !isLaneNumber(v.index) || !Number.isInteger(v.sessionId))
+    return null;
+  return { index: v.index, sessionId: v.sessionId };
+}
+function toLaneHolder(v) {
+  if (v === null) return null;
+  return isRecord4(v) && isString2(v.label) ? { label: v.label } : void 0;
+}
+function toLaneView(v) {
+  const slot2 = toLaneSlot(v);
+  if (!slot2 || !isRecord4(v)) return null;
+  const holder = toLaneHolder(v.holder);
+  if (holder === void 0 || typeof v.connected !== "boolean" || typeof v.busy !== "boolean")
+    return null;
+  return { ...slot2, connected: v.connected, holder, busy: v.busy };
+}
+function toLaneFileView(v) {
+  if (!isRecord4(v) || !isFileKey(v.fileKey) || !isLaneNumber(v.count))
+    return null;
+  if (!Array.isArray(v.lanes) || v.lanes.length !== v.count) return null;
+  const lanes = [];
+  for (const item of v.lanes) {
+    const lane = toLaneView(item);
+    if (!lane) return null;
+    lanes.push(lane);
+  }
+  if (!isUnique(lanes.map((l) => l.index))) return null;
+  return { fileKey: v.fileKey, count: v.count, lanes };
+}
+function parseLanesSet(f) {
+  if (!isFileKey(f.fileKey) || !Array.isArray(f.lanes)) return null;
+  if (f.lanes.length > LANE_MAX) return null;
+  const lanes = [];
+  for (const item of f.lanes) {
+    const slot2 = toLaneSlot(item);
+    if (!slot2) return null;
+    lanes.push(slot2);
+  }
+  if (!isUnique(lanes.map((l) => l.index))) return null;
+  if (!isUnique(lanes.map((l) => l.sessionId))) return null;
+  return { kind: "lanes-set", fileKey: f.fileKey, lanes };
+}
+function parseLanes(f) {
+  if (!Array.isArray(f.files)) return null;
+  const files2 = [];
+  for (const item of f.files) {
+    const file2 = toLaneFileView(item);
+    if (!file2) return null;
+    files2.push(file2);
+  }
+  return { kind: "lanes", files: files2 };
+}
+var HUB_CAP_LANES, LANE_MAX, LANE_GRACE_MS, LANE_IDLE_MS, LANE_WAIT_MS, LANES_BUSY, CLAIMS_SYNC_EVERY_MS, LANE_SWEEP_MS, HELLO_NAME_MAX, isString2, isRecord4, isFileKey, isLaneNumber, isUnique;
+var init_lane_wire = __esm({
+  "bridge-server/src/lane-wire.ts"() {
+    "use strict";
+    HUB_CAP_LANES = "lanes";
+    LANE_MAX = 8;
+    LANE_GRACE_MS = 2 * 6e4;
+    LANE_IDLE_MS = 15 * 6e4;
+    LANE_WAIT_MS = 6e4;
+    LANES_BUSY = "LANES_BUSY";
+    CLAIMS_SYNC_EVERY_MS = 6e4;
+    LANE_SWEEP_MS = 3e4;
+    HELLO_NAME_MAX = 64;
+    isString2 = (v) => typeof v === "string";
+    isRecord4 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+    isFileKey = (v) => isString2(v) && v.length > 0;
+    isLaneNumber = (v) => Number.isInteger(v) && v >= 1 && v <= LANE_MAX;
+    isUnique = (values) => new Set(values).size === values.length;
+  }
+});
+
 // plugins/ezg-tools/src/shared/bridge-scope.ts
 function splitScopedId(id) {
   const i = id.indexOf("/");
@@ -5523,15 +5699,24 @@ function parseAgentFrame(raw) {
   switch (f.kind) {
     case "agent-hello": {
       if (!Number.isInteger(f.protocol)) return null;
-      const protocol = f.protocol;
-      if (f.role === void 0) return { kind: "agent-hello", protocol };
-      return isAgentRole(f.role) ? { kind: "agent-hello", protocol, role: f.role } : null;
+      if (f.role !== void 0 && !isAgentRole(f.role)) return null;
+      const session2 = toHelloName(f.session);
+      const label = toHelloName(f.label);
+      return {
+        kind: "agent-hello",
+        protocol: f.protocol,
+        ...isAgentRole(f.role) ? { role: f.role } : {},
+        ...session2 !== void 0 ? { session: session2 } : {},
+        ...label !== void 0 ? { label } : {}
+      };
     }
     case "send": {
-      if (!isString2(f.connectionId)) return null;
+      if (!isString3(f.connectionId)) return null;
       const frame = parseServerFrame(f.frame);
       return frame ? { kind: "send", connectionId: f.connectionId, frame } : null;
     }
+    case "lanes-set":
+      return parseLanesSet(f);
     default:
       return null;
   }
@@ -5540,10 +5725,17 @@ function parseHubFrame(raw) {
   const f = decode2(raw);
   if (!f) return null;
   switch (f.kind) {
-    case "agent-welcome":
-      return isString2(f.hubId) ? { kind: "agent-welcome", hubId: f.hubId } : null;
+    case "agent-welcome": {
+      if (!isString3(f.hubId)) return null;
+      const caps = toCaps2(f.caps);
+      return {
+        kind: "agent-welcome",
+        hubId: f.hubId,
+        ...caps ? { caps } : {}
+      };
+    }
     case "plugin": {
-      if (!isString2(f.connectionId) || !Number.isInteger(f.port)) return null;
+      if (!isString3(f.connectionId) || !Number.isInteger(f.port)) return null;
       const frame = parsePluginFrame(f.frame);
       if (!frame) return null;
       return {
@@ -5554,28 +5746,41 @@ function parseHubFrame(raw) {
       };
     }
     case "closed":
-      return isString2(f.connectionId) ? { kind: "closed", connectionId: f.connectionId } : null;
+      return isString3(f.connectionId) ? { kind: "closed", connectionId: f.connectionId } : null;
     case "bye":
-      return isString2(f.reason) ? { kind: "bye", reason: f.reason } : null;
+      return isString3(f.reason) ? { kind: "bye", reason: f.reason } : null;
+    case "lanes":
+      return parseLanes(f);
     default:
       return null;
   }
 }
-var AGENT_PATH, PEER_PROTOCOL, isString2, isAgentRole;
+var AGENT_PATH, PEER_PROTOCOL, isString3, isAgentRole;
 var init_peer_wire = __esm({
   "bridge-server/src/peer-wire.ts"() {
     "use strict";
     init_bridge_wire();
     init_bridge_ui_tunnel();
+    init_lane_wire();
     init_bridge_scope();
     AGENT_PATH = "/agent";
     PEER_PROTOCOL = 1;
-    isString2 = (v) => typeof v === "string";
+    isString3 = (v) => typeof v === "string";
     isAgentRole = (v) => AGENT_ROLES.includes(v);
   }
 });
 
 // bridge-server/src/agent-link.ts
+import { randomUUID } from "node:crypto";
+import { basename } from "node:path";
+function agentLabel(cwd = () => process.cwd()) {
+  try {
+    const label = basename(cwd()).slice(0, 64);
+    return label === "" ? void 0 : label;
+  } catch {
+    return void 0;
+  }
+}
 function connectAgent(port, handlers2, options = {}) {
   const handshakeMs = options.handshakeMs ?? DEFAULT_HANDSHAKE_MS;
   return new Promise((resolve3) => {
@@ -5602,7 +5807,8 @@ function connectAgent(port, handlers2, options = {}) {
       close: () => {
         if (ws.readyState === import_websocket.default.OPEN || ws.readyState === import_websocket.default.CONNECTING)
           ws.close();
-      }
+      },
+      lanes: false
     };
     const timer = setTimeout(() => end(), handshakeMs);
     function end() {
@@ -5619,9 +5825,18 @@ function connectAgent(port, handlers2, options = {}) {
       }
       for (const id of known) handlers2.onClose(id);
       known.clear();
+      handlers2.onLanes?.([]);
       resolveClosed();
     }
-    ws.on("open", () => write({ kind: "agent-hello", protocol: PEER_PROTOCOL }));
+    ws.on(
+      "open",
+      () => write({
+        kind: "agent-hello",
+        protocol: PEER_PROTOCOL,
+        session: AGENT_SESSION,
+        ...AGENT_LABEL !== void 0 ? { label: AGENT_LABEL } : {}
+      })
+    );
     ws.on("error", end);
     ws.on("close", end);
     ws.on("message", (data) => {
@@ -5633,6 +5848,7 @@ function connectAgent(port, handlers2, options = {}) {
         if (frame.kind === "agent-welcome") {
           welcomed = true;
           clearTimeout(timer);
+          link3.lanes = frame.caps?.includes(HUB_CAP_LANES) === true;
           resolve3(link3);
         } else if (frame.kind === "bye") end();
         return;
@@ -5648,6 +5864,9 @@ function connectAgent(port, handlers2, options = {}) {
           if (known.delete(frame.connectionId))
             handlers2.onClose(frame.connectionId);
           break;
+        case "lanes":
+          handlers2.onLanes?.(frame.files);
+          break;
         case "bye":
           end();
           break;
@@ -5655,7 +5874,7 @@ function connectAgent(port, handlers2, options = {}) {
     });
   });
 }
-var DEFAULT_HANDSHAKE_MS;
+var DEFAULT_HANDSHAKE_MS, AGENT_SESSION, AGENT_LABEL;
 var init_agent_link = __esm({
   "bridge-server/src/agent-link.ts"() {
     "use strict";
@@ -5663,12 +5882,55 @@ var init_agent_link = __esm({
     init_bridge_wire();
     init_bridge_chunk();
     init_peer_wire();
+    init_lane_wire();
     DEFAULT_HANDSHAKE_MS = 2e3;
+    AGENT_SESSION = randomUUID();
+    AGENT_LABEL = agentLabel();
+  }
+});
+
+// bridge-server/src/agent-identity.ts
+import { randomUUID as randomUUID2 } from "node:crypto";
+function createAgentIdentity(options) {
+  const { now, graceMs } = options;
+  const live = /* @__PURE__ */ new Map();
+  const remembered = /* @__PURE__ */ new Map();
+  const isLive = (session2) => {
+    for (const s of live.values()) if (s === session2) return true;
+    return false;
+  };
+  return {
+    assign(session2) {
+      const t = now();
+      for (const [s, entry] of remembered)
+        if (t - entry.closedAt > graceMs) remembered.delete(s);
+      const key = session2 ? session2 : void 0;
+      let agentId;
+      if (key && !isLive(key)) {
+        agentId = remembered.get(key)?.agentId;
+        remembered.delete(key);
+      }
+      agentId ??= randomUUID2();
+      live.set(agentId, key);
+      return agentId;
+    },
+    closed(agentId) {
+      if (!live.has(agentId)) return;
+      const session2 = live.get(agentId);
+      live.delete(agentId);
+      if (session2 && !isLive(session2))
+        remembered.set(session2, { agentId, closedAt: now() });
+    }
+  };
+}
+var init_agent_identity = __esm({
+  "bridge-server/src/agent-identity.ts"() {
+    "use strict";
   }
 });
 
 // bridge-server/src/plugin-conns.ts
-import { randomUUID } from "node:crypto";
+import { randomUUID as randomUUID3 } from "node:crypto";
 function createPluginConns(options) {
   const { port, serverId, caps, onHello, onFrame, onClose } = options;
   const helloTimeoutMs = options.helloTimeoutMs ?? HELLO_TIMEOUT_MS;
@@ -5686,7 +5948,7 @@ function createPluginConns(options) {
   heartbeat.unref();
   return {
     accept(ws) {
-      const connectionId = randomUUID();
+      const connectionId = randomUUID3();
       const conn = { ws, helloSeen: false, missed: 0 };
       const assembler = createAssembler();
       conns.set(connectionId, conn);
@@ -5781,13 +6043,17 @@ var init_plugin_conns = __esm({
 });
 
 // bridge-server/src/agent-conns.ts
-import { randomUUID as randomUUID2 } from "node:crypto";
 function createAgentConns(options) {
-  const { hubId, snapshot, onSend, onCountChange } = options;
+  const { hubId, snapshot, onSend, onCountChange, caps } = options;
   const helloTimeoutMs = options.helloTimeoutMs ?? HELLO_TIMEOUT_MS;
-  const agents = /* @__PURE__ */ new Map();
+  const identity = createAgentIdentity({
+    now: Date.now,
+    graceMs: options.graceMs ?? LANE_GRACE_MS
+  });
+  const agents = /* @__PURE__ */ new Set();
+  const byId = /* @__PURE__ */ new Map();
   const heartbeat = setInterval(() => {
-    for (const agent of agents.values()) {
+    for (const agent of agents) {
       if (agent.missed >= HEARTBEAT_MAX_MISSED) {
         agent.ws.terminate();
         continue;
@@ -5798,30 +6064,36 @@ function createAgentConns(options) {
   }, options.heartbeatMs ?? HEARTBEAT_MS);
   heartbeat.unref();
   const broadcast = (frame, role) => {
-    for (const agent of agents.values())
+    for (const agent of agents)
       if (agent.helloSeen && (!role || agent.role === role))
         sendHub(agent.ws, frame);
   };
   return {
     accept(ws) {
-      const agentId = randomUUID2();
       const agent = { ws, helloSeen: false, missed: 0 };
       const assembler = createAssembler();
-      agents.set(agentId, agent);
+      agents.add(agent);
       agent.helloTimer = setTimeout(() => {
         sendHub(ws, { kind: "bye", reason: BYE_REASONS.helloTimeout });
         ws.close(1008);
       }, helloTimeoutMs);
-      const handleHello = (protocol, role) => {
+      const handleHello = (hello) => {
         clearTimeout(agent.helloTimer);
-        if (protocol !== PEER_PROTOCOL) {
+        if (hello.protocol !== PEER_PROTOCOL) {
           sendHub(ws, { kind: "bye", reason: BYE_REASONS.protocol });
           ws.close(1008);
           return;
         }
-        agent.role = role ?? DEFAULT_AGENT_ROLE;
+        const role = hello.role ?? DEFAULT_AGENT_ROLE;
+        const agentId = identity.assign(hello.session);
+        agent.agentId = agentId;
+        agent.role = role;
         agent.helloSeen = true;
-        sendHub(ws, { kind: "agent-welcome", hubId });
+        byId.set(agentId, agent);
+        sendHub(
+          ws,
+          caps ? { kind: "agent-welcome", hubId, caps } : { kind: "agent-welcome", hubId }
+        );
         for (const entry of snapshot()) {
           sendHub(ws, {
             kind: "plugin",
@@ -5835,6 +6107,8 @@ function createAgentConns(options) {
           });
         }
         if (isCounted(agent)) onCountChange();
+        const { kind: _kind, protocol: _protocol, ...info } = hello;
+        options.onAgentHello?.(agentId, { ...info, role });
       };
       ws.on("message", (data, isBinary) => {
         if (isBinary) {
@@ -5849,17 +6123,23 @@ function createAgentConns(options) {
           return;
         }
         if (frame.kind === "agent-hello") {
-          if (!agent.helloSeen) handleHello(frame.protocol, frame.role);
+          if (!agent.helloSeen) handleHello(frame);
           return;
         }
-        if (!agent.helloSeen) {
+        const agentId = agent.agentId;
+        if (!agent.helloSeen || agentId === void 0) {
           ws.close(1008);
+          return;
+        }
+        if (frame.kind === "lanes-set") {
+          options.onLanesSet?.(agentId, frame);
           return;
         }
         const out = frame.frame;
         onSend(
           frame.connectionId,
-          out.kind === "request" ? { ...out, id: scopedId(agentId, out.id) } : out
+          out.kind === "request" ? { ...out, id: scopedId(agentId, out.id) } : out,
+          agentId
         );
       });
       ws.on("pong", () => {
@@ -5867,7 +6147,13 @@ function createAgentConns(options) {
       });
       ws.on("close", () => {
         clearTimeout(agent.helloTimer);
-        if (agents.delete(agentId) && isCounted(agent)) onCountChange();
+        if (!agents.delete(agent)) return;
+        const agentId = agent.agentId;
+        if (!agent.helloSeen || agentId === void 0) return;
+        if (byId.get(agentId) === agent) byId.delete(agentId);
+        identity.closed(agentId);
+        if (isCounted(agent)) onCountChange();
+        options.onAgentClose?.(agentId);
       });
       ws.on("error", () => {
       });
@@ -5876,7 +6162,7 @@ function createAgentConns(options) {
       broadcast({ kind: "plugin", connectionId, port, frame });
     },
     toAgent(agentId, connectionId, port, frame) {
-      const agent = agents.get(agentId);
+      const agent = byId.get(agentId);
       if (agent?.helloSeen)
         sendHub(agent.ws, { kind: "plugin", connectionId, port, frame });
     },
@@ -5888,17 +6174,18 @@ function createAgentConns(options) {
     },
     count() {
       let n = 0;
-      for (const agent of agents.values()) if (isCounted(agent)) n++;
+      for (const agent of agents) if (isCounted(agent)) n++;
       return n;
     },
     close() {
       clearInterval(heartbeat);
-      for (const agent of agents.values()) {
+      for (const agent of agents) {
         clearTimeout(agent.helloTimer);
         sendHub(agent.ws, { kind: "bye", reason: BYE_REASONS.shutdown });
         agent.ws.terminate();
       }
-    }
+    },
+    broadcastHub: broadcast
   };
 }
 var isCounted, sendHub;
@@ -5909,6 +6196,8 @@ var init_agent_conns = __esm({
     init_bridge_wire();
     init_bridge_chunk();
     init_bridge_ui_tunnel();
+    init_agent_identity();
+    init_lane_wire();
     init_plugin_conns();
     init_peer_wire();
     isCounted = (agent) => agent.helloSeen && agent.role === DEFAULT_AGENT_ROLE;
@@ -5934,29 +6223,45 @@ function pagePatch(event) {
 }
 function createFileRegistry(linkError = () => null) {
   const entries = /* @__PURE__ */ new Map();
+  let view = [];
   const list = () => [...entries.values()].map((f) => ({ ...f })).sort((a, b) => a.connectedAt - b.connectedAt);
   const fail2 = (message3) => ({
     error: `${message3}
 ${describeFiles(list())}`
   });
+  function laneFile(candidates) {
+    const key = candidates[0]?.fileKey;
+    if (!key || candidates.some((f) => f.fileKey !== key)) return null;
+    const lanes = view.find((v) => v.fileKey === key)?.lanes ?? [];
+    if (lanes.length === 0) return null;
+    const first = lanes.reduce((a, b) => b.index < a.index ? b : a);
+    return candidates.find((f) => f.sessionId === first.sessionId) ?? candidates[0];
+  }
   function resolve3(target) {
     const t = target?.trim() ?? "";
     const all = list();
     if (t) {
-      const byKey = all.filter((f) => f.fileKey === t);
-      if (byKey.length > 1) {
+      const byKey2 = all.filter((f) => f.fileKey === t);
+      const keyLane = byKey2.length > 1 ? laneFile(byKey2) : null;
+      if (keyLane) return { file: keyLane };
+      if (byKey2.length > 1) {
         return fail2(
           `fileKey "${t}" matches several connected files. Pass clientId instead.`
         );
       }
-      if (byKey.length === 1) return { file: byKey[0] };
+      if (byKey2.length === 1) return { file: byKey2[0] };
       const byId = all.find((f) => f.clientId === t);
       if (byId) return { file: byId };
     }
-    if ((t === "" || FILE_KEY_SHAPE.test(t)) && all.length === 1) {
+    const fallback = t === "" || FILE_KEY_SHAPE.test(t);
+    const lane = fallback ? laneFile(all) : null;
+    if (lane) {
+      return t === "" ? { file: lane } : { file: lane, note: unverified(t) };
+    }
+    if (fallback && all.length === 1) {
       return t === "" ? { file: all[0] } : {
         file: all[0],
-        note: `fileKey ${t} is not verified; using the only connected file`
+        note: unverified(t)
       };
     }
     if (all.length === 0) {
@@ -5991,16 +6296,515 @@ ${describeFiles(list())}`
       entries.delete(connectionId);
     },
     list,
-    resolve: resolve3
+    resolve: resolve3,
+    lanes: () => structuredClone(view),
+    setLanes(files2) {
+      view = structuredClone(files2);
+    }
   };
 }
-var FILE_KEY_SHAPE, NOT_CONNECTED, clean;
+var FILE_KEY_SHAPE, NOT_CONNECTED, clean, unverified;
 var init_files = __esm({
   "bridge-server/src/files.ts"() {
     "use strict";
     FILE_KEY_SHAPE = /^[0-9a-zA-Z]{22,128}$/;
     NOT_CONNECTED = 'No Figma file is connected to this server yet. If the MCP tab already shows connected, the plugin may be reconnecting. Retry in a few seconds. Otherwise open the MCP tab in EZG Tools and press "K\u1EBFt n\u1ED1i t\u1EDBi MCP server".';
     clean = (text2) => text2.replace(/\s+/g, " ");
+    unverified = (key) => `fileKey ${key} is not verified; using the only connected file`;
+  }
+});
+
+// bridge-server/src/lanes/claims-broker.ts
+function createClaimsBroker(options) {
+  const { now } = options;
+  const files2 = /* @__PURE__ */ new Map();
+  const fileOf = (fileKey5) => {
+    let state = files2.get(fileKey5);
+    if (!state) {
+      state = {
+        registry: createClaimRegistry(now),
+        agentOfKey: /* @__PURE__ */ new Map(),
+        ttlOf: /* @__PURE__ */ new Map(),
+        lastClaim: /* @__PURE__ */ new Map(),
+        seen: /* @__PURE__ */ new Set(),
+        changed: false,
+        syncedAt: null
+      };
+      files2.set(fileKey5, state);
+    }
+    return state;
+  };
+  const keysOf = (state, agentId) => [...state.agentOfKey].filter(([, a]) => a === agentId).map(([k]) => k);
+  const observe = (state) => {
+    const live = new Set(state.registry.snapshot().map((c) => c.nodeId));
+    if ([...state.seen].some((id) => !live.has(id))) state.changed = true;
+    state.seen = live;
+    for (const id of state.ttlOf.keys())
+      if (!live.has(id)) state.ttlOf.delete(id);
+  };
+  return {
+    handleClaim(agentId, fileKey5, payload) {
+      if (agentId === "" || agentId.includes("/"))
+        throw new Error(`invalid agentId: "${agentId}"`);
+      const state = fileOf(fileKey5);
+      const { registry: registry3 } = state;
+      const key = ownerKey(agentId, payload.owner);
+      state.agentOfKey.set(key, agentId);
+      const record2 = {
+        key,
+        owner: payload.owner,
+        fresh: /* @__PURE__ */ new Set(),
+        prior: /* @__PURE__ */ new Map()
+      };
+      state.lastClaim.set(agentId, record2);
+      if (payload.release) {
+        const ids = payload.nodeIds.length ? payload.nodeIds : void 0;
+        registry3.release(key, ids);
+        observe(state);
+        const claims = registry3.list(key);
+        return {
+          result: { granted: [], conflicts: [], claims },
+          forward: payload
+        };
+      }
+      const t = now();
+      for (const c of registry3.list(key)) {
+        if (!c.mine || !payload.nodeIds.includes(c.nodeId)) continue;
+        const ttl2 = state.ttlOf.get(c.nodeId) ?? CLAIM_TTL_DEFAULT_MS;
+        record2.prior.set(c.nodeId, { expiresAt: t + c.expiresInMs, ttl: ttl2 });
+      }
+      const ttl = payload.ttlMs ?? CLAIM_TTL_DEFAULT_MS;
+      const result = registry3.claim(key, payload.owner, payload.nodeIds, ttl);
+      for (const id of result.granted) {
+        if (!record2.prior.has(id)) record2.fresh.add(id);
+        state.ttlOf.set(id, Math.min(ttl, CLAIM_TTL_MAX_MS));
+      }
+      if (result.granted.length) state.changed = true;
+      observe(state);
+      const forward = result.granted.length ? { ...payload, nodeIds: result.granted } : null;
+      return { result, forward };
+    },
+    rollback(agentId, fileKey5, nodeIds) {
+      const state = files2.get(fileKey5);
+      const record2 = state?.lastClaim.get(agentId);
+      if (!state || !record2) return;
+      const { registry: registry3 } = state;
+      const fresh = nodeIds.filter((id) => record2.fresh.has(id));
+      if (fresh.length) registry3.release(record2.key, fresh);
+      for (const id of fresh) record2.fresh.delete(id);
+      for (const id of nodeIds) {
+        const before = record2.prior.get(id);
+        if (!before) continue;
+        record2.prior.delete(id);
+        state.changed = true;
+        const left = before.expiresAt - now();
+        if (left <= 0) {
+          registry3.release(record2.key, [id]);
+          continue;
+        }
+        registry3.claim(record2.key, record2.owner, [id], left);
+        state.ttlOf.set(id, before.ttl);
+      }
+      observe(state);
+    },
+    touch(agentId, fileKey5) {
+      const state = files2.get(fileKey5);
+      if (!state) return;
+      const keys = new Set(keysOf(state, agentId));
+      for (const c of state.registry.snapshot()) {
+        if (!keys.has(c.key)) continue;
+        const ttl = state.ttlOf.get(c.nodeId) ?? CLAIM_TTL_DEFAULT_MS;
+        state.registry.claim(c.key, c.owner, [c.nodeId], ttl);
+        if (ttl < 2 * CLAIMS_SYNC_EVERY_MS) state.changed = true;
+      }
+      observe(state);
+    },
+    agentGone(agentId) {
+      for (const state of files2.values()) {
+        for (const key of keysOf(state, agentId)) {
+          state.registry.release(key);
+          state.agentOfKey.delete(key);
+        }
+        state.lastClaim.delete(agentId);
+        observe(state);
+      }
+    },
+    snapshot(fileKey5) {
+      const state = files2.get(fileKey5);
+      return { claims: state ? state.registry.snapshot() : [] };
+    },
+    dueForSync(fileKey5) {
+      const state = files2.get(fileKey5);
+      if (!state) return false;
+      observe(state);
+      if (state.changed) return true;
+      return state.seen.size > 0 && state.syncedAt !== null && now() - state.syncedAt >= CLAIMS_SYNC_EVERY_MS;
+    },
+    markSynced(fileKey5) {
+      const state = files2.get(fileKey5);
+      if (!state) return;
+      observe(state);
+      state.changed = false;
+      state.syncedAt = now();
+    }
+  };
+}
+var init_claims_broker = __esm({
+  "bridge-server/src/lanes/claims-broker.ts"() {
+    "use strict";
+    init_bridge_claims();
+    init_lane_wire();
+  }
+});
+
+// bridge-server/src/lanes/lease-store.ts
+function createLeaseStore(options) {
+  const { now } = options;
+  const files2 = /* @__PURE__ */ new Map();
+  const conns = /* @__PURE__ */ new Map();
+  let helloSeq = 0;
+  const laneConnOf = (fileKey5, slot2) => {
+    let [best, bestSeq] = [null, -1];
+    for (const [id, c] of conns) {
+      if (c.fileKey !== fileKey5 || c.sessionId !== slot2.sessionId) continue;
+      if (c.seq > bestSeq) [best, bestSeq] = [id, c.seq];
+    }
+    return best;
+  };
+  const slotOfConn = (connectionId) => {
+    const c = conns.get(connectionId);
+    if (!c || c.fileKey === null || c.sessionId === void 0) return null;
+    const file2 = files2.get(c.fileKey);
+    const slot2 = file2?.slots.find((s) => s.sessionId === c.sessionId);
+    if (!slot2) return null;
+    return laneConnOf(c.fileKey, slot2) === connectionId ? slot2 : null;
+  };
+  const leaseOf = (file2, agentId) => {
+    for (const slot2 of file2.slots) {
+      const lease = file2.leases.get(slot2.index);
+      if (lease?.agentId === agentId) return { slot: slot2, lease };
+    }
+    return null;
+  };
+  const newLease = (agentId, label) => ({
+    agentId,
+    label,
+    lastUsed: now(),
+    closedAt: null
+  });
+  const setClosedAt = (agentId, closedAt) => {
+    for (const file2 of files2.values())
+      for (const lease of file2.leases.values())
+        if (lease.agentId === agentId) lease.closedAt = closedAt;
+  };
+  return {
+    setLanes(fileKey5, slots) {
+      if (slots.length === 0) {
+        files2.delete(fileKey5);
+        return;
+      }
+      const byIndex = /* @__PURE__ */ new Map();
+      for (const { index, sessionId } of slots)
+        if (!byIndex.has(index)) byIndex.set(index, { index, sessionId });
+      const unique = [...byIndex.values()].sort((a, b) => a.index - b.index);
+      const leases = /* @__PURE__ */ new Map();
+      for (const [index, lease] of files2.get(fileKey5)?.leases ?? [])
+        if (byIndex.has(index)) leases.set(index, lease);
+      files2.set(fileKey5, { slots: unique, leases });
+    },
+    pluginHello(connectionId, fileKey5, sessionId) {
+      const conn = { fileKey: fileKey5, busy: false, seq: ++helloSeq };
+      if (sessionId !== void 0) conn.sessionId = sessionId;
+      conns.set(connectionId, conn);
+    },
+    pluginClosed(connectionId) {
+      conns.delete(connectionId);
+    },
+    laneFileOf(connectionId) {
+      const c = conns.get(connectionId);
+      return c && c.fileKey !== null && files2.has(c.fileKey) ? c.fileKey : null;
+    },
+    isLane(connectionId) {
+      return slotOfConn(connectionId) !== null;
+    },
+    acquire(agentId, label, fileKey5) {
+      const file2 = files2.get(fileKey5);
+      if (!file2) return { wait: true };
+      const held = leaseOf(file2, agentId);
+      if (held) {
+        file2.leases.set(held.slot.index, newLease(agentId, label));
+        const id = laneConnOf(fileKey5, held.slot);
+        return id ? { connectionId: id } : { wait: true };
+      }
+      for (const slot2 of file2.slots) {
+        if (file2.leases.has(slot2.index)) continue;
+        const id = laneConnOf(fileKey5, slot2);
+        if (!id) continue;
+        file2.leases.set(slot2.index, newLease(agentId, label));
+        return { connectionId: id };
+      }
+      return { wait: true };
+    },
+    touch(agentId, fileKey5) {
+      const file2 = files2.get(fileKey5);
+      const held = file2 && leaseOf(file2, agentId);
+      if (held) held.lease.lastUsed = now();
+    },
+    agentClosed(agentId) {
+      setClosedAt(agentId, now());
+    },
+    agentBack(agentId) {
+      setClosedAt(agentId, null);
+    },
+    setBusy(connectionId, busy) {
+      const c = conns.get(connectionId);
+      if (c) c.busy = busy;
+    },
+    sweep() {
+      const t = now();
+      const released = [];
+      for (const [fileKey5, file2] of byKey(files2)) {
+        const indexes = [...file2.leases.keys()].sort((a, b) => a - b);
+        for (const index of indexes) {
+          const lease = file2.leases.get(index);
+          const expired = lease.closedAt === null ? t - lease.lastUsed > LANE_IDLE_MS : t - lease.closedAt > LANE_GRACE_MS;
+          if (!expired) continue;
+          file2.leases.delete(index);
+          released.push({ agentId: lease.agentId, fileKey: fileKey5 });
+        }
+      }
+      return released;
+    },
+    holderOf(connectionId) {
+      const slot2 = slotOfConn(connectionId);
+      if (!slot2) return null;
+      const fileKey5 = conns.get(connectionId).fileKey;
+      const lease = files2.get(fileKey5).leases.get(slot2.index);
+      return lease ? { agentId: lease.agentId, label: lease.label } : null;
+    },
+    view() {
+      return byKey(files2).map(([fileKey5, file2]) => ({
+        fileKey: fileKey5,
+        count: file2.slots.length,
+        lanes: file2.slots.map((slot2) => {
+          const id = laneConnOf(fileKey5, slot2);
+          const lease = file2.leases.get(slot2.index);
+          return {
+            index: slot2.index,
+            sessionId: slot2.sessionId,
+            connected: id !== null,
+            holder: lease ? { label: lease.label } : null,
+            busy: id !== null && conns.get(id).busy
+          };
+        })
+      }));
+    }
+  };
+}
+var byKey;
+var init_lease_store = __esm({
+  "bridge-server/src/lanes/lease-store.ts"() {
+    "use strict";
+    init_lane_wire();
+    byKey = (map2) => [...map2.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+  }
+});
+
+// bridge-server/src/lanes/router.ts
+function createLaneRouter(deps) {
+  const { store, broker, sendPlugin: send, replyToAgent } = deps;
+  const conns = /* @__PURE__ */ new Map();
+  const labels = /* @__PURE__ */ new Map();
+  const inflight = /* @__PURE__ */ new Map();
+  const leased = /* @__PURE__ */ new Map();
+  let waiting = [];
+  let [lastView, syncSeq, closed] = ["[]", 0, false];
+  const labelOf = (agentId) => labels.get(agentId) ?? "(no label)";
+  const nameOf = (fileKey5) => [...conns.values()].find((c) => c.fileKey === fileKey5)?.fileName ?? fileKey5;
+  const lid = (r) => splitScopedId(r.frame.id)?.id ?? r.frame.id;
+  const reply = (r, out) => replyToAgent(r.agentId, r.named, { kind: "reply", id: lid(r), ...out });
+  const inUse = (lane) => [...inflight.values()].some((r) => r.lane === lane);
+  const broadcast = (force = false) => {
+    const files2 = store.view();
+    if (!force && JSON.stringify(files2) === lastView) return;
+    lastView = JSON.stringify(files2);
+    deps.broadcastLanes({ kind: "lanes", files: files2 });
+  };
+  const nextId = () => CLAIMS_SYNC_ID_PREFIX + ++syncSeq;
+  const sync = (fileKey5) => {
+    const payload = broker.snapshot(fileKey5);
+    for (const [id, c] of conns)
+      if (c.fileKey === fileKey5 && store.isLane(id))
+        send(id, { kind: "request", id: nextId(), op: "claims-sync", payload });
+    broker.markSynced(fileKey5);
+  };
+  const syncDue = (k) => broker.dueForSync(k) && sync(k);
+  const rollback = ({ claim: claim2, agentId, fileKey: fileKey5 }) => {
+    if (claim2 && !claim2.forward.release)
+      broker.rollback(agentId, fileKey5, claim2.forward.nodeIds);
+  };
+  const dispatch = (r) => {
+    const { agentId, fileKey: fileKey5, frame } = r;
+    const got = store.acquire(agentId, labelOf(agentId), fileKey5);
+    if (!("connectionId" in got)) return false;
+    const lane = got.connectionId;
+    leased.set(agentId, conns.get(lane)?.sessionId);
+    const claim2 = frame.op === "claim" ? parseClaimPayload(frame.payload) : null;
+    if (claim2) {
+      const { result, forward } = broker.handleClaim(agentId, fileKey5, claim2);
+      if (!forward) {
+        reply(r, { ok: true, result });
+        syncDue(fileKey5);
+        return true;
+      }
+      r.claim = { result, forward };
+    }
+    inflight.set(frame.id, { ...r, lane });
+    broker.touch(agentId, fileKey5);
+    store.setBusy(lane, inUse(lane));
+    send(lane, r.claim ? { ...frame, payload: r.claim.forward } : frame);
+    return true;
+  };
+  const unwait = (match) => {
+    const gone = waiting.filter(match);
+    waiting = waiting.filter((r) => !gone.includes(r));
+    for (const r of gone) for (const t of r.timers ?? []) clearTimeout(t);
+    return gone;
+  };
+  const busyError = ({ agentId, fileKey: fileKey5 }) => {
+    const lanes = store.view().find((f) => f.fileKey === fileKey5)?.lanes ?? [];
+    const holders = lanes.flatMap((l) => l.holder ? [l.holder.label] : []);
+    const data = { code: LANES_BUSY, fileKey: fileKey5, count: lanes.length, holders };
+    const [head, of] = [`${LANES_BUSY}: `, `of "${nameOf(fileKey5)}"`];
+    const after = `after ${LANE_WAIT_MS / 1e3} s`;
+    const sessionId = leased.get(agentId);
+    const own2 = lanes.find((l) => !l.connected && l.sessionId === sessionId);
+    const off = lanes.filter((l) => !l.connected).length;
+    const by = holders.length ? holders.join(", ") : "nobody";
+    const tail = off ? `; ${off} not connected` : "";
+    const message3 = own2 && own2.holder?.label === labelOf(agentId) ? `${head}your lane ${own2.index} ${of} is not connected ${after}.` : `${head}no free lane ${of} ${after}; ${lanes.length} lanes, held by ${by}${tail}.`;
+    return { message: message3, data };
+  };
+  const wait = (r) => {
+    const note = `waiting for a free lane of ${nameOf(r.fileKey)}`;
+    const [id, extendMs] = [lid(r), LANE_WAIT_MS];
+    const tick = { kind: "progress", id, extendMs, note };
+    const progress = () => replyToAgent(r.agentId, r.named, tick);
+    const timeout = () => {
+      unwait((w) => w === r);
+      reply(r, { ok: false, error: busyError(r) });
+    };
+    r.timers = [setTimeout(timeout, LANE_WAIT_MS)];
+    if (r.frame.op !== "status") {
+      progress();
+      r.timers.push(setInterval(progress, WAIT_PROGRESS_MS));
+    }
+    waiting.push(r);
+  };
+  const drain = (fileKey5) => {
+    for (const r of waiting.filter((w) => w.fileKey === fileKey5))
+      if (dispatch(r)) unwait((w) => w === r);
+    syncDue(fileKey5);
+  };
+  const cancel = (r) => {
+    const original = r.frame.id.replace(/\.cancel$/, "");
+    const lane = inflight.get(original)?.lane;
+    if (!lane) {
+      unwait((w) => w.frame.id === original);
+      return reply(r, { ok: true, result: { found: false } });
+    }
+    inflight.set(r.frame.id, { ...r, lane });
+    send(lane, r.frame);
+  };
+  const sweep = () => {
+    for (const r of inflight.values()) store.touch(r.agentId, r.fileKey);
+    for (const { agentId } of store.sweep()) broker.agentGone(agentId);
+    for (const { fileKey: fileKey5 } of store.view()) drain(fileKey5);
+    broadcast();
+  };
+  const sweepTimer = setInterval(sweep, LANE_SWEEP_MS).unref();
+  return {
+    onPluginHello(connectionId, { fileKey: fileKey5, fileName, sessionId }) {
+      conns.set(connectionId, { fileKey: fileKey5, fileName, sessionId });
+      store.pluginHello(connectionId, fileKey5, sessionId);
+      if (fileKey5 !== null && store.isLane(connectionId)) sync(fileKey5);
+      if (fileKey5 !== null) drain(fileKey5);
+      broadcast();
+    },
+    onPluginClose(connectionId) {
+      const fileKey5 = conns.get(connectionId)?.fileKey;
+      conns.delete(connectionId);
+      store.pluginClosed(connectionId);
+      for (const [id, r] of inflight) {
+        if (r.lane !== connectionId) continue;
+        inflight.delete(id);
+        rollback(r);
+        const data = { code: "LANE_CLOSED", fileKey: r.fileKey };
+        const error62 = { message: "Figma file disconnected", data };
+        if (r.named !== connectionId) reply(r, { ok: false, error: error62 });
+      }
+      unwait((r) => r.named === connectionId);
+      if (fileKey5) syncDue(fileKey5);
+      broadcast();
+    },
+    onLanesSet(role, { fileKey: fileKey5, lanes }) {
+      if (role !== "ui") return;
+      store.setLanes(fileKey5, lanes);
+      if (lanes.length) sync(fileKey5);
+      else
+        for (const r of unwait((w) => w.fileKey === fileKey5))
+          send(r.named, r.frame);
+      drain(fileKey5);
+      broadcast();
+    },
+    onAgentHello(agentId, info) {
+      if (info.label) labels.set(agentId, info.label);
+      store.agentBack(agentId);
+      if (store.view().length) broadcast(true);
+    },
+    onAgentClose(agentId) {
+      store.agentClosed(agentId);
+      labels.delete(agentId);
+      unwait((r) => r.agentId === agentId);
+      broadcast();
+    },
+    route(agentId, role, named, frame) {
+      const fileKey5 = closed || role !== "mcp" ? null : store.laneFileOf(named);
+      if (fileKey5 === null || frame.kind !== "request")
+        return send(named, frame);
+      const r = { agentId, fileKey: fileKey5, named, frame };
+      if (frame.op === "cancel") return cancel(r);
+      if (!dispatch(r)) wait(r);
+      broadcast();
+    },
+    requestedConnectionOf: (scopedId2) => inflight.get(scopedId2)?.named,
+    settle(_connectionId, frame) {
+      const r = inflight.get(frame.id);
+      if (!r) return frame.id.startsWith(CLAIMS_SYNC_ID_PREFIX) ? null : frame;
+      inflight.delete(frame.id);
+      store.setBusy(r.lane, inUse(r.lane));
+      if (r.claim && !frame.ok) rollback(r);
+      if (r.claim) syncDue(r.fileKey);
+      broadcast();
+      return r.claim && frame.ok ? { ...frame, result: r.claim.result } : frame;
+    },
+    isHubLocal: (id) => id.startsWith(CLAIMS_SYNC_ID_PREFIX),
+    close() {
+      closed = true;
+      clearInterval(sweepTimer);
+      unwait(() => true);
+    }
+  };
+}
+var CLAIMS_SYNC_ID_PREFIX, WAIT_PROGRESS_MS;
+var init_router = __esm({
+  "bridge-server/src/lanes/router.ts"() {
+    "use strict";
+    init_bridge_claims();
+    init_lane_wire();
+    init_peer_wire();
+    CLAIMS_SYNC_ID_PREFIX = "hub.claims-sync.";
+    WAIT_PROGRESS_MS = 2e4;
   }
 });
 
@@ -6075,9 +6879,9 @@ Connection: close\r
 });
 
 // bridge-server/src/hub.ts
-import { randomUUID as randomUUID3 } from "node:crypto";
+import { randomUUID as randomUUID4 } from "node:crypto";
 async function startHub(port, handlers2, options = {}) {
-  const serverId = randomUUID3();
+  const serverId = randomUUID4();
   const files2 = /* @__PURE__ */ new Map();
   let plugins;
   let agents;
@@ -6088,6 +6892,16 @@ async function startHub(port, handlers2, options = {}) {
   );
   if (listener === "in-use") return "in-use";
   const boundPort = listener.port;
+  const roles = /* @__PURE__ */ new Map();
+  const roleOf = (agentId) => roles.get(agentId) ?? DEFAULT_AGENT_ROLE;
+  const router = createLaneRouter({
+    store: createLeaseStore({ now: Date.now }),
+    broker: createClaimsBroker({ now: Date.now }),
+    sendPlugin: (connectionId, frame) => plugins.send(connectionId, frame),
+    replyToAgent: (agentId, connectionId, frame) => agents.toAgent(agentId, connectionId, boundPort, frame),
+    broadcastLanes: (frame) => agents.broadcastHub(frame),
+    now: Date.now
+  });
   const self = options.countSelf === false ? 0 : 1;
   const sessions = () => ({
     kind: "sessions",
@@ -6100,8 +6914,19 @@ async function startHub(port, handlers2, options = {}) {
       port: port2,
       file: file2
     })),
-    onSend: (connectionId, frame) => plugins.send(connectionId, frame),
+    onSend: (connectionId, frame, agentId) => router.route(agentId, roleOf(agentId), connectionId, frame),
     onCountChange: () => plugins.broadcast(sessions()),
+    caps: [HUB_CAP_LANES],
+    graceMs: LANE_GRACE_MS,
+    onAgentHello(agentId, info) {
+      roles.set(agentId, info.role);
+      router.onAgentHello(agentId, info);
+    },
+    onAgentClose(agentId) {
+      roles.delete(agentId);
+      router.onAgentClose(agentId);
+    },
+    onLanesSet: (agentId, frame) => router.onLanesSet(roleOf(agentId), frame),
     helloTimeoutMs: options.helloTimeoutMs,
     heartbeatMs: options.heartbeatMs
   });
@@ -6111,6 +6936,7 @@ async function startHub(port, handlers2, options = {}) {
     caps: [HUB_CAP_UI],
     onHello(connectionId, frame) {
       files2.set(connectionId, { port: boundPort, file: frame.file });
+      router.onPluginHello(connectionId, frame.file);
       handlers2.onFrame(connectionId, frame, { port: boundPort });
       agents.toAll(connectionId, boundPort, frame);
       plugins.send(connectionId, sessions());
@@ -6129,16 +6955,21 @@ async function startHub(port, handlers2, options = {}) {
         return;
       }
       const scoped = splitScopedId(frame.id);
-      if (scoped) {
-        agents.toAgent(scoped.agentId, connectionId, boundPort, {
-          ...frame,
+      if (!scoped) {
+        if (!router.isHubLocal(frame.id))
+          handlers2.onFrame(connectionId, frame, { port: boundPort });
+        return;
+      }
+      const named = router.requestedConnectionOf(frame.id) ?? connectionId;
+      const out = frame.kind === "reply" ? router.settle(connectionId, frame) : frame;
+      if (out)
+        agents.toAgent(scoped.agentId, named, boundPort, {
+          ...out,
           id: scoped.id
         });
-      } else {
-        handlers2.onFrame(connectionId, frame, { port: boundPort });
-      }
     },
     onClose(connectionId) {
+      router.onPluginClose(connectionId);
       files2.delete(connectionId);
       handlers2.onClose(connectionId);
       agents.closed(connectionId);
@@ -6155,6 +6986,7 @@ async function startHub(port, handlers2, options = {}) {
     closed,
     close() {
       closing3 ??= (async () => {
+        router.close();
         agents.close();
         plugins.close();
         const ids = [...files2.keys()];
@@ -6173,6 +7005,10 @@ var init_hub = __esm({
     init_bridge_ui_tunnel();
     init_agent_conns();
     init_files();
+    init_lane_wire();
+    init_claims_broker();
+    init_lease_store();
+    init_router();
     init_listen();
     init_peer_wire();
     init_plugin_conns();
@@ -44541,7 +45377,9 @@ var init_bridge_error_codes = __esm({
       BUILD_SPEC_INVALID: "Fix every listed problem, then call build again.",
       UPLOAD_UNSUPPORTED: "Use PNG, JPG, GIF or SVG.",
       CLAIMED: "Another agent holds this part of the file; work in your own claimed frame or wait.",
-      FONT_MISSING: "Install the font or choose an available one (fonts_check lists them)."
+      FONT_MISSING: "Install the font or choose an available one (fonts_check lists them).",
+      LANES_BUSY: "Every lane of this file is held by another session. Wait a minute and call again; do not pass another clientId.",
+      LANE_CLOSED: "Your lane's plugin restarted. Call again; EZG Figma Desktop restarts the lane within 30 s."
     };
   }
 });
@@ -44959,19 +45797,19 @@ var init_lint_summary = __esm({
 
 // plugins/ezg-tools/src/shared/bridge-build-fail.ts
 function isBuildFailureData(v) {
-  if (!isRecord4(v) || v.kind !== "build-failure") return false;
+  if (!isRecord5(v) || v.kind !== "build-failure") return false;
   if (typeof v.path !== "string" || typeof v.rolledBack !== "boolean")
     return false;
   if (typeof v.removed !== "number" || !Array.isArray(v.kept)) return false;
   if (!v.kept.every((k) => typeof k === "string")) return false;
   return v.issues === void 0 || Array.isArray(v.issues) && v.issues.every(isIssue);
 }
-var isRecord4, isIssue;
+var isRecord5, isIssue;
 var init_bridge_build_fail = __esm({
   "plugins/ezg-tools/src/shared/bridge-build-fail.ts"() {
     "use strict";
-    isRecord4 = (v) => typeof v === "object" && v !== null;
-    isIssue = (v) => isRecord4(v) && typeof v.path === "string" && typeof v.message === "string";
+    isRecord5 = (v) => typeof v === "object" && v !== null;
+    isIssue = (v) => isRecord5(v) && typeof v.path === "string" && typeof v.message === "string";
   }
 });
 
@@ -47134,13 +47972,57 @@ function toRow(f) {
     port: f.port
   };
 }
-var registerSession;
+function heldLanes(file2, label) {
+  if (!label) return [];
+  return file2.lanes.filter((l) => l.holder?.label === label).map((l) => l.index).sort((a, b) => a - b);
+}
+function laneOf(file2, label) {
+  const held = heldLanes(file2, label);
+  if (held.length === 0) return LANE_NONE_YET;
+  if (held.length === 1) return `lane ${held[0]} of ${file2.count}`;
+  const list = `${held.slice(0, -1).join(", ")} or ${held[held.length - 1]}`;
+  return `lane ${list} of ${file2.count} (label ${label} is not unique)`;
+}
+function toFileLanes(file2, label) {
+  return {
+    count: file2.count,
+    yours: laneOf(file2, label),
+    lanes: [...file2.lanes].sort((a, b) => a.index - b.index).map((l) => ({
+      index: l.index,
+      sessionId: l.sessionId,
+      holder: l.holder?.label ?? LANE_FREE,
+      busy: l.busy,
+      connected: l.connected
+    }))
+  };
+}
+function toRows(files2, view) {
+  const laneFiles = new Map(
+    view.filter((v) => v.lanes.length > 0).map((v) => [v.fileKey, v])
+  );
+  const label = agentLabel();
+  const folded = /* @__PURE__ */ new Set();
+  const rows = [];
+  for (const f of files2) {
+    const lane = f.fileKey === null ? void 0 : laneFiles.get(f.fileKey);
+    if (!lane) rows.push(toRow(f));
+    else if (!folded.has(lane.fileKey)) {
+      folded.add(lane.fileKey);
+      rows.push({ ...toRow(f), lanes: toFileLanes(lane, label) });
+    }
+  }
+  return rows;
+}
+var LANE_FREE, LANE_NONE_YET, registerSession;
 var init_session = __esm({
   "bridge-server/src/tools/session.ts"() {
     "use strict";
     init_context();
     init_files();
+    init_agent_link();
     init_tool_result();
+    LANE_FREE = "free";
+    LANE_NONE_YET = "none yet (assigned on first call)";
     registerSession = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.files,
@@ -47150,7 +48032,7 @@ var init_session = __esm({
         },
         async () => {
           try {
-            const rows = ctx2.files.list().map(toRow);
+            const rows = toRows(ctx2.files.list(), ctx2.files.lanes?.() ?? []);
             if (rows.length === 0)
               return textResult(ctx2.link.error() ?? NOT_CONNECTED);
             return jsonResult(rows);
@@ -47175,7 +48057,7 @@ function parseSteps(raw) {
   for (let i = 0; i < raw.length; i++) {
     const at = `step ${i + 1}`;
     const item = raw[i];
-    if (!isRecord5(item)) return `${at}: must be an object`;
+    if (!isRecord6(item)) return `${at}: must be an object`;
     const extra = Object.keys(item).find((k) => !STEP_KEYS.has(k));
     if (extra !== void 0) return `${at}: unknown field "${extra}"`;
     const tool = item.tool;
@@ -47183,7 +48065,7 @@ function parseSteps(raw) {
       return `${at}: tool ${JSON.stringify(tool)} is not allowed, use one of ${RUN_TOOLS.join(", ")}`;
     }
     const args = item.args ?? {};
-    if (!isRecord5(args)) return `${at}: args must be an object`;
+    if (!isRecord6(args)) return `${at}: args must be an object`;
     const step = { tool, args };
     if (item.as !== void 0) {
       const name = item.as;
@@ -47204,7 +48086,7 @@ function lookup(value, segments) {
     if (Array.isArray(cur)) {
       if (!/^\d+$/.test(seg)) return void 0;
       cur = cur[Number(seg)];
-    } else if (isRecord5(cur) && Object.hasOwn(cur, seg)) {
+    } else if (isRecord6(cur) && Object.hasOwn(cur, seg)) {
       cur = cur[seg];
     } else {
       return void 0;
@@ -47229,14 +48111,14 @@ function resolveRefs(args, results, step) {
       return found === void 0 ? fail2(v) : found;
     }
     if (Array.isArray(v)) return v.map(walk2);
-    if (isRecord5(v)) {
+    if (isRecord6(v)) {
       return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk2(x)]));
     }
     return v;
   };
   return walk2(args);
 }
-var RUN_MAX_STEPS, RUN_TOOLS, RunRefError, NAME, REF, STEP_KEYS, isRecord5;
+var RUN_MAX_STEPS, RUN_TOOLS, RunRefError, NAME, REF, STEP_KEYS, isRecord6;
 var init_run_refs = __esm({
   "bridge-server/src/run-refs.ts"() {
     "use strict";
@@ -47260,7 +48142,7 @@ var init_run_refs = __esm({
     NAME = /^[A-Za-z_][\w-]*$/;
     REF = /^\$([A-Za-z_][\w-]*)((?:\.[^.\s]+)*)$/;
     STEP_KEYS = /* @__PURE__ */ new Set(["tool", "args", "as"]);
-    isRecord5 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+    isRecord6 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
   }
 });
 
@@ -47355,6 +48237,17 @@ var init_run = __esm({
 });
 
 // bridge-server/src/tools/status.ts
+function laneLine(file2, fileName) {
+  const yours = laneOf(file2, agentLabel());
+  return yours === LANE_NONE_YET ? yours : `${yours} of ${fileName}`;
+}
+function noFreeLane(file2, fileName) {
+  const holders = [...file2.lanes].sort((a, b) => a.index - b.index).flatMap((l) => l.holder ? [l.holder.label] : []);
+  return errorResult(
+    `No lane of ${fileName} was free within ${STATUS_TIMEOUT_MS / 1e3} s: all ${file2.count} lanes are held (${holders.join(", ")}).`,
+    "Wait, then call status again."
+  );
+}
 var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION14, statusInputSchema, registerStatus;
 var init_status = __esm({
   "bridge-server/src/tools/status.ts"() {
@@ -47362,6 +48255,8 @@ var init_status = __esm({
     init_zod();
     init_context();
     init_tool_result();
+    init_agent_link();
+    init_session();
     STATUS_TIMEOUT_MS = 5e3;
     STATUS_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use status";
     DESCRIPTION14 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
@@ -47377,6 +48272,9 @@ var init_status = __esm({
         async ({ fileKey: fileKey5 }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
+          const laneFile = () => (ctx2.files.lanes?.() ?? []).find(
+            (v) => v.fileKey === r.file.fileKey && v.lanes.length > 0
+          );
           try {
             const res = await ctx2.rpc.call(
               r.file.connectionId,
@@ -47384,15 +48282,25 @@ var init_status = __esm({
               {},
               STATUS_TIMEOUT_MS
             );
-            return jsonResult(res, r.note);
+            const lanes = laneFile();
+            if (!lanes) return jsonResult(res, r.note);
+            const lane = laneLine(lanes, r.file.fileName);
+            return jsonResult(
+              { ...res, lane },
+              r.note
+            );
           } catch (e) {
             if (e instanceof BridgeCallError && e.code === "remote" && e.remote?.message.startsWith("unknown op: status"))
               return errorResult(e.remote.message, STATUS_OLD_PLUGIN_HINT);
-            if (e instanceof BridgeCallError && e.code === "timeout")
+            if (e instanceof BridgeCallError && e.code === "timeout") {
+              const lanes = laneFile();
+              if (lanes && heldLanes(lanes, agentLabel()).length === 0)
+                return noFreeLane(lanes, r.file.fileName);
               return errorResult(
                 `The plugin did not answer status within ${STATUS_TIMEOUT_MS / 1e3} s.`,
                 "Its sandbox is blocked by a long synchronous step. Wait, then call status again."
               );
+            }
             return fromCallError(e);
           }
         }
@@ -47489,7 +48397,7 @@ var init_ui_screenshot = __esm({
 
 // bridge-server/src/upload-read.ts
 import { readFile, stat } from "node:fs/promises";
-import { basename, extname, isAbsolute as isAbsolute6 } from "node:path";
+import { basename as basename2, extname, isAbsolute as isAbsolute6 } from "node:path";
 function sniffKind(bytes) {
   if (startsWith2(bytes, [137, 80, 78, 71]) || startsWith2(bytes, [255, 216, 255]) || startsWith2(bytes, [71, 73, 70, 56]))
     return "image";
@@ -47594,7 +48502,7 @@ var init_upload_read = __esm({
     SNIFF_CHARS = 1024;
     startsWith2 = (b, sig) => sig.every((v, i) => b[i] === v);
     stem = (file2) => {
-      const base = basename(file2);
+      const base = basename2(file2);
       const ext = extname(base);
       return (ext ? base.slice(0, -ext.length) : base) || "image";
     };
@@ -47826,7 +48734,7 @@ var mcp_exports = {};
 __export(mcp_exports, {
   SERVER_VERSION: () => SERVER_VERSION
 });
-import { randomUUID as randomUUID4 } from "node:crypto";
+import { randomUUID as randomUUID5 } from "node:crypto";
 import { homedir } from "node:os";
 var SERVER_VERSION, EXIT_GRACE_MS2, handlers, events, rpc, files, link2, session, journal, ctx, server, tools, registry2, closing2, shutdown2;
 var init_mcp2 = __esm({
@@ -47893,13 +48801,16 @@ var init_mcp2 = __esm({
       onClose(connectionId) {
         rpc.onClosed(connectionId);
         files.remove(connectionId);
+      },
+      onLanes(view) {
+        files.setLanes(view);
       }
     };
     events = createEventStore();
     rpc = createRpc((id, frame) => link2.send(id, frame));
     files = createFileRegistry(() => link2.error());
     link2 = startLink({ env: process.env, handlers });
-    session = randomUUID4().slice(0, 8);
+    session = randomUUID5().slice(0, 8);
     journal = createJournal(process.env, homedir());
     ctx = {
       link: link2,

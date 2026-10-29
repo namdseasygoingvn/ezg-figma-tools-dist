@@ -32,7 +32,7 @@ Load the `figma-use` skill first for Plugin API rules; this file only covers wha
 1. Call `files`. It lists every connected file.
 2. If it shows none, ask the user to press "Kết nối tới MCP server" in the MCP tab.
 
-`fileKey` in a tool call may be a `fileKey` or a `clientId`. With exactly one connected file it may be omitted. Any number of Claude sessions can use the same file at once.
+`fileKey` in a tool call may be a `fileKey` or a `clientId`. With exactly one connected file it may be omitted. Several Claude sessions can use the same file at once. In lane mode the file is listed with a lane line; pass its fileKey and the hub picks your lane (see Lanes).
 
 The port defaults to 39410. To use another port (39410–39419), set `EZG_FIGMA_BRIDGE_PORT` in the MCP server config and the same number in the MCP tab.
 
@@ -68,8 +68,8 @@ Arguments: `{fileKey?, code, description, skillNames?, timeoutMs?, atomic?, page
 - If the code stops within 10 s, `atomic: true` removes what it created, and the error gives the elapsed time, the last `figma`, `kit` or helper call and the created count. If it finishes within those 10 s, the result comes back with `lateMs` in its stats.
 - If it does not stop within 10 s, the error says it is still running. Call `status` until `busy` is false, then read its outcome in `recent` before you retry.
 - If the plugin sends no reply or progress at all, the server times out the call and sends a cancel itself.
-- Stats give `queueMs` and `queueDepth` (calls ahead of this one, from every session) and `slowFonts` (font loads over 3 s).
-- Sessions take turns in one file, and calls from one session run in order. A long `eval` from another session delays you by at most its own run.
+- Stats give `queueMs` and `queueDepth` (calls ahead of this one in the plugin that serves you) and `slowFonts` (font loads over 3 s).
+- Without lane mode, sessions take turns in the file's one plugin: a long eval from another session delays you by at most its own run. In lane mode your lane runs only your calls. Calls from one session always run in order.
 
 ### Differences from use_figma
 
@@ -136,7 +136,7 @@ return card.id
 
 The default view is compact: variable ids and scopes, style ids and component descriptions are left out, and each component lists its properties as one line per property (`name: TYPE = default`, or the options for a variant). `detail` is a list that adds them back: `ids`, `scopes`, `descriptions`, `props` (full property objects with the keys `kit.props` needs). The result is capped near 20,000 characters; cut sections are named in `truncated`, so narrow with `name`, `include` or `pageIds` instead of asking for more.
 
-It does not wait for other sessions' writes (see Read lane).
+It does not wait for other sessions' writes (see Reads outside the queue).
 
 ## build
 
@@ -196,7 +196,7 @@ It is atomic by default: on failure the created nodes are removed. Before it cre
 | `overflow`       | `{tolerance?}`                                           |
 | `reuse`          | `{min?}`                                                 |
 
-By default (`detail: "summary"`) the report has `checked`, `total` and `groups`, largest first: `{rule, count, examples, nodeIds}` with up to 3 examples (`nodeId`, `path`, `detail`) and the first 30 node ids per rule. Use the `nodeIds` to fix a whole rule at once. `detail: "full"` returns `counts` and every finding (`rule`, `nodeId`, `path`, `detail`) up to `limit`. Both have `truncated`. A `lint` without `fix` does not wait for other sessions' writes (see Read lane).
+By default (`detail: "summary"`) the report has `checked`, `total` and `groups`, largest first: `{rule, count, examples, nodeIds}` with up to 3 examples (`nodeId`, `path`, `detail`) and the first 30 node ids per rule. Use the `nodeIds` to fix a whole rule at once. `detail: "full"` returns `counts` and every finding (`rule`, `nodeId`, `path`, `detail`) up to `limit`. Both have `truncated`. A `lint` without `fix` does not wait for other sessions' writes (see Reads outside the queue).
 
 `fix` applies safe fixes in the same call (one undo step), then lints again. The report adds `fixes` (`fixed`, `skipped` with a reason).
 
@@ -287,22 +287,37 @@ Use `run` when the next step does not need your judgment. If a step's output dec
 
 ## Many agents, one file
 
-Several agents (for example subagents of one Claude Code session) can work in one file. They share one MCP server, so the `owner` label tells them apart.
+Several agents can work in one file. Subagents of one Claude Code session share its MCP server and so its plugin, or its lane: the owner label tells them apart, and their writes still run one at a time. Separate Claude sessions (for example Worker-1 to Worker-5) each run their own MCP server: without lane mode they take turns in the file's one plugin; in lane mode each gets its own lane and they write at the same time (see Lanes).
 
 1. Lead agent: `inventory`, `fonts_check`, then create one frame (or page) per worker.
 2. Each worker: `claim` its frame with a unique `owner`. Pass the same `owner` to `build` and `upload`. Read with `describe`. Batch steps with `run`. Run long steps with `async` and `job_wait`.
-3. Figma still runs one write at a time per file. Parallel agents save model time, not Figma time.
+3. One plugin runs one write at a time. Subagents of one session save model time, not Figma time; only lanes let separate sessions write at the same time.
 4. Never export in parallel. Check `status.exportStuck` first.
 
 `eval` is not claim-checked: it can edit anything. Stay inside your own claim by hand.
 
+## Lanes
+
+The owner can turn on lane mode in EZG Figma Desktop. One file is then open N times (2 to 8) in a minimized "EZG Lanes" window, and each tab runs its own EZG plugin: a lane. You call the tools as usual.
+
+- The hub gives your session one free lane on its first call to that file and keeps it for you. Every call you make to that file runs in your lane, whatever fileKey or clientId you pass. Pass the fileKey; do not pass a clientId to pick a lane.
+- No other session runs in your lane. Your queue, status, checkpoint and undo cover your lane only. Edits from other lanes and from the owner reach your lane live, as from another person.
+- view_get and view_set read and move your lane's view, not the owner's: you do not see the owner's selection.
+- You keep the lane while you call. It is freed 15 min after your last call, or 2 min after your MCP server stops. If the link to the hub drops and comes back within that time, you get the same lane with its undo history. A restarted MCP server is a new session and gets a new lane.
+- `[LANES_BUSY]`: every lane is held. The call waited 60 s; the message names the file, N and the holders. Wait, then retry.
+- The owner's own tab of the file is never a lane. The hub never sends your calls there.
+- Claims are shared across lanes: a frame claimed from one lane cannot be built into from another. Claim before you build, as in Many agents, one file.
+- Use one bridge server per session: the ezg-figma-bridge tools or the ezg-figma-bridge-dev tools, never both. Each server is its own agent and takes its own lane, with its own claims.
+- files lists the lane file with a lane line: N, and who holds each lane. status shows your lane.
+- Lanes need EZG Figma Desktop running. If files lists the same file several times with no lane line, lane mode is off: ask the user before you pick a clientId.
+
 ## claim
 
-`{fileKey?, nodeIds, owner, ttlMs?, release?}`. Holds frames or pages so other agents cannot `build` or `upload` into them. `owner` is required and must be unique per agent; a claim belongs to the owner label within one session.
+`{fileKey?, nodeIds, owner, ttlMs?, release?}`. Holds frames or pages so other agents cannot `build` or `upload` into them. `owner` is required and must be unique per agent; a claim belongs to your session and its owner label, so another session that uses the same label is still another owner. In lane mode the hub keeps one claim list per file, shared by every lane.
 
 - The result is `{granted, conflicts, claims}`. A node held by another owner is in `conflicts` (with `owner` and `expiresInMs`) and is not granted. `claims` lists yours.
 - A claim covers the node and everything under it. Claim the top frame of your work.
-- A claim expires after `ttlMs` (default 10 min, max 60 min). A successful `build` or `upload` with your `owner` renews it. The plugin is not told when a session ends, so rely on the expiry.
+- A claim expires after `ttlMs` (default 10 min, max 60 min). A successful `build` or `upload` with your `owner` renews it. A claim is not released when your session ends: it lasts until its expiry or release: true, so release your claims when you finish.
 - `release: true` gives up the listed nodes.
 - Only `build`, `upload` and `copy` check claims. They fail with `CLAIMED`, and nothing is created.
 
@@ -312,7 +327,7 @@ Several agents (for example subagents of one Claude Code session) can work in on
 
 - `depth` defaults to 3, max 8. `maxNodes` defaults to 300, max 2000.
 - `more` on a node counts children not shown; `truncated` is true when `maxNodes` cut the tree. Call `describe` again on the child ids to go deeper.
-- It is a read: it does not wait for other sessions' writes (see Read lane).
+- It is a read: it does not wait for other sessions' writes (see Reads outside the queue).
 
 ## fonts_check
 
@@ -324,15 +339,15 @@ Several agents (for example subagents of one Claude Code session) can work in on
 
 - `job_wait` `{jobId, timeoutMs?}` returns the job's own result with a first note `job j3 (eval) took 4.2 s`. After `timeoutMs` (default 60 s, max 120 s) it answers `{jobId, state: "running", ms}`: call it again.
 - Jobs live in server memory for 30 min, at most 50. A server restart loses them. An unknown id is an error (`no job j3 ...`).
-- `async` does not change the order: calls still run one at a time per file. Use it so a long step does not hold your turn.
+- `async` does not change the order: your calls still run one at a time in the plugin that serves you. Use it so a long step does not hold your turn.
 
-## Read lane
+## Reads outside the queue
 
-`inventory` and `lint` without `fix` run at once, not in the write queue, so they answer while another session's `eval` is running. They can see that `eval`'s half-finished state. If you need a settled view, call `status` until `busy` is false, then read. `lint` with `fix` is a write and queues.
+`inventory` and `lint` without `fix` run at once, not in the write queue, so they answer while an eval in the same plugin is running. They can see that `eval`'s half-finished state. If you need a settled view, call `status` until `busy` is false, then read. `lint` with `fix` is a write and queues.
 
 ## status
 
-`{fileKey?}`. Answers at once, outside the plugin queue. `busy` is true while any call from any session is queued or running. `queueDepth` counts them. `jobs` lists each one with `op`, `state` (`queued`, `running`, `cancelling`), `waitMs`, `runMs`, `created` and `last` (the last `figma`, `kit` or helper call); `mine` marks this session's calls. `recent` lists the last 20 finished calls with `outcome` (`ok`, `late`, `failed`, `cancelled`, `rolled-back`) and created ids.
+`{fileKey?}`. Answers at once, outside the plugin queue. `busy` is true while any call is queued or running in the plugin that serves you: the file's one plugin, or your lane in lane mode. `queueDepth` counts them. `jobs` lists each one with `op`, `state` (`queued`, `running`, `cancelling`), `waitMs`, `runMs`, `created` and `last` (the last `figma`, `kit` or helper call); `mine` marks this session's calls. `recent` lists the last 20 finished calls with `outcome` (`ok`, `late`, `failed`, `cancelled`, `rolled-back`) and created ids.
 
 If `status` shows `exportStuck`, a render in the plugin has hung. Do not retry exports. Ask the user to close and reopen the EZG Tools plugin.
 
@@ -359,6 +374,7 @@ A failure with a known fix prints as `[CODE] message`, then `Fix: ...`. Follow t
 | `UPLOAD_UNSUPPORTED`  | Use PNG, JPG, GIF or SVG.                                                          |
 | `CLAIMED`             | Another agent holds this part of the file; work in your own claimed frame or wait. |
 | `FONT_MISSING`        | Install the font or choose an available one (`fonts_check` lists them).            |
+| `LANES_BUSY`          | Every lane of the file is held by another session; wait, then call again.          |
 
 Errors without a code are plain messages.
 
@@ -379,7 +395,7 @@ Errors without a code are plain messages.
 - `figma.createText()` defaults to Inter; load the font before setting `characters`, or use `kit.text`.
 - Instances made with `createInstance()` or `clone()` in raw code are not tracked for `atomic` rollback. Make them through `kit`.
 - Remote library components are not in `inventory`.
-- Never call `exportAsync` or `screenshot` in `Promise.all`. Renders run one at a time per file, so `await` them in a loop.
+- Never call `exportAsync` or `screenshot` in `Promise.all`. Renders run one at a time per plugin, so `await` them in a loop.
 - `kit.token()` returns a promise. `setBoundVariable(field, kit.token(...))` without `await` fails with "Expected node id to be a string".
 - `node.clone()` puts the copy in the source's parent, or on the current page when that parent is the page. `atomic: true` does not remove it. Append it where it belongs right away, and check the page for strays after a failed run.
 - `componentPropertyReferences` can only be set once the node is inside the component ("Can only set component property references on symbol sublayer"). Append first, then set it.
@@ -408,7 +424,7 @@ Errors without a code are plain messages.
 - A node that cannot be exported is in `failed`, not `written`. The call still succeeds if at least one node was written.
 - More than 50 `nodeIds` is rejected. Split the call.
 - Bytes never enter the chat.
-- Renders run one at a time per file, but the server writes one file while the plugin renders the next (at most 2 requests in flight), so many nodes in one call is the fast path. Do not start a second export or `screenshot` to speed it up, and do not retry one that is slow; check `status` instead.
+- Renders run one at a time per plugin, but the server writes one file while the plugin renders the next (at most 2 requests in flight), so many nodes in one call is the fast path. Do not start a second export or `screenshot` to speed it up, and do not retry one that is slow; check `status` instead.
 - The raw plugin op `export` (WebSocket) has no `outDir` and writes no files. It returns `{files: [{nodeId, name, format, base64 | text}], failed: [{nodeId, error}], warnings?}`: `base64` for PNG, JPG and PDF, `text` for SVG and JSON. Every row in `files` has data; every error is in `failed`.
 
 ## Snapshot and image fills
