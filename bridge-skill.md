@@ -303,10 +303,11 @@ Lane mode is turned on in EZG Figma Desktop, by the owner or with the `lanes` to
 `lanes` reads lane mode (`{action: "status"}`), turns it on for one file (`{action: "enable", fileKey, count}`, count 2 to 8) or off (`{action: "disable"}`). enable and disable quit and restart Figma and take about a minute. It goes through the EZG hub and never touches the user's screen. Never script EZG Figma Desktop or Figma (System Events, keystrokes, window focus) to turn lanes on or off.
 
 - The hub gives your session one free lane on its first call to that file and keeps it for you. Every call you make to that file runs in your lane, whatever fileKey or clientId you pass. Pass the fileKey; do not pass a clientId to pick a lane.
+- A lane that loses its Figma connection ("Unable to establish connection to Figma") is taken out of service: that call fails with a note, your next call runs on another lane, and EZG Figma Desktop reloads the lost lane.
 - No other session runs in your lane. Your queue, status, checkpoint and undo cover your lane only. Edits from other lanes and from the owner reach your lane live, as from another person.
 - view_get and view_set read and move your lane's view, not the owner's: you do not see the owner's selection.
 - You keep the lane while you call. It is freed 15 min after your last call, or 2 min after your MCP server stops. If the link to the hub drops and comes back within that time, you get the same lane with its undo history. A restarted MCP server is a new session and gets a new lane.
-- `[LANES_BUSY]`: every lane is held. The call waited 60 s; the message names the file, N and the holders. Wait, then retry.
+- `[LANES_BUSY]`: every lane is held or offline. The call waited 60 s; the message names the file, N and the holders; sessions started from folders with the same name show as `<name>#2`, `#3`. Wait, then retry.
 - The owner's own tab of the file is never a lane. The hub never sends your calls there.
 - Claims are shared across lanes: a frame claimed from one lane cannot be built into from another. Claim before you build, as in Many agents, one file.
 - Use one bridge server per session: the ezg-figma-bridge tools or the ezg-figma-bridge-dev tools, never both. Each server is its own agent and takes its own lane, with its own claims.
