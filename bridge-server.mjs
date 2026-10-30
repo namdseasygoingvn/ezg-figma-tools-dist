@@ -69,6 +69,39 @@ var init_dist = __esm({
   }
 });
 
+// bridge-server/src/hub-pid.ts
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+function writeHubPid(path, pid = process.pid) {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, String(pid));
+  return () => {
+    try {
+      if (readFileSync(path, "utf8").trim() === String(pid))
+        rmSync(path, { force: true });
+    } catch {
+    }
+  };
+}
+function hubOnlyAlive(path) {
+  try {
+    const pid = Number(readFileSync(path, "utf8").trim());
+    if (!Number.isInteger(pid) || pid <= 0 || pid === process.pid) return false;
+    process.kill(pid, 0);
+    return true;
+  } catch (error62) {
+    return error62.code === "EPERM";
+  }
+}
+var hubPidPath;
+var init_hub_pid = __esm({
+  "bridge-server/src/hub-pid.ts"() {
+    "use strict";
+    hubPidPath = (port, home = homedir()) => join(home, ".ezg", `bridge-hub-${port}.pid`);
+  }
+});
+
 // node_modules/ws/lib/constants.js
 var require_constants = __commonJS({
   "node_modules/ws/lib/constants.js"(exports, module) {
@@ -7038,6 +7071,7 @@ var init_port = __esm({
 function startLink(options) {
   const { handlers: handlers2, hubOnly = false } = options;
   const retry = options.retry ?? DEFAULT_RETRY;
+  const yieldHub = (port) => !hubOnly && (options.hubOnlyAlive ?? ((p) => hubOnlyAlive(hubPidPath(p))))(port);
   const resolved = resolveBridgePort(options.env);
   let role = "none";
   let error62 = null;
@@ -7059,7 +7093,8 @@ function startLink(options) {
   async function loop(port) {
     let failures = 0;
     while (!aborted2) {
-      const started = await startHub(port, handlers2, { countSelf: !hubOnly });
+      const yielding = yieldHub(port);
+      const started = yielding ? "in-use" : await startHub(port, handlers2, { countSelf: !hubOnly });
       if (aborted2) {
         if (started !== "in-use") await started.close();
         return;
@@ -7069,7 +7104,12 @@ function startLink(options) {
         hub = started;
         role = "hub";
         error62 = null;
+        const watch = hubOnly ? null : setInterval(() => {
+          if (yieldHub(port)) void started.close();
+        }, YIELD_CHECK_MS);
+        watch?.unref();
         await started.closed;
+        if (watch) clearInterval(watch);
         hub = null;
         role = "none";
         continue;
@@ -7095,7 +7135,7 @@ function startLink(options) {
         await sleep(jitter(retry.minMs));
         continue;
       }
-      error62 = `Port ${port} is busy but no EZG bridge answered; waiting for it to free up.`;
+      error62 = yielding ? `Waiting for the EZG hub process on port ${port}.` : `Port ${port} is busy but no EZG bridge answered; waiting for it to free up.`;
       await sleep(jitter(Math.min(retry.maxMs, retry.minMs * 2 ** failures++)));
     }
   }
@@ -7119,23 +7159,26 @@ function startLink(options) {
     }
   };
 }
-var DEFAULT_RETRY;
+var DEFAULT_RETRY, YIELD_CHECK_MS;
 var init_link = __esm({
   "bridge-server/src/link.ts"() {
     "use strict";
     init_agent_link();
     init_hub();
+    init_hub_pid();
     init_port();
     DEFAULT_RETRY = { minMs: 250, maxMs: 2e3 };
+    YIELD_CHECK_MS = 2e3;
   }
 });
 
 // bridge-server/src/hub-only.ts
 var hub_only_exports = {};
-var EXIT_GRACE_MS, KEEP_ALIVE_MS, link, keepAlive, closing, shutdown;
+var EXIT_GRACE_MS, KEEP_ALIVE_MS, link, removePid, keepAlive, closing, shutdown;
 var init_hub_only = __esm({
   "bridge-server/src/hub-only.ts"() {
     "use strict";
+    init_hub_pid();
     init_link();
     EXIT_GRACE_MS = 2e3;
     KEEP_ALIVE_MS = 1 << 30;
@@ -7150,6 +7193,8 @@ var init_hub_only = __esm({
       console.error(link.error());
       process.exit(0);
     }
+    removePid = writeHubPid(hubPidPath(link.port));
+    process.on("exit", removePid);
     keepAlive = setInterval(() => {
     }, KEEP_ALIVE_MS);
     closing = false;
@@ -44901,17 +44946,17 @@ var init_instructions = __esm({
 // bridge-server/src/journal.ts
 import {
   appendFileSync,
-  mkdirSync,
-  readFileSync,
+  mkdirSync as mkdirSync2,
+  readFileSync as readFileSync2,
   renameSync,
   statSync
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname as dirname2, join as join2 } from "node:path";
 function journalPath(env, home) {
   const value = env[JOURNAL_ENV]?.trim();
   if (value === "off") return null;
   if (value) return value;
-  return join(home, ...INSTALL_DIR_PARTS, BRIDGE_DIR, JOURNAL_FILE);
+  return join2(home, ...INSTALL_DIR_PARTS, BRIDGE_DIR, JOURNAL_FILE);
 }
 function isEntry(v) {
   if (typeof v !== "object" || v === null) return false;
@@ -44943,7 +44988,7 @@ function createJournal(env, home, maxBytes = JOURNAL_MAX_BYTES) {
     write(e) {
       try {
         if (!dirReady) {
-          mkdirSync(dirname(path), { recursive: true });
+          mkdirSync2(dirname2(path), { recursive: true });
           dirReady = true;
         }
         const line = JSON.stringify({
@@ -44960,7 +45005,7 @@ function createJournal(env, home, maxBytes = JOURNAL_MAX_BYTES) {
     read(f) {
       try {
         const limit = f.limit ?? READ_LIMIT_DEFAULT;
-        const entries = readFileSync(path, "utf8").split("\n").map(parseLine).filter(
+        const entries = readFileSync2(path, "utf8").split("\n").map(parseLine).filter(
           (e) => e !== null && (f.session === void 0 || e.session === f.session) && (f.since === void 0 || e.ts >= f.since) && (f.tool === void 0 || e.tool === f.tool)
         );
         return limit > 0 ? entries.slice(-limit) : [];
@@ -46229,7 +46274,7 @@ var init_png_decode = __esm({
 
 // bridge-server/src/tools/export-files.ts
 import { writeFile } from "node:fs/promises";
-import { isAbsolute, join as join2, relative, resolve } from "node:path";
+import { isAbsolute, join as join3, relative, resolve } from "node:path";
 function safeFileName(name) {
   let out = name.replace(/[^A-Za-z0-9._ -]/g, "-").replace(/-{2,}/g, "-").replace(EDGE_JUNK, "").slice(0, MAX_NAME_CHARS).replace(EDGE_JUNK, "");
   if (!out) out = "node";
@@ -46242,7 +46287,7 @@ function exportFileName(file2) {
 }
 function resolveInside(outDir, fileName) {
   const root = resolve(outDir);
-  const target = resolve(join2(root, fileName));
+  const target = resolve(join3(root, fileName));
   const rel = relative(root, target);
   if (!rel || rel.startsWith("..") || isAbsolute(rel)) return null;
   return target;
@@ -47063,7 +47108,7 @@ var init_eval = __esm({
 
 // bridge-server/src/tools/doc-snapshot.ts
 import { mkdir as mkdir2, writeFile as writeFile2 } from "node:fs/promises";
-import { dirname as dirname2, isAbsolute as isAbsolute3 } from "node:path";
+import { dirname as dirname3, isAbsolute as isAbsolute3 } from "node:path";
 var DOC_SNAPSHOT_OLD_PLUGIN_HINT, DESCRIPTION6, docSnapshotInputSchema, registerDocSnapshot;
 var init_doc_snapshot = __esm({
   "bridge-server/src/tools/doc-snapshot.ts"() {
@@ -47104,7 +47149,7 @@ var init_doc_snapshot = __esm({
               payload,
               SNAPSHOT_TIMEOUT_MS
             );
-            await mkdir2(dirname2(outPath), { recursive: true });
+            await mkdir2(dirname3(outPath), { recursive: true });
             await writeFile2(outPath, res.text);
             return jsonResult(
               {
@@ -47372,13 +47417,13 @@ var init_history = __esm({
 
 // bridge-server/src/tools/images-get.ts
 import { mkdir as mkdir3, writeFile as writeFile3 } from "node:fs/promises";
-import { dirname as dirname3, isAbsolute as isAbsolute4, resolve as resolve2 } from "node:path";
+import { dirname as dirname4, isAbsolute as isAbsolute4, resolve as resolve2 } from "node:path";
 async function writeImage(outDir, hash2, base643) {
   const data = Buffer.from(base643, "base64");
   if (!data.length)
     return { failed: { hash: hash2, error: "plugin returned no data" } };
   const path = resolveInside(outDir, `${hash2}.${imageExtension(data)}`);
-  if (!path || dirname3(path) !== resolve2(outDir))
+  if (!path || dirname4(path) !== resolve2(outDir))
     return { failed: { hash: hash2, error: "hash resolves outside outDir" } };
   try {
     await writeFile3(path, data);
@@ -48311,7 +48356,7 @@ var init_status = __esm({
 
 // bridge-server/src/tools/ui-screenshot.ts
 import { mkdir as mkdir4, writeFile as writeFile4 } from "node:fs/promises";
-import { dirname as dirname4, isAbsolute as isAbsolute5 } from "node:path";
+import { dirname as dirname5, isAbsolute as isAbsolute5 } from "node:path";
 var UI_SCREENSHOT_TIMEOUT_MS, UPDATE_HINT, inputSchema3, registerUiScreenshot;
 var init_ui_screenshot = __esm({
   "bridge-server/src/tools/ui-screenshot.ts"() {
@@ -48371,7 +48416,7 @@ var init_ui_screenshot = __esm({
           }
           if (outPath) {
             try {
-              await mkdir4(dirname4(outPath), { recursive: true });
+              await mkdir4(dirname5(outPath), { recursive: true });
               await writeFile4(outPath, Buffer.from(shot.image.base64, "base64"));
             } catch (e) {
               return errorResult(
@@ -48735,7 +48780,7 @@ __export(mcp_exports, {
   SERVER_VERSION: () => SERVER_VERSION
 });
 import { randomUUID as randomUUID5 } from "node:crypto";
-import { homedir } from "node:os";
+import { homedir as homedir2 } from "node:os";
 var SERVER_VERSION, EXIT_GRACE_MS2, handlers, events, rpc, files, link2, session, journal, ctx, server, tools, registry2, closing2, shutdown2;
 var init_mcp2 = __esm({
   async "bridge-server/src/mcp.ts"() {
@@ -48811,7 +48856,7 @@ var init_mcp2 = __esm({
     files = createFileRegistry(() => link2.error());
     link2 = startLink({ env: process.env, handlers });
     session = randomUUID5().slice(0, 8);
-    journal = createJournal(process.env, homedir());
+    journal = createJournal(process.env, homedir2());
     ctx = {
       link: link2,
       files,
