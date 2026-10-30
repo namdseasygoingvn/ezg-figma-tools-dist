@@ -5677,11 +5677,39 @@ function parseLanes(f) {
   }
   return { kind: "lanes", files: files2 };
 }
-var HUB_CAP_LANES, LANE_MAX, LANE_GRACE_MS, LANE_IDLE_MS, LANE_WAIT_MS, LANES_BUSY, CLAIMS_SYNC_EVERY_MS, LANE_SWEEP_MS, HELLO_NAME_MAX, isString2, isRecord4, isFileKey, isLaneNumber, isUnique;
+function toLanesControlRequest(f) {
+  const action = LANES_CONTROL_ACTIONS.find((a) => a === f.action);
+  if (!action) return null;
+  if (f.fileKey !== void 0 && !isFileKey(f.fileKey)) return null;
+  if (f.count !== void 0 && !isLaneCount(f.count)) return null;
+  if (action === "enable" && (f.fileKey === void 0 || f.count === void 0))
+    return null;
+  return {
+    action,
+    ...f.fileKey !== void 0 ? { fileKey: f.fileKey } : {},
+    ...f.count !== void 0 ? { count: f.count } : {}
+  };
+}
+function parseLanesControl(f) {
+  if (!isFileKey(f.id)) return null;
+  const request = toLanesControlRequest(f);
+  return request ? { kind: "lanes-control", id: f.id, ...request } : null;
+}
+function parseLanesControlReply(f) {
+  if (!isFileKey(f.id)) return null;
+  const kind = "lanes-control-reply";
+  if (f.ok === true && isRecord4(f.status))
+    return { kind, id: f.id, ok: true, status: f.status };
+  if (f.ok === false && isString2(f.error))
+    return { kind, id: f.id, ok: false, error: f.error };
+  return null;
+}
+var HUB_CAP_LANES, LANE_MIN, LANE_MAX, LANE_GRACE_MS, LANE_IDLE_MS, LANE_WAIT_MS, LANES_BUSY, CLAIMS_SYNC_EVERY_MS, LANE_SWEEP_MS, HELLO_NAME_MAX, HUB_CAP_LANES_CONTROL, LANES_CONTROL_TIMEOUT_MS, LANES_CONTROL_ACTIONS, isString2, isRecord4, isFileKey, isLaneNumber, isUnique, isLaneCount;
 var init_lane_wire = __esm({
   "bridge-server/src/lane-wire.ts"() {
     "use strict";
     HUB_CAP_LANES = "lanes";
+    LANE_MIN = 2;
     LANE_MAX = 8;
     LANE_GRACE_MS = 2 * 6e4;
     LANE_IDLE_MS = 15 * 6e4;
@@ -5690,11 +5718,15 @@ var init_lane_wire = __esm({
     CLAIMS_SYNC_EVERY_MS = 6e4;
     LANE_SWEEP_MS = 3e4;
     HELLO_NAME_MAX = 64;
+    HUB_CAP_LANES_CONTROL = "lanes-control";
+    LANES_CONTROL_TIMEOUT_MS = 18e4;
+    LANES_CONTROL_ACTIONS = ["status", "enable", "disable"];
     isString2 = (v) => typeof v === "string";
     isRecord4 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
     isFileKey = (v) => isString2(v) && v.length > 0;
     isLaneNumber = (v) => Number.isInteger(v) && v >= 1 && v <= LANE_MAX;
     isUnique = (values) => new Set(values).size === values.length;
+    isLaneCount = (v) => Number.isInteger(v) && v >= LANE_MIN && v <= LANE_MAX;
   }
 });
 
@@ -5735,12 +5767,14 @@ function parseAgentFrame(raw) {
       if (f.role !== void 0 && !isAgentRole(f.role)) return null;
       const session2 = toHelloName(f.session);
       const label = toHelloName(f.label);
+      const caps = toCaps2(f.caps);
       return {
         kind: "agent-hello",
         protocol: f.protocol,
         ...isAgentRole(f.role) ? { role: f.role } : {},
         ...session2 !== void 0 ? { session: session2 } : {},
-        ...label !== void 0 ? { label } : {}
+        ...label !== void 0 ? { label } : {},
+        ...caps ? { caps } : {}
       };
     }
     case "send": {
@@ -5750,6 +5784,10 @@ function parseAgentFrame(raw) {
     }
     case "lanes-set":
       return parseLanesSet(f);
+    case "lanes-control":
+      return parseLanesControl(f);
+    case "lanes-control-reply":
+      return parseLanesControlReply(f);
     default:
       return null;
   }
@@ -5784,6 +5822,10 @@ function parseHubFrame(raw) {
       return isString3(f.reason) ? { kind: "bye", reason: f.reason } : null;
     case "lanes":
       return parseLanes(f);
+    case "lanes-control":
+      return parseLanesControl(f);
+    case "lanes-control-reply":
+      return parseLanesControlReply(f);
     default:
       return null;
   }
@@ -5803,8 +5845,101 @@ var init_peer_wire = __esm({
   }
 });
 
-// bridge-server/src/agent-link.ts
+// bridge-server/src/pending-replies.ts
+function createPendingReplies() {
+  const pending = /* @__PURE__ */ new Map();
+  const finish2 = (id, value) => {
+    const entry = pending.get(id);
+    if (!entry) return;
+    pending.delete(id);
+    clearTimeout(entry.timer);
+    entry.resolve(value);
+  };
+  return {
+    wait(id, owner, timeoutMs, onTimeout) {
+      return new Promise((resolve3) => {
+        const timer = setTimeout(() => finish2(id, onTimeout), timeoutMs);
+        timer.unref();
+        pending.set(id, { owner, resolve: resolve3, timer });
+      });
+    },
+    settle(id, owner, value) {
+      if (pending.get(id)?.owner === owner) finish2(id, value);
+    },
+    failOwner(owner, value) {
+      for (const [id, entry] of pending)
+        if (entry.owner === owner) finish2(id, value);
+    },
+    failAll(value) {
+      for (const id of [...pending.keys()]) finish2(id, value);
+    }
+  };
+}
+var init_pending_replies = __esm({
+  "bridge-server/src/pending-replies.ts"() {
+    "use strict";
+  }
+});
+
+// bridge-server/src/lanes/control.ts
 import { randomUUID } from "node:crypto";
+function createLanesControl(options) {
+  const timeoutMs = options.timeoutMs ?? LANES_CONTROL_TIMEOUT_MS;
+  const apps = [];
+  const pending = createPendingReplies();
+  const fail2 = (error62) => ({ ok: false, error: error62 });
+  return {
+    onAgentHello(agentId, info) {
+      if (info.role === "ui" && info.caps?.includes(HUB_CAP_LANES_CONTROL))
+        apps.push(agentId);
+    },
+    onAgentClose(agentId) {
+      const i = apps.indexOf(agentId);
+      if (i >= 0) apps.splice(i, 1);
+      pending.failOwner(agentId, fail2(LANES_CONTROL_ERRORS.closed));
+    },
+    request(req) {
+      const app = apps.at(-1);
+      if (app === void 0)
+        return Promise.resolve(fail2(LANES_CONTROL_ERRORS.notRunning));
+      const id = randomUUID();
+      const reply = pending.wait(
+        id,
+        app,
+        timeoutMs,
+        fail2(LANES_CONTROL_ERRORS.timeout)
+      );
+      options.sendToUi(app, { kind: "lanes-control", id, ...req });
+      return reply;
+    },
+    onReply(agentId, { kind: _kind, id, ...result }) {
+      pending.settle(id, agentId, result);
+    },
+    close() {
+      pending.failAll(fail2(LANES_CONTROL_ERRORS.hubClosed));
+    }
+  };
+}
+var APP, LANES_CONTROL_ERRORS;
+var init_control = __esm({
+  "bridge-server/src/lanes/control.ts"() {
+    "use strict";
+    init_lane_wire();
+    init_pending_replies();
+    APP = "EZG Figma Desktop";
+    LANES_CONTROL_ERRORS = {
+      notRunning: `${APP} is not running, or it is too old to take lane commands. Open ${APP} (v0.1.12 or newer).`,
+      timeout: `${APP} did not answer the lane command within ${LANES_CONTROL_TIMEOUT_MS / 1e3} s.`,
+      closed: `${APP} disconnected before it answered the lane command.`,
+      notMcp: "Only MCP sessions may send lane commands.",
+      hubClosed: "The EZG hub closed before the lane command finished.",
+      hubTooOld: `The EZG hub is too old to take lane commands. Update ${APP}, then restart it.`
+    };
+  }
+});
+
+// bridge-server/src/agent-link.ts
+import { randomUUID as randomUUID2 } from "node:crypto";
 import { basename } from "node:path";
 function agentLabel(cwd = () => process.cwd()) {
   try {
@@ -5822,6 +5957,7 @@ function connectAgent(port, handlers2, options = {}) {
     });
     const assembler = createAssembler();
     const known = /* @__PURE__ */ new Set();
+    const replies = createPendingReplies();
     let welcomed = false;
     let ended = false;
     let resolveClosed = () => {
@@ -5841,7 +5977,19 @@ function connectAgent(port, handlers2, options = {}) {
         if (ws.readyState === import_websocket.default.OPEN || ws.readyState === import_websocket.default.CONNECTING)
           ws.close();
       },
-      lanes: false
+      lanes: false,
+      lanesControl: false,
+      controlLanes(req) {
+        const id = randomUUID2();
+        const reply = replies.wait(
+          id,
+          "",
+          LANES_CONTROL_TIMEOUT_MS + CONTROL_SLACK_MS,
+          { ok: false, error: LANES_CONTROL_ERRORS.timeout }
+        );
+        write({ kind: "lanes-control", id, ...req });
+        return reply;
+      }
     };
     const timer = setTimeout(() => end(), handshakeMs);
     function end() {
@@ -5859,6 +6007,7 @@ function connectAgent(port, handlers2, options = {}) {
       for (const id of known) handlers2.onClose(id);
       known.clear();
       handlers2.onLanes?.([]);
+      replies.failAll({ ok: false, error: LANES_CONTROL_ERRORS.hubClosed });
       resolveClosed();
     }
     ws.on(
@@ -5882,6 +6031,7 @@ function connectAgent(port, handlers2, options = {}) {
           welcomed = true;
           clearTimeout(timer);
           link3.lanes = frame.caps?.includes(HUB_CAP_LANES) === true;
+          link3.lanesControl = frame.caps?.includes(HUB_CAP_LANES_CONTROL) === true;
           resolve3(link3);
         } else if (frame.kind === "bye") end();
         return;
@@ -5900,6 +6050,11 @@ function connectAgent(port, handlers2, options = {}) {
         case "lanes":
           handlers2.onLanes?.(frame.files);
           break;
+        case "lanes-control-reply": {
+          const { kind: _kind, id, ...result } = frame;
+          replies.settle(id, "", result);
+          break;
+        }
         case "bye":
           end();
           break;
@@ -5907,7 +6062,7 @@ function connectAgent(port, handlers2, options = {}) {
     });
   });
 }
-var DEFAULT_HANDSHAKE_MS, AGENT_SESSION, AGENT_LABEL;
+var DEFAULT_HANDSHAKE_MS, CONTROL_SLACK_MS, AGENT_SESSION, AGENT_LABEL;
 var init_agent_link = __esm({
   "bridge-server/src/agent-link.ts"() {
     "use strict";
@@ -5916,14 +6071,17 @@ var init_agent_link = __esm({
     init_bridge_chunk();
     init_peer_wire();
     init_lane_wire();
+    init_control();
+    init_pending_replies();
     DEFAULT_HANDSHAKE_MS = 2e3;
-    AGENT_SESSION = randomUUID();
+    CONTROL_SLACK_MS = 5e3;
+    AGENT_SESSION = randomUUID2();
     AGENT_LABEL = agentLabel();
   }
 });
 
 // bridge-server/src/agent-identity.ts
-import { randomUUID as randomUUID2 } from "node:crypto";
+import { randomUUID as randomUUID3 } from "node:crypto";
 function createAgentIdentity(options) {
   const { now, graceMs } = options;
   const live = /* @__PURE__ */ new Map();
@@ -5943,7 +6101,7 @@ function createAgentIdentity(options) {
         agentId = remembered.get(key)?.agentId;
         remembered.delete(key);
       }
-      agentId ??= randomUUID2();
+      agentId ??= randomUUID3();
       live.set(agentId, key);
       return agentId;
     },
@@ -5963,7 +6121,7 @@ var init_agent_identity = __esm({
 });
 
 // bridge-server/src/plugin-conns.ts
-import { randomUUID as randomUUID3 } from "node:crypto";
+import { randomUUID as randomUUID4 } from "node:crypto";
 function createPluginConns(options) {
   const { port, serverId, caps, onHello, onFrame, onClose } = options;
   const helloTimeoutMs = options.helloTimeoutMs ?? HELLO_TIMEOUT_MS;
@@ -5981,7 +6139,7 @@ function createPluginConns(options) {
   heartbeat.unref();
   return {
     accept(ws) {
-      const connectionId = randomUUID3();
+      const connectionId = randomUUID4();
       const conn = { ws, helloSeen: false, missed: 0 };
       const assembler = createAssembler();
       conns.set(connectionId, conn);
@@ -6096,6 +6254,10 @@ function createAgentConns(options) {
     }
   }, options.heartbeatMs ?? HEARTBEAT_MS);
   heartbeat.unref();
+  const toHub = (agentId, frame) => {
+    const agent = byId.get(agentId);
+    if (agent?.helloSeen) sendHub(agent.ws, frame);
+  };
   const broadcast = (frame, role) => {
     for (const agent of agents)
       if (agent.helloSeen && (!role || agent.role === role))
@@ -6123,10 +6285,7 @@ function createAgentConns(options) {
         agent.role = role;
         agent.helloSeen = true;
         byId.set(agentId, agent);
-        sendHub(
-          ws,
-          caps ? { kind: "agent-welcome", hubId, caps } : { kind: "agent-welcome", hubId }
-        );
+        sendHub(ws, { kind: "agent-welcome", hubId, ...caps && { caps } });
         for (const entry of snapshot()) {
           sendHub(ws, {
             kind: "plugin",
@@ -6164,8 +6323,8 @@ function createAgentConns(options) {
           ws.close(1008);
           return;
         }
-        if (frame.kind === "lanes-set") {
-          options.onLanesSet?.(agentId, frame);
+        if (frame.kind !== "send") {
+          options.onControl?.(agentId, frame);
           return;
         }
         const out = frame.frame;
@@ -6195,13 +6354,12 @@ function createAgentConns(options) {
       broadcast({ kind: "plugin", connectionId, port, frame });
     },
     toAgent(agentId, connectionId, port, frame) {
-      const agent = byId.get(agentId);
-      if (agent?.helloSeen)
-        sendHub(agent.ws, { kind: "plugin", connectionId, port, frame });
+      toHub(agentId, { kind: "plugin", connectionId, port, frame });
     },
     toUi(connectionId, port, frame) {
       broadcast({ kind: "plugin", connectionId, port, frame }, "ui");
     },
+    toHub,
     closed(connectionId) {
       broadcast({ kind: "closed", connectionId });
     },
@@ -6912,9 +7070,9 @@ Connection: close\r
 });
 
 // bridge-server/src/hub.ts
-import { randomUUID as randomUUID4 } from "node:crypto";
+import { randomUUID as randomUUID5 } from "node:crypto";
 async function startHub(port, handlers2, options = {}) {
-  const serverId = randomUUID4();
+  const serverId = randomUUID5();
   const files2 = /* @__PURE__ */ new Map();
   let plugins;
   let agents;
@@ -6935,6 +7093,20 @@ async function startHub(port, handlers2, options = {}) {
     broadcastLanes: (frame) => agents.broadcastHub(frame),
     now: Date.now
   });
+  const control = createLanesControl({
+    sendToUi: (agentId, frame) => agents.toHub(agentId, frame)
+  });
+  const onControl = (agentId, frame) => {
+    const role = roleOf(agentId);
+    if (frame.kind === "lanes-set") return router.onLanesSet(role, frame);
+    if (frame.kind === "lanes-control-reply")
+      return control.onReply(agentId, frame);
+    const { kind: _kind, id, ...req } = frame;
+    const result = role === DEFAULT_AGENT_ROLE ? control.request(req) : Promise.resolve({ ok: false, error: LANES_CONTROL_ERRORS.notMcp });
+    void result.then(
+      (r) => agents.toHub(agentId, { kind: "lanes-control-reply", id, ...r })
+    );
+  };
   const self = options.countSelf === false ? 0 : 1;
   const sessions = () => ({
     kind: "sessions",
@@ -6949,17 +7121,19 @@ async function startHub(port, handlers2, options = {}) {
     })),
     onSend: (connectionId, frame, agentId) => router.route(agentId, roleOf(agentId), connectionId, frame),
     onCountChange: () => plugins.broadcast(sessions()),
-    caps: [HUB_CAP_LANES],
+    caps: [HUB_CAP_LANES, HUB_CAP_LANES_CONTROL],
     graceMs: LANE_GRACE_MS,
     onAgentHello(agentId, info) {
       roles.set(agentId, info.role);
       router.onAgentHello(agentId, info);
+      control.onAgentHello(agentId, info);
     },
     onAgentClose(agentId) {
       roles.delete(agentId);
       router.onAgentClose(agentId);
+      control.onAgentClose(agentId);
     },
-    onLanesSet: (agentId, frame) => router.onLanesSet(roleOf(agentId), frame),
+    onControl,
     helloTimeoutMs: options.helloTimeoutMs,
     heartbeatMs: options.heartbeatMs
   });
@@ -7016,10 +7190,12 @@ async function startHub(port, handlers2, options = {}) {
   return {
     port: boundPort,
     send: (connectionId, frame) => plugins.send(connectionId, frame),
+    lanesControl: (req) => control.request(req),
     closed,
     close() {
       closing3 ??= (async () => {
         router.close();
+        control.close();
         agents.close();
         plugins.close();
         const ids = [...files2.keys()];
@@ -7040,6 +7216,7 @@ var init_hub = __esm({
     init_files();
     init_lane_wire();
     init_claims_broker();
+    init_control();
     init_lease_store();
     init_router();
     init_listen();
@@ -7150,6 +7327,13 @@ function startLink(options) {
       if (role === "hub") hub?.send(connectionId, frame);
       else if (role === "agent") agent?.send(connectionId, frame);
     },
+    lanesControl(req) {
+      const fail2 = (e) => Promise.resolve({ ok: false, error: e });
+      if (role === "hub" && hub) return hub.lanesControl(req);
+      if (role === "agent" && agent)
+        return agent.lanesControl ? agent.controlLanes(req) : fail2(LANES_CONTROL_ERRORS.hubTooOld);
+      return fail2(error62 ?? LANES_CONTROL_ERRORS.notRunning);
+    },
     async close() {
       aborted2 = true;
       wake?.();
@@ -7166,6 +7350,7 @@ var init_link = __esm({
     init_agent_link();
     init_hub();
     init_hub_pid();
+    init_control();
     init_port();
     DEFAULT_RETRY = { minMs: 250, maxMs: 2e3 };
     YIELD_CHECK_MS = 2e3;
@@ -45156,7 +45341,8 @@ var init_context = __esm({
       docSnapshot: "doc_snapshot",
       imagesGet: "images_get",
       jobWait: "job_wait",
-      copy: "copy"
+      copy: "copy",
+      lanes: "lanes"
     };
     BridgeCallError = class extends Error {
       code;
@@ -47934,8 +48120,61 @@ var init_journal2 = __esm({
   }
 });
 
+// bridge-server/src/tools/lanes.ts
+function configKey(status) {
+  const config2 = status.config;
+  return typeof config2?.fileKey === "string" ? config2.fileKey : void 0;
+}
+function hubLanes(view) {
+  if (!view) return null;
+  const lanes = [...view.lanes].sort((a, b) => a.index - b.index);
+  return { ...view, lanes };
+}
+var DESCRIPTION12, lanesInputSchema, registerLanes;
+var init_lanes = __esm({
+  "bridge-server/src/tools/lanes.ts"() {
+    "use strict";
+    init_zod();
+    init_context();
+    init_lane_wire();
+    init_tool_result();
+    DESCRIPTION12 = `Turns EZG Figma Desktop lane mode on or off for one Figma file, or reads it. enable opens the file in count tabs (${LANE_MIN} to ${LANE_MAX}), one lane per MCP session; disable turns lane mode off. enable and disable quit and restart Figma and take about a minute; status answers at once. It talks to the app through the EZG hub and never touches the user's screen or keyboard: never script the app or Figma UI instead. Returns the app's lane status and the hub's lane view of the file.`;
+    lanesInputSchema = {
+      action: external_exports.enum(LANES_CONTROL_ACTIONS).describe("status reads lane mode; enable turns it on; disable off."),
+      fileKey: external_exports.string().min(1).optional().describe("fileKey from files. Required for enable."),
+      count: external_exports.number().int().min(LANE_MIN).max(LANE_MAX).optional().describe(
+        `Number of lanes, ${LANE_MIN} to ${LANE_MAX}. Required for enable.`
+      )
+    };
+    registerLanes = (server2, ctx2) => {
+      server2.registerTool(
+        TOOL_NAMES.lanes,
+        { description: DESCRIPTION12, inputSchema: lanesInputSchema },
+        async (args) => {
+          const req = toLanesControlRequest(args);
+          if (!req)
+            return errorResult(
+              `enable needs fileKey and count (${LANE_MIN} to ${LANE_MAX}).`,
+              "Take the fileKey from files."
+            );
+          const r = await ctx2.link.lanesControl(req);
+          if (!r.ok) return errorResult(r.error);
+          const fileKey5 = req.fileKey ?? configKey(r.status);
+          const view = (ctx2.files.lanes?.() ?? []).find(
+            (v) => v.fileKey === fileKey5
+          );
+          return jsonResult({
+            status: r.status,
+            hubLanes: hubLanes(view)
+          });
+        }
+      );
+    };
+  }
+});
+
 // bridge-server/src/tools/lint.ts
-var LINT_TIMEOUT_MS, LINT_OLD_PLUGIN_HINT, LINT_INVALID_HINT, DESCRIPTION12, lintInputSchema, registerLint;
+var LINT_TIMEOUT_MS, LINT_OLD_PLUGIN_HINT, LINT_INVALID_HINT, DESCRIPTION13, lintInputSchema, registerLint;
 var init_lint = __esm({
   "bridge-server/src/tools/lint.ts"() {
     "use strict";
@@ -47947,7 +48186,7 @@ var init_lint = __esm({
     LINT_TIMEOUT_MS = 12e4;
     LINT_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use lint";
     LINT_INVALID_HINT = 'options shapes: "name-pattern" {pattern, flags?, types?}; clip {allow?}; "safe-zone" {top?, bottom?, left?, right?, frame?{width,height}, types?, names?}; "grid-style" {styleId?, frame?{width,height}}; "unbound-number" {fields?}; overflow {tolerance?}; reuse {min?}; fix {clip?, styles?, rename?}';
-    DESCRIPTION12 = 'Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more. fix applies safe fixes to the findings in the same call (one undo step), then lints again: clip true unclips clip findings; styles true binds unbound-color and text-no-style nodes to the one local paint or text style with exactly the same values; rename {old: new} renames generic-name and name-pattern findings by exact name. The report then has fixes {fixed, skipped}. detail "summary" (default) returns per-rule groups {rule, count, examples, nodeIds} and a total instead of every finding; detail "full" returns every finding and counts.';
+    DESCRIPTION13 = 'Checks nodes in the connected Figma file against lint rules and returns findings. Scope is the current page unless nodeIds or pageIds are given; nodes inside instances are skipped unless includeInstances is true. Default rules: generic-name (default layer names), unbound-color (fills or strokes not bound to a variable or style), text-no-style (text without a text style), missing-font, variant-conflict (duplicate variant property sets). Opt-in rules run only when named in rules or given options: name-pattern {pattern, flags?, types?} (name must match); clip {allow?} (clipped frames, allow = names that may clip); safe-zone {top?, bottom?, left?, right?, frame?, types?, names?} (nodes outside the inset area); grid-style {styleId?, frame?} (frames missing a layout grid style); unbound-number {fields?} (numbers not bound to variables); overflow {tolerance?} (children outside their parent); reuse {min?} (repeated structures that could be components). The bridge has no project rules: pass your own conventions as options. Patterns are JavaScript RegExp source strings. Findings are capped at limit (default 500, max 5000); raise limit for more. fix applies safe fixes to the findings in the same call (one undo step), then lints again: clip true unclips clip findings; styles true binds unbound-color and text-no-style nodes to the one local paint or text style with exactly the same values; rename {old: new} renames generic-name and name-pattern findings by exact name. The report then has fixes {fixed, skipped}. detail "summary" (default) returns per-rule groups {rule, count, examples, nodeIds} and a total instead of every finding; detail "full" returns every finding and counts.';
     lintInputSchema = {
       fileKey: external_exports.string().optional(),
       nodeIds: external_exports.array(external_exports.string()).optional(),
@@ -47966,7 +48205,7 @@ var init_lint = __esm({
     registerLint = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.lint,
-        { description: DESCRIPTION12, inputSchema: lintInputSchema },
+        { description: DESCRIPTION13, inputSchema: lintInputSchema },
         async ({ fileKey: fileKey5, detail, ...rest }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -48207,7 +48446,7 @@ function registerRun(registry3) {
   return (server2) => {
     server2.registerTool(
       TOOL_NAMES.run,
-      { description: DESCRIPTION13, inputSchema: runInputSchema },
+      { description: DESCRIPTION14, inputSchema: runInputSchema },
       async ({ fileKey: fileKey5, steps: raw, continueOnError }) => {
         const steps = parseSteps(raw);
         if (typeof steps === "string") return errorResult(steps);
@@ -48261,7 +48500,7 @@ function registerRun(registry3) {
     );
   };
 }
-var RUN_STEP_MAX_CHARS, DESCRIPTION13, runInputSchema, textOf;
+var RUN_STEP_MAX_CHARS, DESCRIPTION14, runInputSchema, textOf;
 var init_run = __esm({
   "bridge-server/src/tools/run.ts"() {
     "use strict";
@@ -48271,7 +48510,7 @@ var init_run = __esm({
     init_run_refs();
     init_tool_result();
     RUN_STEP_MAX_CHARS = 2e4;
-    DESCRIPTION13 = `Runs up to ${RUN_MAX_STEPS} tool steps in order in one call, so build, lint and export cost one round trip. Each step is {tool, args?, as?}; tool is one of ${RUN_TOOLS.join(", ")}. The steps call the same tools with the same validation. A string arg that is exactly $name or $name.a.0.b is replaced by that path in the result of the earlier step whose as is name (write $$text for a literal $text). Steps get fileKey unless they set their own. The run stops at the first failing step unless continueOnError is true. Returns {steps:[{tool, as?, ok, ms, result|error}]}, each step capped near ${RUN_STEP_MAX_CHARS} characters (as refs still see the full result), plus every image the steps returned. Inner calls are not journaled one by one.`;
+    DESCRIPTION14 = `Runs up to ${RUN_MAX_STEPS} tool steps in order in one call, so build, lint and export cost one round trip. Each step is {tool, args?, as?}; tool is one of ${RUN_TOOLS.join(", ")}. The steps call the same tools with the same validation. A string arg that is exactly $name or $name.a.0.b is replaced by that path in the result of the earlier step whose as is name (write $$text for a literal $text). Steps get fileKey unless they set their own. The run stops at the first failing step unless continueOnError is true. Returns {steps:[{tool, as?, ok, ms, result|error}]}, each step capped near ${RUN_STEP_MAX_CHARS} characters (as refs still see the full result), plus every image the steps returned. Inner calls are not journaled one by one.`;
     runInputSchema = {
       fileKey: string2().min(1).optional().describe("Default fileKey for steps that do not set their own."),
       steps: array(unknown()).describe("Steps: [{tool, args?, as?}], run in order."),
@@ -48293,7 +48532,7 @@ function noFreeLane(file2, fileName) {
     "Wait, then call status again."
   );
 }
-var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION14, statusInputSchema, registerStatus;
+var STATUS_TIMEOUT_MS, STATUS_OLD_PLUGIN_HINT, DESCRIPTION15, statusInputSchema, registerStatus;
 var init_status = __esm({
   "bridge-server/src/tools/status.ts"() {
     "use strict";
@@ -48304,7 +48543,7 @@ var init_status = __esm({
     init_session();
     STATUS_TIMEOUT_MS = 5e3;
     STATUS_OLD_PLUGIN_HINT = "update the EZG Tools plugin (rerun it) to use status";
-    DESCRIPTION14 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
+    DESCRIPTION15 = "Shows what the plugin is doing now, without waiting in its queue. busy is true while any call is queued or running, from any session. jobs lists each call with op, state (queued, running or cancelling), wait and run time, created node count and the last figma, kit or helper call; mine marks this session's calls. recent lists finished calls with outcome: ok, late (finished after its timeout), failed, cancelled or rolled-back, and their created node ids. After an eval timeout, call status until busy is false before you retry.";
     statusInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
@@ -48313,7 +48552,7 @@ var init_status = __esm({
     registerStatus = (server2, ctx2) => {
       server2.registerTool(
         TOOL_NAMES.status,
-        { description: DESCRIPTION14, inputSchema: statusInputSchema },
+        { description: DESCRIPTION15, inputSchema: statusInputSchema },
         async ({ fileKey: fileKey5 }) => {
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
@@ -48779,7 +49018,7 @@ var mcp_exports = {};
 __export(mcp_exports, {
   SERVER_VERSION: () => SERVER_VERSION
 });
-import { randomUUID as randomUUID5 } from "node:crypto";
+import { randomUUID as randomUUID6 } from "node:crypto";
 import { homedir as homedir2 } from "node:os";
 var SERVER_VERSION, EXIT_GRACE_MS2, handlers, events, rpc, files, link2, session, journal, ctx, server, tools, registry2, closing2, shutdown2;
 var init_mcp2 = __esm({
@@ -48812,6 +49051,7 @@ var init_mcp2 = __esm({
     init_inventory();
     init_job();
     init_journal2();
+    init_lanes();
     init_lint();
     init_session();
     init_run();
@@ -48855,7 +49095,7 @@ var init_mcp2 = __esm({
     rpc = createRpc((id, frame) => link2.send(id, frame));
     files = createFileRegistry(() => link2.error());
     link2 = startLink({ env: process.env, handlers });
-    session = randomUUID5().slice(0, 8);
+    session = randomUUID6().slice(0, 8);
     journal = createJournal(process.env, homedir2());
     ctx = {
       link: link2,
@@ -48892,6 +49132,7 @@ var init_mcp2 = __esm({
       registerDocSnapshot,
       registerImagesGet,
       registerCopy,
+      registerLanes,
       registerJobWait(registry2.jobs),
       registerRun(registry2)
     ]) {

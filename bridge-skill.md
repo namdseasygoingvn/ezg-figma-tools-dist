@@ -298,7 +298,9 @@ Several agents can work in one file. Subagents of one Claude Code session share 
 
 ## Lanes
 
-The owner can turn on lane mode in EZG Figma Desktop. One file is then open N times (2 to 8) in a minimized "EZG Lanes" window, and each tab runs its own EZG plugin: a lane. You call the tools as usual.
+Lane mode is turned on in EZG Figma Desktop, by the owner or with the `lanes` tool. One file is then open N times (2 to 8) in a minimized "EZG Lanes" window, and each tab runs its own EZG plugin: a lane. You call the tools as usual.
+
+`lanes` reads lane mode (`{action: "status"}`), turns it on for one file (`{action: "enable", fileKey, count}`, count 2 to 8) or off (`{action: "disable"}`). enable and disable quit and restart Figma and take about a minute. It goes through the EZG hub and never touches the user's screen. Never script EZG Figma Desktop or Figma (System Events, keystrokes, window focus) to turn lanes on or off.
 
 - The hub gives your session one free lane on its first call to that file and keeps it for you. Every call you make to that file runs in your lane, whatever fileKey or clientId you pass. Pass the fileKey; do not pass a clientId to pick a lane.
 - No other session runs in your lane. Your queue, status, checkpoint and undo cover your lane only. Edits from other lanes and from the owner reach your lane live, as from another person.
@@ -309,7 +311,7 @@ The owner can turn on lane mode in EZG Figma Desktop. One file is then open N ti
 - Claims are shared across lanes: a frame claimed from one lane cannot be built into from another. Claim before you build, as in Many agents, one file.
 - Use one bridge server per session: the ezg-figma-bridge tools or the ezg-figma-bridge-dev tools, never both. Each server is its own agent and takes its own lane, with its own claims.
 - files lists the lane file with a lane line: N, and who holds each lane. status shows your lane.
-- Lanes need EZG Figma Desktop running. If files lists the same file several times with no lane line, lane mode is off: ask the user before you pick a clientId.
+- Lanes need EZG Figma Desktop running. If files lists the same file several times with no lane line, lane mode is off: ask the user before you pick a clientId, or turn lanes on with `lanes`.
 
 ## claim
 
