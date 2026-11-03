@@ -1583,7 +1583,7 @@ input[type=range]:focus-visible::-moz-range-thumb {
   var isDesktopHost = () => HOST === "desktop";
 
   // plugins/ezg-tools/src/shared/version.ts
-  var BUILD_VERSION = true ? "0.1.56" : "dev";
+  var BUILD_VERSION = true ? "0.1.57" : "dev";
 
   // plugins/ezg-tools/src/shared/auth.ts
   var AUTH_ORIGIN = "https://img-gen.easygoing.vn";
@@ -2474,15 +2474,24 @@ input[type=range]:focus-visible::-moz-range-thumb {
 
   // plugins/ezg-tools/src/shared/bridge-snapshot.ts
   var SNAPSHOT_MAX_PAGE_IDS = 200;
+  function parseList(raw) {
+    if (raw === void 0) return void 0;
+    if (!Array.isArray(raw)) return null;
+    if (raw.length < 1 || raw.length > SNAPSHOT_MAX_PAGE_IDS) return null;
+    if (!raw.every((v) => typeof v === "string" && v !== "")) return null;
+    return [...new Set(raw)];
+  }
   function parseDocSnapshotPayload(raw) {
     if (raw === void 0 || raw === null) return {};
     if (typeof raw !== "object" || Array.isArray(raw)) return null;
-    const ids = raw.pageIds;
-    if (ids === void 0) return {};
-    if (!Array.isArray(ids)) return null;
-    if (ids.length < 1 || ids.length > SNAPSHOT_MAX_PAGE_IDS) return null;
-    if (!ids.every((id) => typeof id === "string" && id !== "")) return null;
-    return { pageIds: [...new Set(ids)] };
+    const fields = raw;
+    const pageIds = parseList(fields.pageIds);
+    const pageNames = parseList(fields.pageNames);
+    if (pageIds === null || pageNames === null) return null;
+    return {
+      ...pageIds && { pageIds },
+      ...pageNames && { pageNames }
+    };
   }
 
   // plugins/ezg-tools/src/shared/bridge-images.ts

@@ -303,10 +303,10 @@ Lane mode is turned on in EZG Figma Desktop, by the owner or with the `lanes` to
 `lanes` reads lane mode (`{action: "status"}`), turns it on for one file (`{action: "enable", fileKey, count}`, count 2 to 8) or off (`{action: "disable"}`). enable and disable quit and restart Figma and take about a minute. It goes through the EZG hub and never touches the user's screen. Never script EZG Figma Desktop or Figma (System Events, keystrokes, window focus) to turn lanes on or off.
 
 - The hub gives your session one free lane on its first call to that file and keeps it for you. Every call you make to that file runs in your lane, whatever fileKey or clientId you pass. Pass the fileKey; do not pass a clientId to pick a lane.
-- A lane that loses its Figma connection ("Unable to establish connection to Figma") is taken out of service: that call fails with a note, your next call runs on another lane, and EZG Figma Desktop reloads the lost lane.
+- A lane is taken out of service when it loses its Figma connection ("Unable to establish connection to Figma"; that call fails with a note) or gets stuck: a call still running 30 s after its cancel (your call timed out, or you stopped it), which happens when a Figma call never returns. A stuck lane's cancelled call fails with `LANE_STUCK`; your other calls queued on it are cancelled there and run on another lane, and so do your next calls. EZG Figma Desktop reloads the lane.
 - No other session runs in your lane. Your queue, status, checkpoint and undo cover your lane only. Edits from other lanes and from the owner reach your lane live, as from another person.
 - view_get and view_set read and move your lane's view, not the owner's: you do not see the owner's selection.
-- You keep the lane while you call. It is freed 15 min after your last call, or 2 min after your MCP server stops. If the link to the hub drops and comes back within that time, you get the same lane with its undo history. A restarted MCP server is a new session and gets a new lane.
+- You keep the lane while you call. It is freed 15 min after your last call, or 2 min after your MCP server stops; calls it left running are then cancelled. If the link to the hub drops and comes back within that time, you get the same lane with its undo history. A restarted MCP server is a new session and gets a new lane.
 - `[LANES_BUSY]`: every lane is held or offline. The call waited 60 s; the message names the file, N and the holders; sessions started from folders with the same name show as `<name>#2`, `#3`. Wait, then retry.
 - The owner's own tab of the file is never a lane. The hub never sends your calls there.
 - Claims are shared across lanes: a frame claimed from one lane cannot be built into from another. Claim before you build, as in Many agents, one file.
@@ -432,7 +432,9 @@ Errors without a code are plain messages.
 
 ## Snapshot and image fills
 
-- `doc_snapshot` writes REST-shaped JSON of every page (or `pageIds`) to the absolute `outPath`. It uses no Figma REST quota and takes seconds. It returns `{ path, bytes, name, pages, nodes, ms }`.
+- `doc_snapshot` writes REST-shaped JSON of every page to the absolute `outPath`. It uses no Figma REST quota and takes seconds. It returns `{ path, bytes, name, pages, nodes, ms }`.
+  - `pageIds` (page node ids like `12:34`) and `pageNames` (exact names; every page with that name) narrow it to those pages, in document order. Ask only for what you need: a big file is tens of MB. An unknown id or name fails and lists the file's pages.
+  - The plugin sends progress per page and step (`page 2/4 Screens: export`), so a long snapshot does not time out. A page load or export that hangs fails after 60 s with the page name; a cancel or timeout ends the plugin job at once, so `status` never stays on `cancelling`.
 - `images_get` writes image fill bytes by hash (at most 100 `hashes`) into the absolute `outDir`. It returns `{ outDir, written, missing, failed }`.
 - Bytes never enter the chat. Read the file at `path` only when you need it.
 - The Unity importer (`com.ezg.figma-bridge`, setting `Source = Bridge`) uses the same ops directly over the hub, with no MCP and no Claude.

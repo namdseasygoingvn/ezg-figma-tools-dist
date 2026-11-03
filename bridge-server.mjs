@@ -4871,15 +4871,24 @@ var init_bridge_fonts_check = __esm({
 });
 
 // plugins/ezg-tools/src/shared/bridge-snapshot.ts
+function parseList(raw) {
+  if (raw === void 0) return void 0;
+  if (!Array.isArray(raw)) return null;
+  if (raw.length < 1 || raw.length > SNAPSHOT_MAX_PAGE_IDS) return null;
+  if (!raw.every((v) => typeof v === "string" && v !== "")) return null;
+  return [...new Set(raw)];
+}
 function parseDocSnapshotPayload(raw) {
   if (raw === void 0 || raw === null) return {};
   if (typeof raw !== "object" || Array.isArray(raw)) return null;
-  const ids = raw.pageIds;
-  if (ids === void 0) return {};
-  if (!Array.isArray(ids)) return null;
-  if (ids.length < 1 || ids.length > SNAPSHOT_MAX_PAGE_IDS) return null;
-  if (!ids.every((id) => typeof id === "string" && id !== "")) return null;
-  return { pageIds: [...new Set(ids)] };
+  const fields = raw;
+  const pageIds = parseList(fields.pageIds);
+  const pageNames = parseList(fields.pageNames);
+  if (pageIds === null || pageNames === null) return null;
+  return {
+    ...pageIds && { pageIds },
+    ...pageNames && { pageNames }
+  };
 }
 var SNAPSHOT_OP, SNAPSHOT_TIMEOUT_MS, SNAPSHOT_MAX_PAGE_IDS;
 var init_bridge_snapshot = __esm({
@@ -5705,7 +5714,7 @@ function parseLanesControlReply(f) {
     return { kind, id: f.id, ok: false, error: f.error };
   return null;
 }
-var HUB_CAP_LANES, LANE_MIN, LANE_MAX, LANE_GRACE_MS, LANE_IDLE_MS, LANE_WAIT_MS, LANES_BUSY, CLAIMS_SYNC_EVERY_MS, LANE_SWEEP_MS, HELLO_NAME_MAX, HUB_CAP_LANES_CONTROL, LANES_CONTROL_TIMEOUT_MS, LANES_CONTROL_ACTIONS, LANE_OFFLINE_PATTERN, isString2, isRecord4, isFileKey, isLaneNumber, isUnique, isLaneCount;
+var HUB_CAP_LANES, LANE_MIN, LANE_MAX, LANE_GRACE_MS, LANE_IDLE_MS, LANE_WAIT_MS, LANES_BUSY, CLAIMS_SYNC_EVERY_MS, LANE_SWEEP_MS, HELLO_NAME_MAX, HUB_CAP_LANES_CONTROL, LANES_CONTROL_TIMEOUT_MS, LANES_CONTROL_ACTIONS, LANE_OFFLINE_PATTERN, LANE_CANCEL_GRACE_MS, LANE_WATCHDOG_MS, LANE_STUCK, isString2, isRecord4, isFileKey, isLaneNumber, isUnique, isLaneCount;
 var init_lane_wire = __esm({
   "bridge-server/src/lane-wire.ts"() {
     "use strict";
@@ -5723,6 +5732,9 @@ var init_lane_wire = __esm({
     LANES_CONTROL_TIMEOUT_MS = 18e4;
     LANES_CONTROL_ACTIONS = ["status", "enable", "disable"];
     LANE_OFFLINE_PATTERN = /Unable to establish connection to Figma/i;
+    LANE_CANCEL_GRACE_MS = 3e4;
+    LANE_WATCHDOG_MS = 5e3;
+    LANE_STUCK = "LANE_STUCK";
     isString2 = (v) => typeof v === "string";
     isRecord4 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
     isFileKey = (v) => isString2(v) && v.length > 0;
@@ -6717,6 +6729,11 @@ function withOfflineNote(frame, index, fileName) {
     error: { ...frame.error, message: frame.error.message + note }
   };
 }
+function laneStuckError(stuck, fileName) {
+  const lane = stuck.index === void 0 ? "A lane" : `Lane ${stuck.index}`;
+  const message3 = `${lane} of "${fileName}" is stuck: ${stuck.op} did not stop within ${LANE_CANCEL_GRACE_MS / 1e3} s of its cancel. The hub took the lane out of service and EZG Figma Desktop reloads it; your next call runs on another lane.`;
+  return { message: message3, data: { code: LANE_STUCK, fileKey: stuck.fileKey } };
+}
 var init_health = __esm({
   "bridge-server/src/lanes/health.ts"() {
     "use strict";
@@ -6825,15 +6842,15 @@ function createLeaseStore(options) {
         const id = laneConnOf(fileKey5, held.slot);
         return id ? { connectionId: id } : { wait: true };
       }
-      for (const slot2 of file2.slots) {
-        if (file2.leases.has(slot2.index) || !health.isHealthy(fileKey5, slot2))
-          continue;
+      const free = file2.slots.flatMap((slot2) => {
         const id = laneConnOf(fileKey5, slot2);
-        if (!id) continue;
-        file2.leases.set(slot2.index, newLease(agentId, label));
-        return { connectionId: id };
-      }
-      return { wait: true };
+        const open2 = !file2.leases.has(slot2.index) && health.isHealthy(fileKey5, slot2);
+        return id && open2 ? [{ slot: slot2, id }] : [];
+      });
+      const pick3 = free.find(({ id }) => !conns.get(id).busy) ?? free[0];
+      if (!pick3) return { wait: true };
+      file2.leases.set(pick3.slot.index, newLease(agentId, label));
+      return { connectionId: pick3.id };
     },
     touch(agentId, fileKey5) {
       const file2 = files2.get(fileKey5);
@@ -6961,6 +6978,42 @@ var init_claims_sync = __esm({
   }
 });
 
+// bridge-server/src/lanes/watchdog.ts
+function createLaneWatchdog(deps) {
+  const gone = /* @__PURE__ */ new Map();
+  const check2 = () => {
+    const t = deps.now();
+    const stuck = /* @__PURE__ */ new Map();
+    const callers = /* @__PURE__ */ new Set();
+    for (const r of deps.inflight()) {
+      if (!r.lane || r.frame.op === "cancel") continue;
+      callers.add(r.agentId);
+      const goneAt = gone.get(r.agentId);
+      if (r.cancelAt === void 0) {
+        if (goneAt === void 0 || t - goneAt <= LANE_GRACE_MS) continue;
+        r.cancelAt = t;
+        deps.cancel(r);
+      } else if (t - r.cancelAt > LANE_CANCEL_GRACE_MS && !stuck.has(r.lane))
+        stuck.set(r.lane, r);
+    }
+    for (const id of gone.keys()) if (!callers.has(id)) gone.delete(id);
+    for (const [lane, r] of stuck) deps.stuck(lane, r);
+  };
+  const timer = setInterval(check2, LANE_WATCHDOG_MS).unref();
+  return {
+    agentGone: (agentId) => void gone.set(agentId, deps.now()),
+    agentBack: (agentId) => void gone.delete(agentId),
+    check: check2,
+    stop: () => clearInterval(timer)
+  };
+}
+var init_watchdog = __esm({
+  "bridge-server/src/lanes/watchdog.ts"() {
+    "use strict";
+    init_lane_wire();
+  }
+});
+
 // bridge-server/src/lanes/wait-queue.ts
 function createWaitQueue() {
   let waiting = [];
@@ -7076,15 +7129,50 @@ function createLaneRouter(deps) {
     syncDue(fileKey5);
   };
   const cancel = (r) => {
-    const original = r.frame.id.replace(/\.cancel$/, "");
-    const lane = inflight.get(original)?.lane;
-    if (!lane) {
-      unwait((w) => w.frame.id === original);
+    const id = r.frame.id.replace(/\.cancel$/, "");
+    const original = inflight.get(id);
+    if (!original?.lane) {
+      unwait((w) => w.frame.id === id);
       return reply(r, { ok: true, result: { found: false } });
     }
-    inflight.set(r.frame.id, { ...r, lane });
-    send(lane, r.frame);
+    original.cancelAt ??= deps.now();
+    inflight.set(r.frame.id, { ...r, lane: original.lane });
+    send(original.lane, r.frame);
   };
+  const cancelOn = (lane, r) => send(lane, {
+    ...{ kind: "request", id: `${r.frame.id}.cancel`, op: "cancel" },
+    payload: { id: lid(r) }
+  });
+  const stuck = (lane, wedged) => {
+    const retired = store.retire(lane);
+    const error62 = laneStuckError(
+      { index: retired?.index, op: wedged.frame.op, fileKey: wedged.fileKey },
+      nameOf(wedged.fileKey)
+    );
+    const moved = [];
+    for (const [id, r] of inflight) {
+      if (r.lane !== lane) continue;
+      inflight.delete(id);
+      if (r.frame.op === "cancel") continue;
+      rollback(r);
+      if (r.cancelAt !== void 0) reply(r, { ok: false, error: error62 });
+      else {
+        cancelOn(lane, r);
+        const { lane: _lane, claim: _claim, ...base } = r;
+        moved.push(base);
+      }
+    }
+    store.setBusy(lane, false);
+    for (const r of moved) if (!dispatch(r)) wait(r);
+    drain(wedged.fileKey);
+    broadcast();
+  };
+  const watchdog = createLaneWatchdog({
+    inflight: () => [...inflight.values()],
+    now: deps.now,
+    cancel: (r) => cancelOn(r.lane, r),
+    stuck
+  });
   const sweep = () => {
     for (const r of inflight.values()) store.touch(r.agentId, r.fileKey);
     for (const { agentId } of store.sweep()) broker.agentGone(agentId);
@@ -7129,10 +7217,12 @@ function createLaneRouter(deps) {
     onAgentHello(agentId, info) {
       if (info.label) labels.set(agentId, info.label);
       store.agentBack(agentId);
+      watchdog.agentBack(agentId);
       if (store.view().length) broadcast(true);
     },
     onAgentClose(agentId) {
       store.agentClosed(agentId);
+      watchdog.agentGone(agentId);
       labels.delete(agentId);
       unwait((r) => r.agentId === agentId);
       broadcast();
@@ -7151,6 +7241,7 @@ function createLaneRouter(deps) {
       const frame = offline(connectionId, plugin);
       const r = inflight.get(frame.id);
       if (!r) return claims.isHubLocal(frame.id) ? null : frame;
+      if (r.lane !== connectionId) return null;
       inflight.delete(frame.id);
       store.setBusy(r.lane, inUse(r.lane));
       if (r.claim && !frame.ok) rollback(r);
@@ -7162,6 +7253,7 @@ function createLaneRouter(deps) {
     close() {
       closed = true;
       clearInterval(sweepTimer);
+      watchdog.stop();
       unwait(() => true);
     }
   };
@@ -7175,6 +7267,7 @@ var init_router = __esm({
     init_busy_error();
     init_claims_sync();
     init_health();
+    init_watchdog();
     init_wait_queue();
   }
 });
@@ -47484,12 +47577,15 @@ var init_doc_snapshot = __esm({
     init_context();
     init_tool_result();
     DOC_SNAPSHOT_OLD_PLUGIN_HINT = "reopen the EZG Tools plugin to update it";
-    DESCRIPTION6 = "Writes the open Figma file as one JSON file at outPath, the same shape as GET /v1/files/:key?geometry=paths (no text outlines). Takes every page unless pageIds is given. Use it for a Unity import or offline reading. Returns path, bytes, name, pages, nodes and ms, not the JSON. An existing file at outPath is overwritten.";
+    DESCRIPTION6 = "Writes the open Figma file as one JSON file at outPath, the same shape as GET /v1/files/:key?geometry=paths (no text outlines). Takes every page unless pageIds or pageNames is given; ask only for the pages you need, a big file is tens of MB. The plugin reports progress per page and step and keeps the call alive while it works; a page load or export that hangs fails after 60 s with the page name, and a cancel or timeout stops the plugin job at once. Use it for a Unity import or offline reading. Returns path, bytes, name, pages, nodes and ms, not the JSON. An existing file at outPath is overwritten.";
     docSnapshotInputSchema = {
       fileKey: external_exports.string().min(1).optional().describe(
         "fileKey or clientId from files. Optional with one file connected."
       ),
-      pageIds: external_exports.array(external_exports.string().min(1)).min(1).max(SNAPSHOT_MAX_PAGE_IDS).optional().describe("Page node ids to include. Default: every page."),
+      pageIds: external_exports.array(external_exports.string().min(1)).min(1).max(SNAPSHOT_MAX_PAGE_IDS).optional().describe("Page node ids to include, like 12:34. Default: every page."),
+      pageNames: external_exports.array(external_exports.string().min(1)).min(1).max(SNAPSHOT_MAX_PAGE_IDS).optional().describe(
+        "Exact page names to include, added to pageIds. Default: every page."
+      ),
       outPath: external_exports.string().min(1).describe("Absolute path of the .json file to write.")
     };
     registerDocSnapshot = (server2, ctx2) => {
@@ -47500,14 +47596,17 @@ var init_doc_snapshot = __esm({
           description: DESCRIPTION6,
           inputSchema: docSnapshotInputSchema
         },
-        async ({ fileKey: fileKey5, pageIds, outPath }) => {
+        async ({ fileKey: fileKey5, pageIds, pageNames, outPath }) => {
           if (!isAbsolute3(outPath))
             return errorResult("outPath must be an absolute path");
           if (!outPath.endsWith(".json"))
             return errorResult("outPath must end in .json");
           const r = ctx2.files.resolve(fileKey5);
           if ("error" in r) return errorResult(r.error);
-          const payload = pageIds?.length ? { pageIds } : {};
+          const payload = {
+            ...pageIds?.length && { pageIds },
+            ...pageNames?.length && { pageNames }
+          };
           try {
             const res = await ctx2.rpc.call(
               r.file.connectionId,
