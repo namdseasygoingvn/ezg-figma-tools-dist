@@ -9,7 +9,12 @@
       "id": "picto-super-casual",
       "name": "Picto Icon - GUI Pro Super Casual",
       "file": "picto-super-casual.json"
+    },
+    {
+      "id": "claude-made",
+      "name": "Claude Made",
+      "file": "claude-made.json"
     }
   ],
-  "updated": 1794133700329
+  "updated": 1794299964334
 }
